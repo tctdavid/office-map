@@ -64,8 +64,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel - Seat Details - 320px width */}
-        <div className="w-80 bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
+        {/* Right Panel - Seat Details - 200px width */}
+        <div className="w-50 bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
           {/* Monitor Icon - 80px width, 60px height */}
           <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
             <div className="w-12 h-8 border border-gray-600 rounded"></div>
