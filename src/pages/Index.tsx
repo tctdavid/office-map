@@ -28,7 +28,7 @@ const Index = () => {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 p-6 gap-6">
+      <div className="w-[1150px] flex p-6 gap-6">
         {/* Left Panel - Seat Configuration - 800px width */}
         <div className="w-200 flex-1">
           <h2 className="text-lg mb-6 text-center">部門座座位配置</h2>
@@ -64,8 +64,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel - Seat Details - 200px width */}
-        <div className="w-50 bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
+        {/* Right Panel - Seat Details - 250px width */}
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
           {/* Monitor Icon - 80px width, 60px height */}
           <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
             <div className="w-12 h-8 border border-gray-600 rounded"></div>
