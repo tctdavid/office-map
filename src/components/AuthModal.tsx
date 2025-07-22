@@ -76,6 +76,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           });
           setEmail("");
           setPassword("");
+          setShowPassword(false);
           setIsSignUp(false);
         }
       } else {
@@ -120,6 +121,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             email: employee.email
           });
         }
+        
+        // 清空輸入框
+        setEmail("");
+        setPassword("");
+        setShowPassword(false);
         
         onClose();
         toast({
@@ -232,6 +238,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
                 setIsSignUp(!isSignUp);
                 setEmail("");
                 setPassword("");
+                setShowPassword(false);
               }}
               className="text-blue-500 hover:text-blue-600 text-sm"
             >
