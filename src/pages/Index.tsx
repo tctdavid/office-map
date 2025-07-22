@@ -61,13 +61,13 @@ const Index = () => {
         </div>
         
         {/* Title - flexible width */}
-        <div className="flex-1 flex justify-between items-center">
-          <h1 className="text-xl font-medium">
+        <div className="flex-1 flex items-center">
+          <h1 className="text-2xl font-medium">
             辦公室座位與設備管理系統
           </h1>
           {currentEmployee && (
-            <span className="text-sm text-cyan-300">
-              歡迎，{currentEmployee.name} ({currentEmployee.email})
+            <span className="text-lg text-cyan-300 ml-4">
+              {currentEmployee.name}
             </span>
           )}
         </div>
