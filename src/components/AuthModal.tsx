@@ -9,9 +9,10 @@ import { User, Session } from '@supabase/supabase-js';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess?: (employee: {id: string, name: string, email: string}) => void;
 }
 
-const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
+const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -94,22 +95,37 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           return;
         }
 
-        // 簡單密碼比對（實際應用中應使用加密比對）
+        // 簡單密碼比對
         if (employee.password_hash !== password) {
           toast({
-            title: "登入失敗",
+            title: "登入失敗", 
             description: "密碼錯誤",
             variant: "destructive",
           });
           return;
         }
 
-        // 登入成功
+        // 建立自訂登入狀態
+        setUser({ 
+          id: employee.id, 
+          email: employee.email,
+          user_metadata: { name: employee.name }
+        } as any);
+        
+        // 通知父組件登入成功
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            id: employee.id,
+            name: employee.name,
+            email: employee.email
+          });
+        }
+        
+        onClose();
         toast({
           title: "登入成功",
           description: `歡迎回來，${employee.name}！`,
         });
-        onClose();
       }
     } catch (error) {
       toast({

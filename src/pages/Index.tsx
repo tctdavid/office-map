@@ -12,93 +12,36 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let logoutTimer: NodeJS.Timeout;
+    let logoutTimer: NodeJS.Timeout | null = null;
 
-    // 檢查登入狀態
-    const checkAuthStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        
-        // 獲取員工資料
-        const { data: employee } = await supabase
-          .from('employees')
-          .select('name, email')
-          .eq('email', session.user.email)
-          .single();
-          
-        if (employee) {
-          setCurrentEmployee(employee);
-          
-          // 設定3分鐘後自動登出
-          logoutTimer = setTimeout(() => {
-            handleLogout();
-            toast({
-              title: "自動登出",
-              description: "由於安全考量，已自動登出",
-            });
-          }, 3 * 60 * 1000); // 3分鐘
-        }
-      }
-    };
-
-    const handleLogout = async () => {
-      await supabase.auth.signOut();
-      setUser(null);
-      setCurrentEmployee(null);
-      toast({
-        title: "登出成功",
-        description: "已成功登出系統",
-      });
-    };
-
-    checkAuthStatus();
-
-    // 監聽認證狀態變化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          
-          // 獲取員工資料
-          const { data: employee } = await supabase
-            .from('employees')
-            .select('name, email')
-            .eq('email', session.user.email)
-            .single();
-            
-          if (employee) {
-            setCurrentEmployee(employee);
-            
-            // 設定3分鐘後自動登出
-            logoutTimer = setTimeout(() => {
-              handleLogout();
-              toast({
-                title: "自動登出",
-                description: "由於安全考量，已自動登出",
-              });
-            }, 3 * 60 * 1000); // 3分鐘
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setCurrentEmployee(null);
-          if (logoutTimer) {
-            clearTimeout(logoutTimer);
-          }
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
+    // 清理timer的函數
+    const clearTimer = () => {
       if (logoutTimer) {
         clearTimeout(logoutTimer);
+        logoutTimer = null;
       }
     };
-  }, [toast]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+    return () => {
+      clearTimer();
+    };
+  }, []);
+
+  const handleLoginSuccess = (employee: {id: string, name: string, email: string}) => {
+    setCurrentEmployee(employee);
+    setUser({ email: employee.email } as User);
+    
+    // 設定3分鐘後自動登出
+    const logoutTimer = setTimeout(() => {
+      handleLogout();
+      toast({
+        title: "自動登出",
+        description: "由於安全考量，已自動登出",
+      });
+    }, 3 * 60 * 1000); // 3分鐘
+  };
+
+  const handleLogout = () => {
     setUser(null);
     setCurrentEmployee(null);
     toast({
@@ -212,7 +155,8 @@ const Index = () => {
       {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
       />
     </div>
   );
