@@ -18,7 +18,10 @@ const Index = () => {
         
         {/* Auth Buttons - 200px width */}
         <div className="w-50 flex gap-3">
-          <button className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors">
+          <button 
+            onClick={() => window.location.href = '/auth'}
+            className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
+          >
             登入
           </button>
           <button className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors">
