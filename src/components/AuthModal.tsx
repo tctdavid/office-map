@@ -78,18 +78,38 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           setIsSignUp(false);
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        // 與資料庫比對員工資料
+        const { data: employee, error } = await supabase
+          .from('employees')
+          .select('id, name, email, password_hash')
+          .eq('email', email)
+          .single();
 
-        if (error) {
+        if (error || !employee) {
           toast({
             title: "登入失敗",
-            description: error.message,
+            description: "帳號不存在",
             variant: "destructive",
           });
+          return;
         }
+
+        // 簡單密碼比對（實際應用中應使用加密比對）
+        if (employee.password_hash !== password) {
+          toast({
+            title: "登入失敗",
+            description: "密碼錯誤",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // 登入成功
+        toast({
+          title: "登入成功",
+          description: `歡迎回來，${employee.name}！`,
+        });
+        onClose();
       }
     } catch (error) {
       toast({
@@ -147,6 +167,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 required
                 className="w-full"
               />
+              <p className="text-xs text-gray-500 mt-1">請輸入您的公司電子郵件地址</p>
             </div>
 
             {/* Password Field */}
@@ -171,6 +192,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">請輸入您的登入密碼</p>
             </div>
 
             {/* Submit Button */}
