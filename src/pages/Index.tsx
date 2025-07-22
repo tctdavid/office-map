@@ -1,34 +1,112 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
-import { User, Session } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
+    let logoutTimer: NodeJS.Timeout;
+
+    // 檢查登入狀態
+    const checkAuthStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        
+        // 獲取員工資料
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('name, email')
+          .eq('email', session.user.email)
+          .single();
+          
+        if (employee) {
+          setCurrentEmployee(employee);
+          
+          // 設定3分鐘後自動登出
+          logoutTimer = setTimeout(() => {
+            handleLogout();
+            toast({
+              title: "自動登出",
+              description: "由於安全考量，已自動登出",
+            });
+          }, 3 * 60 * 1000); // 3分鐘
+        }
+      }
+    };
+
+    const handleLogout = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+      setCurrentEmployee(null);
+      toast({
+        title: "登出成功",
+        description: "已成功登出系統",
+      });
+    };
+
+    checkAuthStatus();
+
+    // 監聽認證狀態變化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          setUser(session.user);
+          
+          // 獲取員工資料
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('name, email')
+            .eq('email', session.user.email)
+            .single();
+            
+          if (employee) {
+            setCurrentEmployee(employee);
+            
+            // 設定3分鐘後自動登出
+            logoutTimer = setTimeout(() => {
+              handleLogout();
+              toast({
+                title: "自動登出",
+                description: "由於安全考量，已自動登出",
+              });
+            }, 3 * 60 * 1000); // 3分鐘
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setCurrentEmployee(null);
+          if (logoutTimer) {
+            clearTimeout(logoutTimer);
+          }
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      if (logoutTimer) {
+        clearTimeout(logoutTimer);
+      }
+    };
+  }, [toast]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setCurrentEmployee(null);
+    toast({
+      title: "登出成功",
+      description: "已成功登出系統",
+    });
   };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header - 80px height */}
@@ -40,9 +118,16 @@ const Index = () => {
         </div>
         
         {/* Title - flexible width */}
-        <h1 className="text-xl font-medium text-center flex-1">
-          辦公室座位與設備管理系統
-        </h1>
+        <div className="flex-1 flex justify-between items-center">
+          <h1 className="text-xl font-medium">
+            辦公室座位與設備管理系統
+          </h1>
+          {currentEmployee && (
+            <span className="text-sm text-cyan-300">
+              歡迎，{currentEmployee.name} ({currentEmployee.email})
+            </span>
+          )}
+        </div>
         
         {/* Auth Buttons - 200px width */}
         <div className="w-50 flex gap-3">
