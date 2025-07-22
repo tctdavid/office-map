@@ -165,7 +165,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="請輸入您的電子郵件"
                 required
-                className="w-full"
+                className="w-full bg-transparent border-gray-300 text-gray-800 placeholder:text-gray-400"
               />
               <p className="text-xs text-gray-500 mt-1">請輸入您的公司電子郵件地址</p>
             </div>
@@ -182,7 +182,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="請輸入您的密碼"
                   required
-                  className="w-full pr-10"
+                  className="w-full pr-10 bg-transparent border-gray-300 text-gray-800 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
