@@ -158,6 +158,7 @@ const Index = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent, handle: string) => {
+    e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
     setDragHandle(handle);
@@ -165,6 +166,9 @@ const Index = () => {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !editingContainer || !dragHandle) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
     
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -174,36 +178,37 @@ const Index = () => {
     const snapToGrid = (value: number) => Math.round(value / 20) * 20;
     
     let newContainer = {...editingContainer};
+    const minSize = 40; // 最小2個網格單位
     
     switch(dragHandle) {
       case 'top':
-        const snappedTopY = snapToGrid(mouseY);
-        const newHeight = newContainer.height + (newContainer.y - snappedTopY);
-        if (newHeight >= 40 && snappedTopY >= 0) { // 最小40px高度，確保至少2個網格
+        const snappedTopY = Math.max(0, snapToGrid(mouseY));
+        const newHeightFromTop = newContainer.y + newContainer.height - snappedTopY;
+        if (newHeightFromTop >= minSize) {
           newContainer.y = snappedTopY;
-          newContainer.height = newHeight;
+          newContainer.height = newHeightFromTop;
         }
         break;
       case 'bottom':
         const snappedBottomY = snapToGrid(mouseY);
-        const bottomHeight = snappedBottomY - newContainer.y;
-        if (bottomHeight >= 40) { // 最小40px高度
-          newContainer.height = bottomHeight;
+        const newHeightFromBottom = snappedBottomY - newContainer.y;
+        if (newHeightFromBottom >= minSize && snappedBottomY <= canvasSize.height) {
+          newContainer.height = newHeightFromBottom;
         }
         break;
       case 'left':
-        const snappedLeftX = snapToGrid(mouseX);
-        const newWidth = newContainer.width + (newContainer.x - snappedLeftX);
-        if (newWidth >= 40 && snappedLeftX >= 0) { // 最小40px寬度，確保至少2個網格
+        const snappedLeftX = Math.max(0, snapToGrid(mouseX));
+        const newWidthFromLeft = newContainer.x + newContainer.width - snappedLeftX;
+        if (newWidthFromLeft >= minSize) {
           newContainer.x = snappedLeftX;
-          newContainer.width = newWidth;
+          newContainer.width = newWidthFromLeft;
         }
         break;
       case 'right':
         const snappedRightX = snapToGrid(mouseX);
-        const rightWidth = snappedRightX - newContainer.x;
-        if (rightWidth >= 40) { // 最小40px寬度
-          newContainer.width = rightWidth;
+        const newWidthFromRight = snappedRightX - newContainer.x;
+        if (newWidthFromRight >= minSize && snappedRightX <= canvasSize.width) {
+          newContainer.width = newWidthFromRight;
         }
         break;
     }
@@ -211,7 +216,10 @@ const Index = () => {
     setEditingContainer(newContainer);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (isDragging && editingContainer) {
       // 確保最終位置對齊網格
       const snapToGrid = (value: number) => Math.round(value / 20) * 20;
@@ -389,10 +397,12 @@ const Index = () => {
                 ? `repeating-linear-gradient(to right, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px),
                    repeating-linear-gradient(to bottom, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px)`
                 : 'none',
-              backgroundSize: isEditMode ? '20px 20px' : 'auto'
+              backgroundSize: isEditMode ? '20px 20px' : 'auto',
+              userSelect: 'none'
             }}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => {
@@ -427,23 +437,27 @@ const Index = () => {
                   <>
                     {/* Top handle */}
                     <div 
-                      className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize"
+                      className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize select-none"
                       onMouseDown={(e) => handleMouseDown(e, 'top')}
+                      style={{ userSelect: 'none' }}
                     />
                     {/* Bottom handle */}
                     <div 
-                      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize"
+                      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize select-none"
                       onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+                      style={{ userSelect: 'none' }}
                     />
                     {/* Left handle */}
                     <div 
-                      className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize"
+                      className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize select-none"
                       onMouseDown={(e) => handleMouseDown(e, 'left')}
+                      style={{ userSelect: 'none' }}
                     />
                     {/* Right handle */}
                     <div 
-                      className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize"
+                      className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize select-none"
                       onMouseDown={(e) => handleMouseDown(e, 'right')}
+                      style={{ userSelect: 'none' }}
                     />
                   </>
                 )}
