@@ -217,10 +217,10 @@ const Index = () => {
               {containers.map((container) => (
                 <div 
                   key={container.id} 
-                  className={`absolute border-2 transition-all duration-200 z-20 ${
+                  className={`absolute transition-all duration-200 z-20 cursor-pointer ${
                     selectedContainer?.id === container.id && isEditMode && isEditingContainer
-                      ? 'border-yellow-400 bg-yellow-400/20 shadow-lg cursor-pointer'
-                      : 'border-transparent cursor-pointer'
+                      ? 'border-2 border-yellow-400 bg-yellow-400/20 shadow-lg'
+                      : 'border border-transparent'
                   }`}
                   style={{ 
                     left: `${container.x}px`,
