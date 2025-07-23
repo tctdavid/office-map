@@ -155,7 +155,7 @@ const Index = () => {
               {containers.map((container) => (
                 <div 
                   key={container.id} 
-                  className="bg-slate-700/50 border border-slate-600 rounded-lg p-3"
+                  className="p-3"
                   style={{ height: `${container.height}px` }}
                 >
                   <div className="flex items-center justify-between mb-2">
