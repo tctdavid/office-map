@@ -237,42 +237,30 @@ const Index = () => {
           const snappedTopY = Math.max(0, snapToGrid(mouseY));
           const newHeightFromTop = newContainer.y + newContainer.height - snappedTopY;
           if (newHeightFromTop >= minSize) {
-            const testContainer = {...newContainer, y: snappedTopY, height: newHeightFromTop};
-            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
-              newContainer.y = snappedTopY;
-              newContainer.height = newHeightFromTop;
-            }
+            newContainer.y = snappedTopY;
+            newContainer.height = newHeightFromTop;
           }
           break;
         case 'bottom':
           const snappedBottomY = snapToGrid(mouseY);
           const newHeightFromBottom = snappedBottomY - newContainer.y;
           if (newHeightFromBottom >= minSize && snappedBottomY <= canvasSize.height) {
-            const testContainer = {...newContainer, height: newHeightFromBottom};
-            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
-              newContainer.height = newHeightFromBottom;
-            }
+            newContainer.height = newHeightFromBottom;
           }
           break;
         case 'left':
           const snappedLeftX = Math.max(0, snapToGrid(mouseX));
           const newWidthFromLeft = newContainer.x + newContainer.width - snappedLeftX;
           if (newWidthFromLeft >= minSize) {
-            const testContainer = {...newContainer, x: snappedLeftX, width: newWidthFromLeft};
-            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
-              newContainer.x = snappedLeftX;
-              newContainer.width = newWidthFromLeft;
-            }
+            newContainer.x = snappedLeftX;
+            newContainer.width = newWidthFromLeft;
           }
           break;
         case 'right':
           const snappedRightX = snapToGrid(mouseX);
           const newWidthFromRight = snappedRightX - newContainer.x;
           if (newWidthFromRight >= minSize && snappedRightX <= canvasSize.width) {
-            const testContainer = {...newContainer, width: newWidthFromRight};
-            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
-              newContainer.width = newWidthFromRight;
-            }
+            newContainer.width = newWidthFromRight;
           }
           break;
       }
