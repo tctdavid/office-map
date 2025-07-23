@@ -194,9 +194,17 @@ const Index = () => {
               {containers.map((container) => (
                 <div 
                   key={container.id} 
-                  className="p-3"
-                  style={{ height: `${container.height}px` }}
+                  className="absolute border-2 border-blue-500 bg-blue-500/10"
+                  style={{ 
+                    left: `${container.x}px`,
+                    top: `${container.y}px`,
+                    width: `${container.width}px`,
+                    height: `${container.height}px`,
+                    borderColor: container.color
+                  }}
+                  title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                 >
+                  <div className="text-xs text-white p-1">{container.name}</div>
                 </div>
               ))}
               {containers.length === 0 && seatCoordinates.length === 0 && (
