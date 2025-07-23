@@ -53,18 +53,9 @@ const Index = () => {
   }, []);
 
   const handleLoginSuccess = (employee: {id: string, name: string, email: string, role?: string}) => {
-    console.log('Login success, employee data:', employee); // 添加調試日誌
+    console.log('Login success, employee data:', employee);
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
-    
-    // 暫時停用3分鐘自動登出功能
-    // const logoutTimer = setTimeout(() => {
-    //   handleLogout();
-    //   toast({
-    //     title: "自動登出",
-    //     description: "由於安全考量，已自動登出",
-    //   });
-    // }, 3 * 60 * 1000); // 3分鐘
   };
 
   const handleLogout = () => {
@@ -78,15 +69,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header - 80px height */}
+      {/* Header */}
       <header className="h-20 w-[1400px] flex items-center justify-between px-6 bg-slate-800/50">
-        {/* Time Display - 120px width */}
         <div className="w-30 bg-cyan-900/40 rounded-lg px-4 py-2 text-center">
           <div className="text-lg font-mono">15:41</div>
           <div className="text-xs text-cyan-300">07/21</div>
         </div>
         
-        {/* Title - flexible width */}
         <div className="flex-1 flex items-center">
           <h1 className="text-2xl font-medium">
             辦公室座位與設備管理系統
@@ -101,11 +90,9 @@ const Index = () => {
           )}
         </div>
         
-        {/* Auth Buttons - 200px width */}
         <div className="w-50 flex gap-3">
           {user ? (
             <>
-              {/* 編輯模式按鈕 - 只有管理員才能看見 */}
               {currentEmployee?.role === 'admin' && (
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
@@ -146,11 +133,10 @@ const Index = () => {
 
       {/* Main Content Area */}
       <div className="w-[1400px] flex px-6 py-6 gap-6">
-        {/* Left Panel - Seat Configuration - 800px width */}
+        {/* Left Panel */}
         <div className="w-200 flex-1">
           <h2 className="text-lg mb-6 text-center">部門座座位配置</h2>
           
-          {/* Legend - 400px width, 80px height */}
           <div className="w-100 mx-auto mb-6">
             <div className="flex items-center justify-center gap-6 mb-3">
               <div className="flex items-center gap-2">
@@ -175,14 +161,13 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Containers Display Area - 1100px width, 800px height */}
+          {/* Display Area */}
           <div className="w-[1100px] h-[800px] mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-hidden">
             <h3 className="text-lg font-medium mb-2 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
             <hr className="border-cyan-300/50 mb-4" />
             <div className="relative">
               {/* Render seat coordinates */}
               {seatCoordinates.map((seat) => {
-                // 找到座位對應的容器
                 const container = containers.find(c => c.id === seat.container_id);
                 const containerX = container ? container.x : 0;
                 const containerY = container ? container.y : 0;
@@ -203,7 +188,7 @@ const Index = () => {
                       width: `${seat.pixel_x}px`,
                       height: `${seat.pixel_y}px`
                     }}
-                    title={`座位 ${seat.id} 容器:(${containerX}, ${containerY}) 相對:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                    title={`座位 ${seat.id}`}
                     onClick={() => {
                       if (isEditMode && !isEditingContainer) {
                         setSelectedSeat(selectedSeat?.id === seat.id ? null : seat);
@@ -214,99 +199,101 @@ const Index = () => {
                 );
               })}
               
-              {/* Render containers */}
-              {containers.map((container) => (
-                <div 
-                  key={container.id} 
-                  className={`absolute transition-all duration-200 z-20 ${
-                    selectedContainer?.id === container.id && isEditMode && isEditingContainer
-                      ? 'border-4 border-solid border-yellow-400 bg-yellow-400 bg-opacity-20 shadow-xl'
-                      : 'border-2 border-transparent'
-                  }`}
-                  style={{ 
-                    left: `${container.x}px`,
-                    top: `${container.y}px`,
-                    width: `${container.width}px`,
-                    height: `${container.height}px`,
-                    cursor: 'pointer',
-                    backgroundColor: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'rgba(251, 191, 36, 0.3)' : 'transparent'
-                  }}
-                  title={`容器: ${container.name}`}
-                  onClick={() => {
-                    console.log('=== CLICK EVENT START ===');
-                    console.log('Container clicked:', container.name);
-                    console.log('isEditMode:', isEditMode);
-                    console.log('isEditingContainer:', isEditingContainer);
-                    console.log('Current selectedContainer:', selectedContainer?.name || 'none');
-                    
-                    if (isEditMode && isEditingContainer) {
-                      const newSelected = selectedContainer?.id === container.id ? null : container;
-                      console.log('Will set to:', newSelected?.name || 'none');
-                      setSelectedContainer(newSelected);
-                      console.log('State updated');
-                    } else {
-                      console.log('Click ignored - not in edit container mode');
-                    }
-                    console.log('=== CLICK EVENT END ===');
-                  }}
-                >
-                  {/* 編輯控制點只在選中時顯示 */}
-                  {selectedContainer?.id === container.id && isEditMode && isEditingContainer && (
-                    <>
-                      {/* 容器名稱 */}
-                      <div className="absolute -top-8 left-0 text-sm text-yellow-300 bg-slate-800/90 px-3 py-1 rounded border border-yellow-400 z-30">
-                        {container.name}
-                      </div>
+              {/* Render containers - 單一容器渲染，避免重複 */}
+              {containers.map((container) => {
+                const isSelected = selectedContainer?.id === container.id && isEditMode && isEditingContainer;
+                
+                return (
+                  <div 
+                    key={container.id} 
+                    className="absolute transition-all duration-200 z-20 cursor-pointer"
+                    style={{ 
+                      left: `${container.x}px`,
+                      top: `${container.y}px`,
+                      width: `${container.width}px`,
+                      height: `${container.height}px`,
+                      border: isSelected ? '4px dashed #fbbf24' : '1px solid transparent',
+                      backgroundColor: isSelected ? 'rgba(251, 191, 36, 0.2)' : 'transparent',
+                      boxShadow: isSelected ? '0 0 0 2px rgba(251, 191, 36, 0.5)' : 'none'
+                    }}
+                    title={`容器: ${container.name}`}
+                    onClick={() => {
+                      console.log('=== CLICK EVENT START ===');
+                      console.log('Container clicked:', container.name);
+                      console.log('isEditMode:', isEditMode);
+                      console.log('isEditingContainer:', isEditingContainer);
+                      console.log('Current selectedContainer:', selectedContainer?.name || 'none');
                       
-                      {/* 四邊調整控制點 */}
-                      <div 
-                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
-                        title="調整高度"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          console.log('Top resize handle clicked');
-                        }}
-                      ></div>
-                      
-                      <div 
-                        className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
-                        title="調整高度"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          console.log('Bottom resize handle clicked');
-                        }}
-                      ></div>
-                      
-                      <div 
-                        className="absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
-                        title="調整寬度"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          console.log('Left resize handle clicked');
-                        }}
-                      ></div>
-                      
-                      <div 
-                        className="absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
-                        title="調整寬度"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          console.log('Right resize handle clicked');
-                        }}
-                      ></div>
-                      
-                      <div 
-                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-green-400 border-2 border-green-300 rounded-full cursor-move hover:bg-green-300 z-30"
-                        title="移動容器"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          console.log('Move handle clicked');
-                        }}
-                      ></div>
-                    </>
-                  )}
-                </div>
-              ))}
+                      if (isEditMode && isEditingContainer) {
+                        const newSelected = selectedContainer?.id === container.id ? null : container;
+                        console.log('Will set to:', newSelected?.name || 'none');
+                        setSelectedContainer(newSelected);
+                        console.log('State updated');
+                      } else {
+                        console.log('Click ignored - not in edit container mode');
+                      }
+                      console.log('=== CLICK EVENT END ===');
+                    }}
+                  >
+                    {/* 編輯控制點只在選中時顯示 */}
+                    {isSelected && (
+                      <>
+                        {/* 容器名稱 */}
+                        <div className="absolute -top-8 left-0 text-sm text-yellow-300 bg-slate-800/90 px-3 py-1 rounded border border-yellow-400 z-30">
+                          {container.name}
+                        </div>
+                        
+                        {/* 四邊調整控制點 */}
+                        <div 
+                          className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
+                          title="調整高度"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            console.log('Top resize handle clicked');
+                          }}
+                        ></div>
+                        
+                        <div 
+                          className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
+                          title="調整高度"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            console.log('Bottom resize handle clicked');
+                          }}
+                        ></div>
+                        
+                        <div 
+                          className="absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
+                          title="調整寬度"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            console.log('Left resize handle clicked');
+                          }}
+                        ></div>
+                        
+                        <div 
+                          className="absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
+                          title="調整寬度"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            console.log('Right resize handle clicked');
+                          }}
+                        ></div>
+                        
+                        <div 
+                          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-green-400 border-2 border-green-300 rounded-full cursor-move hover:bg-green-300 z-30"
+                          title="移動容器"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            console.log('Move handle clicked');
+                          }}
+                        ></div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+              
               {containers.length === 0 && seatCoordinates.length === 0 && (
                 <div className="text-center text-gray-400 py-8">
                   目前沒有容器資料
@@ -314,21 +301,17 @@ const Index = () => {
               )}
             </div>
           </div>
-
         </div>
 
-        {/* Right Panel - Seat Details - 250px width */}
+        {/* Right Panel */}
         <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
           {isEditMode ? (
-            /* 編輯模式界面 */
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-cyan-300 text-center">編輯模式</h3>
               
-              {/* 新增容器按鈕 */}
               <button 
                 className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
                 onClick={() => {
-                  // TODO: 實現新增容器功能
                   toast({
                     title: "功能開發中",
                     description: "新增容器功能即將推出",
@@ -338,7 +321,6 @@ const Index = () => {
                 新增容器
               </button>
               
-              {/* 編輯容器按鈕 */}
               <button 
                 className={`w-full px-4 py-2 rounded text-sm transition-colors ${
                   isEditingContainer 
@@ -354,11 +336,9 @@ const Index = () => {
                 {isEditingContainer ? '退出編輯容器' : '編輯容器'}
               </button>
               
-              {/* 新增座位按鈕 */}
               <button 
                 className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
                 onClick={() => {
-                  // TODO: 實現新增座位功能
                   toast({
                     title: "功能開發中", 
                     description: "新增座位功能即將推出",
@@ -368,12 +348,11 @@ const Index = () => {
                 新增座位
               </button>
               
-              {/* 選中項目資訊 */}
+              {/* 編輯容器信息 */}
               {selectedContainer && isEditingContainer && (
                 <div className="bg-slate-700/50 rounded p-3">
                   <h4 className="text-sm font-medium text-yellow-300 mb-2">編輯容器</h4>
                   
-                  {/* 容器名稱編輯 */}
                   <div className="mb-2">
                     <label className="text-xs text-gray-400 block mb-1">名稱:</label>
                     <input 
@@ -392,7 +371,6 @@ const Index = () => {
                   <p className="text-xs text-gray-300 mb-1">位置: ({selectedContainer.x}, {selectedContainer.y})</p>
                   <p className="text-xs text-gray-300 mb-3">大小: {selectedContainer.width}×{selectedContainer.height}</p>
                   
-                  {/* 保存按鈕 */}
                   <button 
                     className="w-full mt-2 px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs transition-colors"
                     onClick={async () => {
@@ -415,7 +393,6 @@ const Index = () => {
                             description: "無法保存容器變更",
                           });
                         } else {
-                          // 更新本地狀態
                           setContainers(containers.map(c => 
                             c.id === selectedContainer.id ? selectedContainer : c
                           ));
@@ -435,59 +412,27 @@ const Index = () => {
                     保存變更
                   </button>
                   
-                  {/* 取消選擇按鈕 */}
                   <button 
                     className="w-full mt-1 px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs transition-colors"
-                    onClick={() => {
-                      setSelectedContainer(null);
-                    }}
+                    onClick={() => setSelectedContainer(null)}
                   >
                     取消選擇
                   </button>
                 </div>
               )}
               
-              {selectedSeat && !isEditingContainer && (
-                <div className="bg-slate-700/50 rounded p-3">
-                  <h4 className="text-sm font-medium text-yellow-300 mb-2">選中座位</h4>
-                  <p className="text-xs text-gray-300">ID: {selectedSeat.id}</p>
-                  <p className="text-xs text-gray-300">位置: ({selectedSeat.x}, {selectedSeat.y})</p>
-                  <p className="text-xs text-gray-300">大小: {selectedSeat.pixel_x}×{selectedSeat.pixel_y}</p>
-                  <button 
-                    className="w-full mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs transition-colors"
-                    onClick={() => {
-                      // TODO: 實現編輯座位功能
-                      toast({
-                        title: "功能開發中",
-                        description: "編輯座位功能即將推出",
-                      });
-                    }}
-                  >
-                    編輯座位
-                  </button>
-                </div>
-              )}
-               
-               <div className="text-xs text-gray-400 text-center mt-4">
-                 點擊容器或座位進行選擇和編輯
-               </div>
-               
-               {/* 調試信息 */}
-               <div className="text-xs text-green-400 mt-2 p-2 bg-slate-800 rounded">
-                 <div>編輯模式: {isEditMode ? 'ON' : 'OFF'}</div>
-                 <div>編輯容器: {isEditingContainer ? 'ON' : 'OFF'}</div>
-                 <div>選中容器: {selectedContainer ? selectedContainer.name : '無'}</div>
-               </div>
+              {/* 調試信息 */}
+              <div className="text-xs text-green-400 mt-2 p-2 bg-slate-800 rounded">
+                <div>編輯模式: {isEditMode ? 'ON' : 'OFF'}</div>
+                <div>編輯容器: {isEditingContainer ? 'ON' : 'OFF'}</div>
+                <div>選中容器: {selectedContainer ? selectedContainer.name : '無'}</div>
+              </div>
             </div>
           ) : (
-            /* 一般模式界面 */
             <div className="flex flex-col items-center justify-center h-full">
-              {/* Monitor Icon - 80px width, 60px height */}
               <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
                 <div className="w-12 h-8 border border-gray-600 rounded"></div>
               </div>
-              
-              {/* Text Content - 250px width */}
               <div className="w-62 text-center">
                 <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
                 <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
@@ -497,7 +442,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)}
