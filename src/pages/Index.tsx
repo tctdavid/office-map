@@ -170,32 +170,39 @@ const Index = () => {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
+    // Snap to 20px grid
+    const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+    
     let newContainer = {...editingContainer};
     
     switch(dragHandle) {
       case 'top':
-        const newHeight = newContainer.height + (newContainer.y - mouseY);
-        if (newHeight > 50) {
-          newContainer.y = mouseY;
+        const snappedTopY = snapToGrid(mouseY);
+        const newHeight = newContainer.height + (newContainer.y - snappedTopY);
+        if (newHeight >= 40 && snappedTopY >= 0) { // 最小40px高度，確保至少2個網格
+          newContainer.y = snappedTopY;
           newContainer.height = newHeight;
         }
         break;
       case 'bottom':
-        const bottomHeight = mouseY - newContainer.y;
-        if (bottomHeight > 50) {
+        const snappedBottomY = snapToGrid(mouseY);
+        const bottomHeight = snappedBottomY - newContainer.y;
+        if (bottomHeight >= 40) { // 最小40px高度
           newContainer.height = bottomHeight;
         }
         break;
       case 'left':
-        const newWidth = newContainer.width + (newContainer.x - mouseX);
-        if (newWidth > 50) {
-          newContainer.x = mouseX;
+        const snappedLeftX = snapToGrid(mouseX);
+        const newWidth = newContainer.width + (newContainer.x - snappedLeftX);
+        if (newWidth >= 40 && snappedLeftX >= 0) { // 最小40px寬度，確保至少2個網格
+          newContainer.x = snappedLeftX;
           newContainer.width = newWidth;
         }
         break;
       case 'right':
-        const rightWidth = mouseX - newContainer.x;
-        if (rightWidth > 50) {
+        const snappedRightX = snapToGrid(mouseX);
+        const rightWidth = snappedRightX - newContainer.x;
+        if (rightWidth >= 40) { // 最小40px寬度
           newContainer.width = rightWidth;
         }
         break;
@@ -205,6 +212,18 @@ const Index = () => {
   };
 
   const handleMouseUp = () => {
+    if (isDragging && editingContainer) {
+      // 確保最終位置對齊網格
+      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+      const finalContainer = {
+        ...editingContainer,
+        x: snapToGrid(editingContainer.x),
+        y: snapToGrid(editingContainer.y),
+        width: snapToGrid(editingContainer.width),
+        height: snapToGrid(editingContainer.height)
+      };
+      setEditingContainer(finalContainer);
+    }
     setIsDragging(false);
     setDragHandle('');
   };
