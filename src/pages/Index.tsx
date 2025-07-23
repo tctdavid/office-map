@@ -270,6 +270,10 @@ const Index = () => {
                 }}
                 title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
               >
+                {/* 容器名稱 */}
+                <div className="absolute inset-0 flex items-center justify-center text-lg font-medium text-white pointer-events-none">
+                  {container.name}
+                </div>
                 {/* Render seats relative to this container */}
                 {seatCoordinates
                   .filter(seat => seat.container_id === container.id)
