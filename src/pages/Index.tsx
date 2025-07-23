@@ -135,7 +135,7 @@ const Index = () => {
       </header>
 
       {/* Main Content Area */}
-      <div className="w-[1600px] flex px-6 py-6 gap-6">
+      <div className="w-[1400px] flex px-6 py-6 gap-6">
         {/* Left Panel - Seat Configuration - 1300px width */}
         <div className="w-[1300px] flex-1">
           <h2 className="text-lg mb-6 text-center">部門座位配置</h2>
