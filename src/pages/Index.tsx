@@ -214,31 +214,40 @@ const Index = () => {
               {containers.map((container) => (
                 <div 
                   key={container.id} 
-                  className={`absolute border-2 border-dashed cursor-pointer transition-colors ${
+                  className={`absolute border-2 transition-all duration-200 ${
                     isEditMode 
                       ? (selectedContainer?.id === container.id 
-                          ? 'border-yellow-400 bg-yellow-400/10' 
-                          : 'border-cyan-500 bg-cyan-500/5 hover:bg-cyan-500/10')
+                          ? 'border-yellow-400 bg-yellow-400/20 shadow-lg' 
+                          : 'border-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 cursor-pointer')
                       : 'border-transparent'
                   }`}
                   style={{ 
                     left: `${container.x}px`,
                     top: `${container.y}px`,
                     width: `${container.width}px`,
-                    height: `${container.height}px`
+                    height: `${container.height}px`,
+                    borderStyle: isEditMode ? 'dashed' : 'solid'
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
                     if (isEditMode) {
+                      console.log('Container clicked:', container); // 調試用
                       setSelectedContainer(selectedContainer?.id === container.id ? null : container);
                       setSelectedSeat(null);
                     }
                   }}
                 >
                   {isEditMode && (
-                    <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/70 px-1 rounded">
-                      {container.name}
-                    </div>
+                    <>
+                      <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/90 px-2 py-1 rounded border border-cyan-400">
+                        {container.name}
+                      </div>
+                      {/* 顯示容器角落拖拽點 */}
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
+                      <div className="absolute -top-1 -left-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
+                      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
+                    </>
                   )}
                 </div>
               ))}
