@@ -54,8 +54,12 @@ const Index = () => {
       }
     };
 
-    // 載入容器資料
+    // 載入容器資料 - 只在非編輯狀態時載入
     const fetchContainers = async () => {
+      // 如果正在編輯容器或拖拽中，不重新載入資料
+      if (isContainerEditMode && editingContainer) return;
+      if (isDragging) return;
+      
       const { data, error } = await supabase
         .from('containers')
         .select('*')
@@ -89,7 +93,7 @@ const Index = () => {
     return () => {
       clearTimer();
     };
-  }, []);
+  }, [isContainerEditMode, editingContainer, isDragging]);
 
   const handleLoginSuccess = (employee: {id: string, name: string, email: string}) => {
     setCurrentEmployee(employee);
@@ -598,7 +602,10 @@ const Index = () => {
 
             {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => {
-              const currentContainer = editingContainer && editingContainer.id === container.id ? editingContainer : container;
+              // 優先使用編輯中的容器狀態，避免資料庫重載影響編輯
+              const currentContainer = (editingContainer && editingContainer.id === container.id) 
+                ? editingContainer 
+                : container;
               const isSelected = selectedContainer?.id === container.id;
               
               return (
