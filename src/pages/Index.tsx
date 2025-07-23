@@ -233,8 +233,14 @@ const Index = () => {
                   onClick={() => {
                     if (isEditMode && isEditingContainer) {
                       console.log('Container clicked:', container); // 調試用
-                      setSelectedContainer(selectedContainer?.id === container.id ? null : container);
+                      console.log('Current selectedContainer:', selectedContainer);
+                      console.log('isEditMode:', isEditMode, 'isEditingContainer:', isEditingContainer);
+                      const newSelection = selectedContainer?.id === container.id ? null : container;
+                      console.log('Setting selectedContainer to:', newSelection);
+                      setSelectedContainer(newSelection);
                       setSelectedSeat(null);
+                    } else {
+                      console.log('Click ignored - isEditMode:', isEditMode, 'isEditingContainer:', isEditingContainer);
                     }
                   }}
                 >
