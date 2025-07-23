@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
-
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -10,6 +9,7 @@ const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
+  const [containers, setContainers] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,6 +22,22 @@ const Index = () => {
         logoutTimer = null;
       }
     };
+
+    // 載入容器資料
+    const fetchContainers = async () => {
+      const { data, error } = await supabase
+        .from('containers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching containers:', error);
+      } else {
+        setContainers(data || []);
+      }
+    };
+
+    fetchContainers();
 
     return () => {
       clearTimer();
@@ -132,9 +148,36 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Seat Grid Area - 700px width, 400px height */}
-          <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700">
-            {/* Seat grid will be implemented here */}
+          {/* Containers Display Area - 700px width, 400px height */}
+          <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-y-auto">
+            <h3 className="text-lg font-medium mb-4 text-cyan-300">容器資料</h3>
+            <div className="space-y-3">
+              {containers.map((container) => (
+                <div 
+                  key={container.id} 
+                  className="bg-slate-700/50 border border-slate-600 rounded-lg p-3"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-white">{container.name}</h4>
+                    <div 
+                      className="w-4 h-4 rounded border border-gray-400"
+                      style={{ backgroundColor: container.color }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-gray-300 space-y-1">
+                    <p>部門: {container.department}</p>
+                    <p>位置: ({container.x}, {container.y})</p>
+                    <p>大小: {container.width} × {container.height}px</p>
+                    <p>建立時間: {new Date(container.created_at).toLocaleString('zh-TW')}</p>
+                  </div>
+                </div>
+              ))}
+              {containers.length === 0 && (
+                <div className="text-center text-gray-400 py-8">
+                  目前沒有容器資料
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
