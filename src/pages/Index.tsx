@@ -235,6 +235,16 @@ const Index = () => {
               {containers.map((container) => {
                 const isSelected = selectedContainer?.id === container.id && isEditMode && isEditingContainer;
                 
+                console.log('=== RENDERING CONTAINER ===');
+                console.log('Container name:', container.name);
+                console.log('DB values:', { x: container.x, y: container.y, width: container.width, height: container.height });
+                console.log('Rendering style will be:', {
+                  left: `${container.x}px`,
+                  top: `${container.y}px`, 
+                  width: `${container.width}px`,
+                  height: `${container.height}px`
+                });
+                
                 return (
                   <div 
                     key={container.id} 
