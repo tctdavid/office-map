@@ -17,16 +17,6 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let logoutTimer: NodeJS.Timeout | null = null;
-
-    // 清理timer的函數
-    const clearTimer = () => {
-      if (logoutTimer) {
-        clearTimeout(logoutTimer);
-        logoutTimer = null;
-      }
-    };
-
     // 載入容器資料
     const fetchContainers = async () => {
       const { data, error } = await supabase
@@ -57,24 +47,21 @@ const Index = () => {
 
     fetchContainers();
     fetchSeatCoordinates();
-
-    return () => {
-      clearTimer();
-    };
   }, []);
 
   const handleLoginSuccess = (employee: {id: string, name: string, email: string, role?: string}) => {
+    console.log('Login success, employee data:', employee); // 添加調試日誌
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
-    // 設定3分鐘後自動登出
-    const logoutTimer = setTimeout(() => {
-      handleLogout();
-      toast({
-        title: "自動登出",
-        description: "由於安全考量，已自動登出",
-      });
-    }, 3 * 60 * 1000); // 3分鐘
+    // 暫時停用3分鐘自動登出功能
+    // const logoutTimer = setTimeout(() => {
+    //   handleLogout();
+    //   toast({
+    //     title: "自動登出",
+    //     description: "由於安全考量，已自動登出",
+    //   });
+    // }, 3 * 60 * 1000); // 3分鐘
   };
 
   const handleLogout = () => {
@@ -103,7 +90,10 @@ const Index = () => {
           </h1>
           {currentEmployee && (
             <span className="text-lg text-cyan-300 ml-4">
-              {currentEmployee.name}
+              {currentEmployee.name} 
+              {currentEmployee.role && (
+                <span className="text-sm text-yellow-300 ml-2">({currentEmployee.role})</span>
+              )}
             </span>
           )}
         </div>

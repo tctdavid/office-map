@@ -9,7 +9,7 @@ import { User, Session } from '@supabase/supabase-js';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess?: (employee: {id: string, name: string, email: string}) => void;
+  onLoginSuccess?: (employee: {id: string, name: string, email: string, role?: string}) => void;
 }
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
@@ -83,7 +83,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
         // 與資料庫比對員工資料
         const { data: employee, error } = await supabase
           .from('employees')
-          .select('id, name, email, password_hash')
+          .select('id, name, email, password_hash, role')
           .eq('email', email)
           .single();
 
@@ -118,7 +118,8 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           onLoginSuccess({
             id: employee.id,
             name: employee.name,
-            email: employee.email
+            email: employee.email,
+            role: employee.role
           });
         }
         
