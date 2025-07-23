@@ -165,8 +165,8 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Container Display Area - 1050px width, 850px height - Blank Canvas */}
-          <div className="w-[1050px] h-[850px] bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden">
+          {/* Container Display Area - 1060px width, 850px height - Blank Canvas */}
+          <div className="w-[1060px] h-[850px] bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden">
             {/* Render containers as parent elements */}
             {containers.map((container) => (
               <div 
