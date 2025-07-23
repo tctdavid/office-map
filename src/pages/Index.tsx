@@ -218,7 +218,7 @@ const Index = () => {
                 <div 
                   key={container.id} 
                   className={`absolute border-2 transition-all duration-200 ${
-                    isEditMode 
+                    isEditMode && isEditingContainer
                       ? (selectedContainer?.id === container.id 
                           ? 'border-yellow-400 bg-yellow-400/20 shadow-lg' 
                           : 'border-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 cursor-pointer')
@@ -229,7 +229,7 @@ const Index = () => {
                     top: `${container.y}px`,
                     width: `${container.width}px`,
                     height: `${container.height}px`,
-                    borderStyle: isEditMode ? 'dashed' : 'solid'
+                    borderStyle: (isEditMode && isEditingContainer) ? 'dashed' : 'solid'
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
