@@ -219,7 +219,7 @@ const Index = () => {
                   key={container.id} 
                   className={`absolute transition-all duration-200 z-20 cursor-pointer ${
                     selectedContainer?.id === container.id && isEditMode && isEditingContainer
-                      ? 'border-2 border-yellow-400 bg-yellow-400/20 shadow-lg'
+                      ? 'border-4 border-yellow-400 shadow-lg'
                       : 'border border-transparent'
                   }`}
                   style={{ 
@@ -228,7 +228,8 @@ const Index = () => {
                     width: `${container.width}px`,
                     height: `${container.height}px`,
                     borderStyle: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'dashed' : 'solid',
-                    backgroundColor: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'rgba(251, 191, 36, 0.2)' : 'transparent'
+                    backgroundColor: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'rgba(251, 191, 36, 0.2)' : 'transparent',
+                    boxShadow: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? '0 0 0 2px #fbbf24' : 'none'
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
