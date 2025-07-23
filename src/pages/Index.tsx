@@ -271,7 +271,7 @@ const Index = () => {
                 title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
               >
                 {/* 容器名稱 */}
-                <div className="absolute inset-0 flex items-center justify-center text-lg font-medium text-white pointer-events-none">
+                <div className="absolute inset-0 flex items-start justify-center text-lg font-medium text-white pointer-events-none pt-2">
                   {container.name}
                 </div>
                 {/* Render seats relative to this container */}
