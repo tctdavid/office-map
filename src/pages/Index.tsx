@@ -91,7 +91,7 @@ const Index = () => {
         title: "自動登出",
         description: "由於安全考量，已自動登出",
       });
-    }, 3 * 60 * 1000); // 3分鐘
+    }, 30 * 60 * 1000); // 3分鐘
   };
 
   const handleLogout = () => {
