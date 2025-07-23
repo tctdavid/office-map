@@ -245,8 +245,8 @@ const Index = () => {
               width: `${canvasSize.width}px`,
               height: `${canvasSize.height}px`,
               backgroundImage: isEditMode 
-                ? `linear-gradient(to right, rgba(156, 163, 175, 0.3) 1px, transparent 1px),
-                   linear-gradient(to bottom, rgba(156, 163, 175, 0.3) 1px, transparent 1px)`
+                ? `repeating-linear-gradient(to right, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px),
+                   repeating-linear-gradient(to bottom, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px)`
                 : 'none',
               backgroundSize: isEditMode ? '20px 20px' : 'auto'
             }}
