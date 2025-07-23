@@ -170,19 +170,26 @@ const Index = () => {
             <hr className="border-cyan-300/50 mb-4" />
             <div className="relative">
               {/* Render seat coordinates */}
-              {seatCoordinates.map((seat) => (
-                <div
-                  key={seat.id}
-                  className="absolute bg-gray-500 border border-gray-400 rounded"
-                  style={{
-                    left: `${seat.x}px`,
-                    top: `${seat.y}px`,
-                    width: `${seat.pixel_x}px`,
-                    height: `${seat.pixel_y}px`
-                  }}
-                  title={`座位 ${seat.id} 位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
-                />
-              ))}
+              {seatCoordinates.map((seat) => {
+                // 找到座位對應的容器
+                const container = containers.find(c => c.id === seat.container_id);
+                const containerX = container ? container.x : 0;
+                const containerY = container ? container.y : 0;
+                
+                return (
+                  <div
+                    key={seat.id}
+                    className="absolute bg-gray-500 border border-gray-400 rounded"
+                    style={{
+                      left: `${containerX + seat.x}px`,
+                      top: `${containerY + seat.y}px`,
+                      width: `${seat.pixel_x}px`,
+                      height: `${seat.pixel_y}px`
+                    }}
+                    title={`座位 ${seat.id} 容器:(${containerX}, ${containerY}) 相對:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                  />
+                );
+              })}
               
               {containers.map((container) => (
                 <div 
