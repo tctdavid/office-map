@@ -237,30 +237,42 @@ const Index = () => {
           const snappedTopY = Math.max(0, snapToGrid(mouseY));
           const newHeightFromTop = newContainer.y + newContainer.height - snappedTopY;
           if (newHeightFromTop >= minSize) {
-            newContainer.y = snappedTopY;
-            newContainer.height = newHeightFromTop;
+            const testContainer = {...newContainer, y: snappedTopY, height: newHeightFromTop};
+            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
+              newContainer.y = snappedTopY;
+              newContainer.height = newHeightFromTop;
+            }
           }
           break;
         case 'bottom':
           const snappedBottomY = snapToGrid(mouseY);
           const newHeightFromBottom = snappedBottomY - newContainer.y;
           if (newHeightFromBottom >= minSize && snappedBottomY <= canvasSize.height) {
-            newContainer.height = newHeightFromBottom;
+            const testContainer = {...newContainer, height: newHeightFromBottom};
+            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
+              newContainer.height = newHeightFromBottom;
+            }
           }
           break;
         case 'left':
           const snappedLeftX = Math.max(0, snapToGrid(mouseX));
           const newWidthFromLeft = newContainer.x + newContainer.width - snappedLeftX;
           if (newWidthFromLeft >= minSize) {
-            newContainer.x = snappedLeftX;
-            newContainer.width = newWidthFromLeft;
+            const testContainer = {...newContainer, x: snappedLeftX, width: newWidthFromLeft};
+            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
+              newContainer.x = snappedLeftX;
+              newContainer.width = newWidthFromLeft;
+            }
           }
           break;
         case 'right':
           const snappedRightX = snapToGrid(mouseX);
           const newWidthFromRight = snappedRightX - newContainer.x;
           if (newWidthFromRight >= minSize && snappedRightX <= canvasSize.width) {
-            newContainer.width = newWidthFromRight;
+            const testContainer = {...newContainer, width: newWidthFromRight};
+            if (!checkContainerOverlap(testContainer, editingContainer.id)) {
+              newContainer.width = newWidthFromRight;
+            }
           }
           break;
       }
@@ -269,18 +281,19 @@ const Index = () => {
     }
   };
 
-  const checkContainerOverlap = (newContainer: any) => {
+  const checkContainerOverlap = (newContainer: any, excludeId?: string) => {
     return containers.some(container => {
-      if (container.id === newContainer.id) return false;
+      if (container.id === (excludeId || newContainer.id)) return false;
       
-      const noOverlap = (
+      // 檢查兩個矩形是否重疊
+      const isOverlapping = !(
         newContainer.x + newContainer.width <= container.x ||
         container.x + container.width <= newContainer.x ||
         newContainer.y + newContainer.height <= container.y ||
         container.y + container.height <= newContainer.y
       );
       
-      return !noOverlap;
+      return isOverlapping;
     });
   };
 
@@ -333,6 +346,16 @@ const Index = () => {
 
   const saveContainerChanges = async () => {
     if (!editingContainer) return;
+    
+    // 檢查重疊
+    if (checkContainerOverlap(editingContainer, editingContainer.id)) {
+      toast({
+        title: "容器重疊",
+        description: "容器不能與其他容器重疊",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       const { error } = await supabase
