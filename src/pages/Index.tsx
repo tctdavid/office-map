@@ -243,7 +243,12 @@ const Index = () => {
             className="bg-slate-800/30 rounded-lg relative overflow-hidden"
             style={{
               width: `${canvasSize.width}px`,
-              height: `${canvasSize.height}px`
+              height: `${canvasSize.height}px`,
+              backgroundImage: isEditMode 
+                ? `linear-gradient(to right, rgba(156, 163, 175, 0.3) 1px, transparent 1px),
+                   linear-gradient(to bottom, rgba(156, 163, 175, 0.3) 1px, transparent 1px)`
+                : 'none',
+              backgroundSize: isEditMode ? '20px 20px' : 'auto'
             }}
           >
             {/* Render containers with relative positioning and their seats */}
