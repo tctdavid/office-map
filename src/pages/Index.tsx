@@ -14,6 +14,9 @@ const Index = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState<any | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
+  const [isEditingContainer, setIsEditingContainer] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragType, setDragType] = useState<'move' | 'resize-top' | 'resize-bottom' | 'resize-left' | 'resize-right' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -230,24 +233,57 @@ const Index = () => {
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
-                    if (isEditMode) {
+                    if (isEditMode && isEditingContainer) {
                       console.log('Container clicked:', container); // 調試用
                       setSelectedContainer(selectedContainer?.id === container.id ? null : container);
                       setSelectedSeat(null);
                     }
                   }}
                 >
-                  {isEditMode && (
+                  {isEditMode && isEditingContainer && selectedContainer?.id === container.id && (
                     <>
+                      {/* 容器名稱 */}
                       <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/90 px-2 py-1 rounded border border-cyan-400">
                         {container.name}
                       </div>
-                      {/* 顯示容器角落拖拽點 */}
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
-                      <div className="absolute -top-1 -left-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
-                      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-cyan-400 border border-cyan-300 rounded-full"></div>
+                      
+                      {/* 四邊調整控制點 */}
+                      {/* 上邊 */}
+                      <div 
+                        className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-6 h-2 bg-yellow-400 border border-yellow-300 rounded cursor-ns-resize"
+                        title="調整高度"
+                      ></div>
+                      
+                      {/* 下邊 */}
+                      <div 
+                        className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-2 bg-yellow-400 border border-yellow-300 rounded cursor-ns-resize"
+                        title="調整高度"
+                      ></div>
+                      
+                      {/* 左邊 */}
+                      <div 
+                        className="absolute top-1/2 -left-1 transform -translate-y-1/2 w-2 h-6 bg-yellow-400 border border-yellow-300 rounded cursor-ew-resize"
+                        title="調整寬度"
+                      ></div>
+                      
+                      {/* 右邊 */}
+                      <div 
+                        className="absolute top-1/2 -right-1 transform -translate-y-1/2 w-2 h-6 bg-yellow-400 border border-yellow-300 rounded cursor-ew-resize"
+                        title="調整寬度"
+                      ></div>
+                      
+                      {/* 移動控制點（中央） */}
+                      <div 
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-green-400 border border-green-300 rounded-full cursor-move"
+                        title="移動容器"
+                      ></div>
                     </>
+                  )}
+                  
+                  {isEditMode && !isEditingContainer && (
+                    <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/90 px-2 py-1 rounded border border-cyan-400">
+                      {container.name}
+                    </div>
                   )}
                 </div>
               ))}
@@ -282,6 +318,22 @@ const Index = () => {
                 新增容器
               </button>
               
+              {/* 編輯容器按鈕 */}
+              <button 
+                className={`w-full px-4 py-2 rounded text-sm transition-colors ${
+                  isEditingContainer 
+                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                    : 'bg-orange-600 hover:bg-orange-700 text-white'
+                }`}
+                onClick={() => {
+                  setIsEditingContainer(!isEditingContainer);
+                  setSelectedContainer(null);
+                  setSelectedSeat(null);
+                }}
+              >
+                {isEditingContainer ? '退出編輯容器' : '編輯容器'}
+              </button>
+              
               {/* 新增座位按鈕 */}
               <button 
                 className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
@@ -297,23 +349,80 @@ const Index = () => {
               </button>
               
               {/* 選中項目資訊 */}
-              {selectedContainer && (
+              {selectedContainer && isEditingContainer && (
                 <div className="bg-slate-700/50 rounded p-3">
-                  <h4 className="text-sm font-medium text-yellow-300 mb-2">選中容器</h4>
-                  <p className="text-xs text-gray-300">名稱: {selectedContainer.name}</p>
-                  <p className="text-xs text-gray-300">位置: ({selectedContainer.x}, {selectedContainer.y})</p>
-                  <p className="text-xs text-gray-300">大小: {selectedContainer.width}×{selectedContainer.height}</p>
+                  <h4 className="text-sm font-medium text-yellow-300 mb-2">編輯容器</h4>
+                  
+                  {/* 容器名稱編輯 */}
+                  <div className="mb-2">
+                    <label className="text-xs text-gray-400 block mb-1">名稱:</label>
+                    <input 
+                      type="text" 
+                      value={selectedContainer.name}
+                      onChange={(e) => {
+                        setSelectedContainer({
+                          ...selectedContainer,
+                          name: e.target.value
+                        });
+                      }}
+                      className="w-full px-2 py-1 text-xs bg-slate-600 border border-gray-500 rounded"
+                    />
+                  </div>
+                  
+                  <p className="text-xs text-gray-300 mb-1">位置: ({selectedContainer.x}, {selectedContainer.y})</p>
+                  <p className="text-xs text-gray-300 mb-3">大小: {selectedContainer.width}×{selectedContainer.height}</p>
+                  
+                  {/* 保存按鈕 */}
                   <button 
-                    className="w-full mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs transition-colors"
-                    onClick={() => {
-                      // TODO: 實現編輯容器功能
-                      toast({
-                        title: "功能開發中",
-                        description: "編輯容器功能即將推出",
-                      });
+                    className="w-full mt-2 px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs transition-colors"
+                    onClick={async () => {
+                      try {
+                        const { error } = await supabase
+                          .from('containers')
+                          .update({
+                            name: selectedContainer.name,
+                            x: selectedContainer.x,
+                            y: selectedContainer.y,
+                            width: selectedContainer.width,
+                            height: selectedContainer.height,
+                            updated_at: new Date().toISOString()
+                          })
+                          .eq('id', selectedContainer.id);
+                        
+                        if (error) {
+                          toast({
+                            title: "保存失敗",
+                            description: "無法保存容器變更",
+                          });
+                        } else {
+                          // 更新本地狀態
+                          setContainers(containers.map(c => 
+                            c.id === selectedContainer.id ? selectedContainer : c
+                          ));
+                          toast({
+                            title: "保存成功",
+                            description: "容器已成功更新",
+                          });
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "保存失敗",
+                          description: "發生未知錯誤",
+                        });
+                      }
                     }}
                   >
-                    編輯容器
+                    保存變更
+                  </button>
+                  
+                  {/* 取消選擇按鈕 */}
+                  <button 
+                    className="w-full mt-1 px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs transition-colors"
+                    onClick={() => {
+                      setSelectedContainer(null);
+                    }}
+                  >
+                    取消選擇
                   </button>
                 </div>
               )}
