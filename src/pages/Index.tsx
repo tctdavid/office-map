@@ -266,18 +266,79 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel - Seat Details - 250px width */}
-        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
-          {/* Monitor Icon - 80px width, 60px height */}
-          <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
-            <div className="w-12 h-8 border border-gray-600 rounded"></div>
-          </div>
-          
-          {/* Text Content - 250px width */}
-          <div className="w-62 text-center">
-            <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
-            <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
-          </div>
+        {/* Right Panel - Seat Details or Edit Tools - 250px width */}
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
+          {isEditMode ? (
+            /* 編輯模式 */
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-cyan-300 text-center mb-6">編輯模式</h3>
+              
+              {/* 新增容器 */}
+              <button className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors">
+                新增容器
+              </button>
+              
+              {/* 退出編輯容器 */}
+              <button className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 rounded text-sm font-medium transition-colors">
+                退出編輯容器
+              </button>
+              
+              {/* 新增座位 */}
+              <button className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors">
+                新增座位
+              </button>
+              
+              {/* 編輯容器表單 */}
+              <div className="mt-6 p-4 bg-slate-700/50 rounded-lg">
+                <h4 className="text-sm font-medium text-cyan-300 mb-3">編輯容器</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-400">名稱:</label>
+                    <input 
+                      type="text" 
+                      placeholder="預設部門-通訊測試"
+                      className="w-full mt-1 px-3 py-2 bg-slate-600 border border-gray-500 rounded text-sm"
+                    />
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    <div>位置: (20, 20)</div>
+                    <div>大小: 400×300</div>
+                  </div>
+                  
+                  {/* 保存/取消按鈕 */}
+                  <div className="space-y-2 mt-4">
+                    <button className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors">
+                      保存異更
+                    </button>
+                    <button className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-medium transition-colors">
+                      取消異更
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 編輯狀態指示 */}
+              <div className="mt-4 text-xs text-green-400 space-y-1">
+                <div>編輯模式: ON</div>
+                <div>編輯容器: ON</div>
+                <div>異更容器: 預設部門-通訊測試</div>
+              </div>
+            </div>
+          ) : (
+            /* 一般模式 */
+            <div className="flex flex-col items-center justify-center h-full">
+              {/* Monitor Icon - 80px width, 60px height */}
+              <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-8 border border-gray-600 rounded"></div>
+              </div>
+              
+              {/* Text Content - 250px width */}
+              <div className="w-62 text-center">
+                <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
+                <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
