@@ -150,12 +150,13 @@ const Index = () => {
 
           {/* Containers Display Area - 700px width, 400px height */}
           <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-y-auto">
-            <h3 className="text-lg font-medium mb-4 text-cyan-300">容器資料</h3>
+            <h3 className="text-lg font-medium mb-4 text-cyan-300 text-center">容器資料</h3>
             <div className="space-y-3">
               {containers.map((container) => (
                 <div 
                   key={container.id} 
                   className="bg-slate-700/50 border border-slate-600 rounded-lg p-3"
+                  style={{ height: `${container.height}px` }}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-white">{container.name}</h4>
@@ -163,12 +164,6 @@ const Index = () => {
                       className="w-4 h-4 rounded border border-gray-400"
                       style={{ backgroundColor: container.color }}
                     ></div>
-                  </div>
-                  <div className="text-sm text-gray-300 space-y-1">
-                    <p>部門: {container.department}</p>
-                    <p>位置: ({container.x}, {container.y})</p>
-                    <p>大小: {container.width} × {container.height}px</p>
-                    <p>建立時間: {new Date(container.created_at).toLocaleString('zh-TW')}</p>
                   </div>
                 </div>
               ))}
