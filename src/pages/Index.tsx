@@ -87,7 +87,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header - 80px height */}
-      <header className="h-20 w-[1600px] flex items-center justify-between px-6 bg-slate-800/50">
+      <header className="h-20 w-[1400px] flex items-center justify-between px-6 bg-slate-800/50">
         {/* Time Display - 120px width */}
         <div className="w-30 bg-cyan-900/40 rounded-lg px-4 py-2 text-center">
           <div className="text-lg font-mono">15:41</div>
