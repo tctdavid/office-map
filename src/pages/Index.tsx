@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
@@ -19,6 +18,12 @@ const Index = () => {
   const [editingContainer, setEditingContainer] = useState<any>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragHandle, setDragHandle] = useState<string>('');
+  const [isAddingContainer, setIsAddingContainer] = useState(false);
+  const [newContainerStart, setNewContainerStart] = useState<{x: number, y: number} | null>(null);
+  const [newContainerEnd, setNewContainerEnd] = useState<{x: number, y: number} | null>(null);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [newContainerName, setNewContainerName] = useState('');
+  const [pendingContainer, setPendingContainer] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -90,14 +95,14 @@ const Index = () => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
-    // 設定3分鐘後自動登出
+    // 設定30分鐘後自動登出
     const logoutTimer = setTimeout(() => {
       handleLogout();
       toast({
         title: "自動登出",
         description: "由於安全考量，已自動登出",
       });
-    }, 30 * 60 * 1000); // 3分鐘
+    }, 30 * 60 * 1000);
   };
 
   const handleLogout = () => {
@@ -108,13 +113,18 @@ const Index = () => {
     setSelectedContainer(null);
     setEditingContainer(null);
     setIsDragging(false);
+    setIsAddingContainer(false);
+    setNewContainerStart(null);
+    setNewContainerEnd(null);
+    setShowNameDialog(false);
+    setPendingContainer(null);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
     });
   };
 
-  // 檢查是否為管理員（暫時使用email判斷）
+  // 檢查是否為管理員
   const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name?.includes('管理員');
 
   const toggleEditMode = () => {
@@ -123,6 +133,7 @@ const Index = () => {
       setIsContainerEditMode(false);
       setSelectedContainer(null);
       setEditingContainer(null);
+      setIsAddingContainer(false);
     }
     toast({
       title: isEditMode ? "退出編輯模式" : "進入編輯模式",
@@ -134,6 +145,7 @@ const Index = () => {
     setIsContainerEditMode(!isContainerEditMode);
     setSelectedContainer(null);
     setEditingContainer(null);
+    setIsAddingContainer(false);
     toast({
       title: isContainerEditMode ? "退出容器編輯" : "進入容器編輯",
       description: isContainerEditMode ? "已退出容器編輯模式" : "點擊容器進行編輯",
@@ -141,7 +153,7 @@ const Index = () => {
   };
 
   const handleContainerClick = (container: any) => {
-    if (isContainerEditMode && !isDragging) {
+    if (isContainerEditMode && !isDragging && !isAddingContainer) {
       setSelectedContainer(container);
       setEditingContainer({...container});
       toast({
@@ -149,6 +161,17 @@ const Index = () => {
         description: `正在編輯: ${container.name}`,
       });
     }
+  };
+
+  const startAddingContainer = () => {
+    setIsAddingContainer(true);
+    setIsContainerEditMode(false);
+    setSelectedContainer(null);
+    setEditingContainer(null);
+    toast({
+      title: "新增容器模式",
+      description: "在畫布上拖拽創建新容器",
+    });
   };
 
   const handleContainerNameChange = (name: string) => {
@@ -164,64 +187,136 @@ const Index = () => {
     setDragHandle(handle);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !editingContainer || !dragHandle) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    if (!isAddingContainer) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Snap to 20px grid
     const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+    const startPoint = {
+      x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
+      y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
+    };
     
-    let newContainer = {...editingContainer};
-    const minSize = 40; // 最小2個網格單位
-    
-    switch(dragHandle) {
-      case 'top':
-        const snappedTopY = Math.max(0, snapToGrid(mouseY));
-        const newHeightFromTop = newContainer.y + newContainer.height - snappedTopY;
-        if (newHeightFromTop >= minSize) {
-          newContainer.y = snappedTopY;
-          newContainer.height = newHeightFromTop;
-        }
-        break;
-      case 'bottom':
-        const snappedBottomY = snapToGrid(mouseY);
-        const newHeightFromBottom = snappedBottomY - newContainer.y;
-        if (newHeightFromBottom >= minSize && snappedBottomY <= canvasSize.height) {
-          newContainer.height = newHeightFromBottom;
-        }
-        break;
-      case 'left':
-        const snappedLeftX = Math.max(0, snapToGrid(mouseX));
-        const newWidthFromLeft = newContainer.x + newContainer.width - snappedLeftX;
-        if (newWidthFromLeft >= minSize) {
-          newContainer.x = snappedLeftX;
-          newContainer.width = newWidthFromLeft;
-        }
-        break;
-      case 'right':
-        const snappedRightX = snapToGrid(mouseX);
-        const newWidthFromRight = snappedRightX - newContainer.x;
-        if (newWidthFromRight >= minSize && snappedRightX <= canvasSize.width) {
-          newContainer.width = newWidthFromRight;
-        }
-        break;
-    }
-    
-    setEditingContainer(newContainer);
+    setNewContainerStart(startPoint);
+    setNewContainerEnd(startPoint);
+    setIsDragging(true);
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isDragging && editingContainer) {
-      // 確保最終位置對齊網格
+  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+    if (isAddingContainer && isDragging && newContainerStart) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+      const endPoint = {
+        x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
+        y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
+      };
+      
+      setNewContainerEnd(endPoint);
+    } else if (isDragging && editingContainer && dragHandle) {
+      // 原有的容器編輯邏輯
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+      
+      let newContainer = {...editingContainer};
+      const minSize = 40;
+      
+      switch(dragHandle) {
+        case 'top':
+          const snappedTopY = Math.max(0, snapToGrid(mouseY));
+          const newHeightFromTop = newContainer.y + newContainer.height - snappedTopY;
+          if (newHeightFromTop >= minSize) {
+            newContainer.y = snappedTopY;
+            newContainer.height = newHeightFromTop;
+          }
+          break;
+        case 'bottom':
+          const snappedBottomY = snapToGrid(mouseY);
+          const newHeightFromBottom = snappedBottomY - newContainer.y;
+          if (newHeightFromBottom >= minSize && snappedBottomY <= canvasSize.height) {
+            newContainer.height = newHeightFromBottom;
+          }
+          break;
+        case 'left':
+          const snappedLeftX = Math.max(0, snapToGrid(mouseX));
+          const newWidthFromLeft = newContainer.x + newContainer.width - snappedLeftX;
+          if (newWidthFromLeft >= minSize) {
+            newContainer.x = snappedLeftX;
+            newContainer.width = newWidthFromLeft;
+          }
+          break;
+        case 'right':
+          const snappedRightX = snapToGrid(mouseX);
+          const newWidthFromRight = snappedRightX - newContainer.x;
+          if (newWidthFromRight >= minSize && snappedRightX <= canvasSize.width) {
+            newContainer.width = newWidthFromRight;
+          }
+          break;
+      }
+      
+      setEditingContainer(newContainer);
+    }
+  };
+
+  const checkContainerOverlap = (newContainer: any) => {
+    return containers.some(container => {
+      if (container.id === newContainer.id) return false;
+      
+      const noOverlap = (
+        newContainer.x + newContainer.width <= container.x ||
+        container.x + container.width <= newContainer.x ||
+        newContainer.y + newContainer.height <= container.y ||
+        container.y + container.height <= newContainer.y
+      );
+      
+      return !noOverlap;
+    });
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (isAddingContainer && isDragging && newContainerStart && newContainerEnd) {
+      const x = Math.min(newContainerStart.x, newContainerEnd.x);
+      const y = Math.min(newContainerStart.y, newContainerEnd.y);
+      const width = Math.abs(newContainerEnd.x - newContainerStart.x);
+      const height = Math.abs(newContainerEnd.y - newContainerStart.y);
+      
+      if (width >= 40 && height >= 40) {
+        const newContainer = { x, y, width, height };
+        
+        if (checkContainerOverlap(newContainer)) {
+          toast({
+            title: "容器重疊",
+            description: "新容器不能與現有容器重疊",
+            variant: "destructive"
+          });
+        } else {
+          setPendingContainer(newContainer);
+          setShowNameDialog(true);
+        }
+      } else {
+        toast({
+          title: "容器太小",
+          description: "容器最小尺寸為40x40像素",
+          variant: "destructive"
+        });
+      }
+      
+      setIsDragging(false);
+      setNewContainerStart(null);
+      setNewContainerEnd(null);
+    } else if (isDragging && editingContainer) {
+      // 原有的容器編輯邏輯
       const snapToGrid = (value: number) => Math.round(value / 20) * 20;
       const finalContainer = {
         ...editingContainer,
@@ -231,9 +326,9 @@ const Index = () => {
         height: snapToGrid(editingContainer.height)
       };
       setEditingContainer(finalContainer);
+      setIsDragging(false);
+      setDragHandle('');
     }
-    setIsDragging(false);
-    setDragHandle('');
   };
 
   const saveContainerChanges = async () => {
@@ -282,6 +377,64 @@ const Index = () => {
     }
   };
 
+  const saveNewContainer = async () => {
+    if (!pendingContainer || !newContainerName.trim()) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('containers')
+        .insert({
+          name: newContainerName.trim(),
+          x: pendingContainer.x,
+          y: pendingContainer.y,
+          width: pendingContainer.width,
+          height: pendingContainer.height,
+          department: '新部門',
+          color: '#3b82f6'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating container:', error);
+        toast({
+          title: "創建失敗",
+          description: "無法創建新容器",
+          variant: "destructive"
+        });
+      } else {
+        setContainers([data, ...containers]);
+        setShowNameDialog(false);
+        setNewContainerName('');
+        setPendingContainer(null);
+        setIsAddingContainer(false);
+        
+        toast({
+          title: "創建成功",
+          description: `容器 "${data.name}" 已創建`,
+        });
+      }
+    } catch (error) {
+      console.error('Error saving new container:', error);
+      toast({
+        title: "創建失敗",
+        description: "發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const cancelNewContainer = () => {
+    setShowNameDialog(false);
+    setNewContainerName('');
+    setPendingContainer(null);
+    setIsAddingContainer(false);
+    toast({
+      title: "已取消",
+      description: "新容器創建已取消",
+    });
+  };
+
   const cancelContainerChanges = () => {
     if (selectedContainer) {
       setEditingContainer({...selectedContainer});
@@ -290,6 +443,26 @@ const Index = () => {
         description: "容器變更已取消",
       });
     }
+  };
+
+  const getRubberBandStyle = () => {
+    if (!newContainerStart || !newContainerEnd) return {};
+    
+    const x = Math.min(newContainerStart.x, newContainerEnd.x);
+    const y = Math.min(newContainerStart.y, newContainerEnd.y);
+    const width = Math.abs(newContainerEnd.x - newContainerStart.x);
+    const height = Math.abs(newContainerEnd.y - newContainerStart.y);
+    
+    return {
+      position: 'absolute' as const,
+      left: `${x}px`,
+      top: `${y}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      border: '2px dashed #fbbf24',
+      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+      pointerEvents: 'none' as const
+    };
   };
 
   return (
@@ -389,21 +562,29 @@ const Index = () => {
 
           {/* Container Display Area - Dynamic Canvas Size */}
           <div 
-            className="bg-slate-800/30 rounded-lg relative overflow-hidden"
+            className={`bg-slate-800/30 rounded-lg relative overflow-hidden ${
+              isAddingContainer ? 'cursor-crosshair' : ''
+            }`}
             style={{
               width: `${canvasSize.width}px`,
               height: `${canvasSize.height}px`,
-              backgroundImage: isEditMode 
+              backgroundImage: (isEditMode || isAddingContainer)
                 ? `repeating-linear-gradient(to right, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px),
                    repeating-linear-gradient(to bottom, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px)`
                 : 'none',
-              backgroundSize: isEditMode ? '20px 20px' : 'auto',
+              backgroundSize: (isEditMode || isAddingContainer) ? '20px 20px' : 'auto',
               userSelect: 'none'
             }}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            onMouseLeave={handleCanvasMouseUp}
           >
+            {/* 橡皮筋矩形 */}
+            {isAddingContainer && newContainerStart && newContainerEnd && (
+              <div style={getRubberBandStyle()} />
+            )}
+
             {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => {
               const currentContainer = editingContainer && editingContainer.id === container.id ? editingContainer : container;
@@ -427,72 +608,72 @@ const Index = () => {
                   }}
                   title={`容器: ${currentContainer.name} 位置:(${currentContainer.x}, ${currentContainer.y}) 大小:(${currentContainer.width}×${currentContainer.height})`}
                 >
-                {/* 容器名稱 */}
-                <div className="absolute inset-0 flex items-start justify-center text-lg font-medium text-white pointer-events-none pt-2">
-                  {currentContainer.name}
-                </div>
-                
-                {/* Resize Handles - 只在選中時顯示 */}
-                {isSelected && isContainerEditMode && (
-                  <>
-                    {/* Top handle */}
-                    <div 
-                      className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize select-none"
-                      onMouseDown={(e) => handleMouseDown(e, 'top')}
-                      style={{ userSelect: 'none' }}
-                    />
-                    {/* Bottom handle */}
-                    <div 
-                      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize select-none"
-                      onMouseDown={(e) => handleMouseDown(e, 'bottom')}
-                      style={{ userSelect: 'none' }}
-                    />
-                    {/* Left handle */}
-                    <div 
-                      className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize select-none"
-                      onMouseDown={(e) => handleMouseDown(e, 'left')}
-                      style={{ userSelect: 'none' }}
-                    />
-                    {/* Right handle */}
-                    <div 
-                      className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize select-none"
-                      onMouseDown={(e) => handleMouseDown(e, 'right')}
-                      style={{ userSelect: 'none' }}
-                    />
-                  </>
-                )}
-
-                {/* Render seats relative to this container */}
-                {seatCoordinates
-                  .filter(seat => seat.container_id === container.id)
-                  .map((seat) => {
-                    // 決定座位顏色
-                    let seatColor = '#6b7280'; // 預設灰色 (空位)
-                    if (seat.employee_id && seat.pc_id) {
-                      seatColor = '#3b82f6'; // 藍色 (有員工)
-                    } else if (seat.pc_id) {
-                      seatColor = '#10b981'; // 綠色 (有PC)
-                    }
-                    
-                    return (
-                      <div
-                        key={seat.id}
-                        className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
-                        style={{
-                          left: `${seat.x}px`,
-                          top: `${seat.y}px`,
-                          width: `${seat.pixel_x}px`,
-                          height: `${seat.pixel_y}px`,
-                          backgroundColor: seatColor
-                        }}
-                        title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                  {/* 容器名稱 */}
+                  <div className="absolute inset-0 flex items-start justify-center text-lg font-medium text-white pointer-events-none pt-2">
+                    {currentContainer.name}
+                  </div>
+                  
+                  {/* Resize Handles - 只在選中時顯示 */}
+                  {isSelected && isContainerEditMode && (
+                    <>
+                      {/* Top handle */}
+                      <div 
+                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize select-none"
+                        onMouseDown={(e) => handleMouseDown(e, 'top')}
+                        style={{ userSelect: 'none' }}
                       />
-                    );
-                  })
-                }
-              </div>
-            );
-          })}
+                      {/* Bottom handle */}
+                      <div 
+                        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize select-none"
+                        onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+                        style={{ userSelect: 'none' }}
+                      />
+                      {/* Left handle */}
+                      <div 
+                        className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize select-none"
+                        onMouseDown={(e) => handleMouseDown(e, 'left')}
+                        style={{ userSelect: 'none' }}
+                      />
+                      {/* Right handle */}
+                      <div 
+                        className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize select-none"
+                        onMouseDown={(e) => handleMouseDown(e, 'right')}
+                        style={{ userSelect: 'none' }}
+                      />
+                    </>
+                  )}
+
+                  {/* Render seats relative to this container */}
+                  {seatCoordinates
+                    .filter(seat => seat.container_id === container.id)
+                    .map((seat) => {
+                      // 決定座位顏色
+                      let seatColor = '#6b7280'; // 預設灰色 (空位)
+                      if (seat.employee_id && seat.pc_id) {
+                        seatColor = '#3b82f6'; // 藍色 (有員工)
+                      } else if (seat.pc_id) {
+                        seatColor = '#10b981'; // 綠色 (有PC)
+                      }
+                      
+                      return (
+                        <div
+                          key={seat.id}
+                          className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
+                          style={{
+                            left: `${seat.x}px`,
+                            top: `${seat.y}px`,
+                            width: `${seat.pixel_x}px`,
+                            height: `${seat.pixel_y}px`,
+                            backgroundColor: seatColor
+                          }}
+                          title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                        />
+                      );
+                    })
+                  }
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -504,7 +685,10 @@ const Index = () => {
               <h3 className="text-lg font-medium text-cyan-300 text-center mb-6">編輯模式</h3>
               
               {/* 新增容器 */}
-              <button className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors">
+              <button 
+                onClick={startAddingContainer}
+                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+              >
                 新增容器
               </button>
               
@@ -596,6 +780,41 @@ const Index = () => {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* Name Dialog for New Container */}
+      {showNameDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 w-96">
+            <h3 className="text-lg font-medium text-white mb-4">新增容器</h3>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">容器名稱</label>
+              <input
+                type="text"
+                value={newContainerName}
+                onChange={(e) => setNewContainerName(e.target.value)}
+                placeholder="請輸入容器名稱"
+                className="w-full px-3 py-2 bg-slate-600 border border-gray-500 rounded text-white"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={saveNewContainer}
+                disabled={!newContainerName.trim()}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
+              >
+                保存
+              </button>
+              <button
+                onClick={cancelNewContainer}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
