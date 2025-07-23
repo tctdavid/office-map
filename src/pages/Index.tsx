@@ -10,6 +10,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
+  const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,7 +38,22 @@ const Index = () => {
       }
     };
 
+    // 載入座位座標資料
+    const fetchSeatCoordinates = async () => {
+      const { data, error } = await supabase
+        .from('seat_coordinates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching seat coordinates:', error);
+      } else {
+        setSeatCoordinates(data || []);
+      }
+    };
+
     fetchContainers();
+    fetchSeatCoordinates();
 
     return () => {
       clearTimer();
@@ -152,7 +168,22 @@ const Index = () => {
           <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-y-auto">
             <h3 className="text-lg font-medium mb-2 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
             <hr className="border-cyan-300/50 mb-4" />
-            <div className="space-y-3">
+            <div className="relative">
+              {/* Render seat coordinates */}
+              {seatCoordinates.map((seat) => (
+                <div
+                  key={seat.id}
+                  className="absolute bg-gray-500 border border-gray-400 rounded"
+                  style={{
+                    left: `${seat.x}px`,
+                    top: `${seat.y}px`,
+                    width: '16px',
+                    height: '16px'
+                  }}
+                  title={`座位 ${seat.id} (${seat.x}, ${seat.y})`}
+                />
+              ))}
+              
               {containers.map((container) => (
                 <div 
                   key={container.id} 
@@ -161,7 +192,7 @@ const Index = () => {
                 >
                 </div>
               ))}
-              {containers.length === 0 && (
+              {containers.length === 0 && seatCoordinates.length === 0 && (
                 <div className="text-center text-gray-400 py-8">
                   目前沒有容器資料
                 </div>
