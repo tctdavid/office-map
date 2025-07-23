@@ -215,102 +215,98 @@ const Index = () => {
               })}
               
               {/* Render containers */}
-              {containers.map((container) => {
-                const isSelected = selectedContainer?.id === container.id && isEditMode && isEditingContainer;
-                
-                return (
-                  <div 
-                    key={container.id} 
-                    className={`absolute transition-all duration-200 z-20 cursor-pointer ${
-                      isSelected
-                        ? 'border-4 border-yellow-400 bg-yellow-400/20 shadow-lg'
-                        : 'border border-transparent'
-                    }`}
-                    style={{ 
-                      left: `${container.x}px`,
-                      top: `${container.y}px`,
-                      width: `${container.width}px`,
-                      height: `${container.height}px`,
-                      borderStyle: isSelected ? 'dashed' : 'solid'
-                    }}
-                    title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
-                    onClick={() => {
-                      if (isEditMode && isEditingContainer) {
-                        console.log('Container clicked:', container);
-                        console.log('Current selectedContainer:', selectedContainer);
-                        console.log('isEditMode:', isEditMode, 'isEditingContainer:', isEditingContainer);
-                        const newSelection = selectedContainer?.id === container.id ? null : container;
-                        console.log('Setting selectedContainer to:', newSelection);
-                        setSelectedContainer(newSelection);
-                        setSelectedSeat(null);
-                      } else {
-                        console.log('Click ignored - isEditMode:', isEditMode, 'isEditingContainer:', isEditingContainer);
-                      }
-                    }}
-                  >
-                    {/* 只有選中時才顯示容器名稱和編輯控制點 */}
-                    {isSelected && (
-                      <>
-                        {/* 容器名稱 */}
-                        <div className="absolute -top-8 left-0 text-sm text-yellow-300 bg-slate-800/90 px-3 py-1 rounded border border-yellow-400 z-30">
-                          {container.name}
-                        </div>
-                        
-                        {/* 四邊調整控制點 */}
-                        {/* 上邊 */}
-                        <div 
-                          className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
-                          title="調整高度"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            console.log('Top resize handle clicked');
-                          }}
-                        ></div>
-                        
-                        {/* 下邊 */}
-                        <div 
-                          className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
-                          title="調整高度"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            console.log('Bottom resize handle clicked');
-                          }}
-                        ></div>
-                        
-                        {/* 左邊 */}
-                        <div 
-                          className="absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
-                          title="調整寬度"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            console.log('Left resize handle clicked');
-                          }}
-                        ></div>
-                        
-                        {/* 右邊 */}
-                        <div 
-                          className="absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
-                          title="調整寬度"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            console.log('Right resize handle clicked');
-                          }}
-                        ></div>
-                        
-                        {/* 移動控制點（中央） */}
-                        <div 
-                          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-green-400 border-2 border-green-300 rounded-full cursor-move hover:bg-green-300 z-30"
-                          title="移動容器"
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                            console.log('Move handle clicked');
-                          }}
-                        ></div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              {containers.map((container) => (
+                <div 
+                  key={container.id} 
+                  className={`absolute transition-all duration-200 z-20 ${
+                    selectedContainer?.id === container.id && isEditMode && isEditingContainer
+                      ? 'border-4 border-solid border-yellow-400 bg-yellow-400 bg-opacity-20 shadow-xl'
+                      : 'border-2 border-transparent'
+                  }`}
+                  style={{ 
+                    left: `${container.x}px`,
+                    top: `${container.y}px`,
+                    width: `${container.width}px`,
+                    height: `${container.height}px`,
+                    cursor: 'pointer',
+                    backgroundColor: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'rgba(251, 191, 36, 0.3)' : 'transparent'
+                  }}
+                  title={`容器: ${container.name}`}
+                  onClick={() => {
+                    console.log('=== CLICK EVENT START ===');
+                    console.log('Container clicked:', container.name);
+                    console.log('isEditMode:', isEditMode);
+                    console.log('isEditingContainer:', isEditingContainer);
+                    console.log('Current selectedContainer:', selectedContainer?.name || 'none');
+                    
+                    if (isEditMode && isEditingContainer) {
+                      const newSelected = selectedContainer?.id === container.id ? null : container;
+                      console.log('Will set to:', newSelected?.name || 'none');
+                      setSelectedContainer(newSelected);
+                      console.log('State updated');
+                    } else {
+                      console.log('Click ignored - not in edit container mode');
+                    }
+                    console.log('=== CLICK EVENT END ===');
+                  }}
+                >
+                  {/* 編輯控制點只在選中時顯示 */}
+                  {selectedContainer?.id === container.id && isEditMode && isEditingContainer && (
+                    <>
+                      {/* 容器名稱 */}
+                      <div className="absolute -top-8 left-0 text-sm text-yellow-300 bg-slate-800/90 px-3 py-1 rounded border border-yellow-400 z-30">
+                        {container.name}
+                      </div>
+                      
+                      {/* 四邊調整控制點 */}
+                      <div 
+                        className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
+                        title="調整高度"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          console.log('Top resize handle clicked');
+                        }}
+                      ></div>
+                      
+                      <div 
+                        className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ns-resize hover:bg-yellow-300 z-30"
+                        title="調整高度"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          console.log('Bottom resize handle clicked');
+                        }}
+                      ></div>
+                      
+                      <div 
+                        className="absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
+                        title="調整寬度"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          console.log('Left resize handle clicked');
+                        }}
+                      ></div>
+                      
+                      <div 
+                        className="absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-8 bg-yellow-400 border-2 border-yellow-300 rounded cursor-ew-resize hover:bg-yellow-300 z-30"
+                        title="調整寬度"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          console.log('Right resize handle clicked');
+                        }}
+                      ></div>
+                      
+                      <div 
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-green-400 border-2 border-green-300 rounded-full cursor-move hover:bg-green-300 z-30"
+                        title="移動容器"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          console.log('Move handle clicked');
+                        }}
+                      ></div>
+                    </>
+                  )}
+                </div>
+              ))}
               {containers.length === 0 && seatCoordinates.length === 0 && (
                 <div className="text-center text-gray-400 py-8">
                   目前沒有容器資料
