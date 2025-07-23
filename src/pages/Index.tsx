@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
+import ContainerElement from "@/components/ContainerElement";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -134,6 +135,14 @@ const Index = () => {
           {/* Seat Grid Area - 700px width, 400px height */}
           <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700">
             {/* Seat grid will be implemented here */}
+          </div>
+
+          {/* Individual Elements Container */}
+          <div className="mt-6">
+            <h3 className="text-md mb-4 text-center">Individual Elements</h3>
+            <div className="relative mx-auto" style={{ width: '1000px', height: '1000px' }}>
+              <ContainerElement />
+            </div>
           </div>
         </div>
 
