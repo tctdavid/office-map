@@ -150,7 +150,7 @@ const Index = () => {
 
           {/* Containers Display Area - 700px width, 400px height */}
           <div className="w-175 h-100 mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-y-auto">
-            <h3 className="text-lg font-medium mb-4 text-cyan-300 text-center">容器資料</h3>
+            <h3 className="text-lg font-medium mb-4 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
             <div className="space-y-3">
               {containers.map((container) => (
                 <div 
