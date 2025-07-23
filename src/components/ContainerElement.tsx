@@ -78,9 +78,9 @@ const ContainerElement = () => {
 
   return (
     <div className="w-full h-full bg-slate-800/20 border border-gray-600 rounded-lg relative overflow-hidden">
-      {/* Container Area */}
+      {/* Container Area - Only render if there are containers */}
       <div className="absolute inset-0 p-4">
-        {containers.map((container) => (
+        {containers.length > 0 && containers.map((container) => (
           <div
             key={container.id}
             className="absolute border-2 border-blue-500 bg-blue-500/10 rounded cursor-move"
