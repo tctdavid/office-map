@@ -202,7 +202,6 @@ const Index = () => {
                   marginTop: `${container.y}px`,
                   width: `${container.width}px`,
                   height: `${container.height}px`,
-                  borderColor: container.color,
                   backgroundColor: 'transparent'
                 }}
                 title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
