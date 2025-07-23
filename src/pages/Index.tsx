@@ -600,8 +600,9 @@ const Index = () => {
                   }`}
                   onClick={() => handleContainerClick(container)}
                   style={{ 
-                    marginLeft: `${currentContainer.x}px`,
-                    marginTop: `${currentContainer.y}px`,
+                    position: 'absolute',
+                    left: `${currentContainer.x}px`,
+                    top: `${currentContainer.y}px`,
                     width: `${currentContainer.width}px`,
                     height: `${currentContainer.height}px`,
                     backgroundColor: 'transparent'
