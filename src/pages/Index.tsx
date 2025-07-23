@@ -8,9 +8,12 @@ import { User } from '@supabase/supabase-js';
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
+  const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string, role?: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedContainer, setSelectedContainer] = useState<any | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,7 +63,7 @@ const Index = () => {
     };
   }, []);
 
-  const handleLoginSuccess = (employee: {id: string, name: string, email: string}) => {
+  const handleLoginSuccess = (employee: {id: string, name: string, email: string, role?: string}) => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
@@ -108,12 +111,27 @@ const Index = () => {
         {/* Auth Buttons - 200px width */}
         <div className="w-50 flex gap-3">
           {user ? (
-            <button 
-              onClick={handleLogout}
-              className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
-            >
-              登出
-            </button>
+            <>
+              {/* 編輯模式按鈕 - 只有管理員才能看見 */}
+              {currentEmployee?.role === 'admin' && (
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`px-4 py-2 rounded text-sm transition-colors ${
+                    isEditMode 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'border border-orange-500 text-orange-500 hover:bg-orange-600 hover:text-white'
+                  }`}
+                >
+                  {isEditMode ? '退出編輯' : '編輯模式'}
+                </button>
+              )}
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
+              >
+                登出
+              </button>
+            </>
           ) : (
             <>
               <button 
@@ -179,7 +197,13 @@ const Index = () => {
                 return (
                   <div
                     key={seat.id}
-                    className="absolute bg-gray-500 border border-gray-400 rounded"
+                    className={`absolute border rounded cursor-pointer transition-colors ${
+                      isEditMode 
+                        ? (selectedSeat?.id === seat.id 
+                            ? 'bg-red-500 border-red-400' 
+                            : 'bg-gray-500 border-gray-400 hover:bg-gray-400')
+                        : 'bg-gray-500 border-gray-400'
+                    }`}
                     style={{
                       left: `${containerX + seat.x}px`,
                       top: `${containerY + seat.y}px`,
@@ -187,6 +211,12 @@ const Index = () => {
                       height: `${seat.pixel_y}px`
                     }}
                     title={`座位 ${seat.id} 容器:(${containerX}, ${containerY}) 相對:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                    onClick={() => {
+                      if (isEditMode) {
+                        setSelectedSeat(selectedSeat?.id === seat.id ? null : seat);
+                        setSelectedContainer(null);
+                      }
+                    }}
                   />
                 );
               })}
@@ -194,9 +224,32 @@ const Index = () => {
               {containers.map((container) => (
                 <div 
                   key={container.id} 
-                  className="p-3"
-                  style={{ height: `${container.height}px` }}
+                  className={`absolute border-2 border-dashed cursor-pointer transition-colors ${
+                    isEditMode 
+                      ? (selectedContainer?.id === container.id 
+                          ? 'border-yellow-400 bg-yellow-400/10' 
+                          : 'border-cyan-500 bg-cyan-500/5 hover:bg-cyan-500/10')
+                      : 'border-transparent'
+                  }`}
+                  style={{ 
+                    left: `${container.x}px`,
+                    top: `${container.y}px`,
+                    width: `${container.width}px`,
+                    height: `${container.height}px`
+                  }}
+                  title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
+                  onClick={() => {
+                    if (isEditMode) {
+                      setSelectedContainer(selectedContainer?.id === container.id ? null : container);
+                      setSelectedSeat(null);
+                    }
+                  }}
                 >
+                  {isEditMode && (
+                    <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/70 px-1 rounded">
+                      {container.name}
+                    </div>
+                  )}
                 </div>
               ))}
               {containers.length === 0 && seatCoordinates.length === 0 && (
@@ -210,17 +263,102 @@ const Index = () => {
         </div>
 
         {/* Right Panel - Seat Details - 250px width */}
-        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6 flex flex-col items-center justify-center">
-          {/* Monitor Icon - 80px width, 60px height */}
-          <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
-            <div className="w-12 h-8 border border-gray-600 rounded"></div>
-          </div>
-          
-          {/* Text Content - 250px width */}
-          <div className="w-62 text-center">
-            <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
-            <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
-          </div>
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
+          {isEditMode ? (
+            /* 編輯模式界面 */
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-cyan-300 text-center">編輯模式</h3>
+              
+              {/* 新增容器按鈕 */}
+              <button 
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
+                onClick={() => {
+                  // TODO: 實現新增容器功能
+                  toast({
+                    title: "功能開發中",
+                    description: "新增容器功能即將推出",
+                  });
+                }}
+              >
+                新增容器
+              </button>
+              
+              {/* 新增座位按鈕 */}
+              <button 
+                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
+                onClick={() => {
+                  // TODO: 實現新增座位功能
+                  toast({
+                    title: "功能開發中", 
+                    description: "新增座位功能即將推出",
+                  });
+                }}
+              >
+                新增座位
+              </button>
+              
+              {/* 選中項目資訊 */}
+              {selectedContainer && (
+                <div className="bg-slate-700/50 rounded p-3">
+                  <h4 className="text-sm font-medium text-yellow-300 mb-2">選中容器</h4>
+                  <p className="text-xs text-gray-300">名稱: {selectedContainer.name}</p>
+                  <p className="text-xs text-gray-300">位置: ({selectedContainer.x}, {selectedContainer.y})</p>
+                  <p className="text-xs text-gray-300">大小: {selectedContainer.width}×{selectedContainer.height}</p>
+                  <button 
+                    className="w-full mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs transition-colors"
+                    onClick={() => {
+                      // TODO: 實現編輯容器功能
+                      toast({
+                        title: "功能開發中",
+                        description: "編輯容器功能即將推出",
+                      });
+                    }}
+                  >
+                    編輯容器
+                  </button>
+                </div>
+              )}
+              
+              {selectedSeat && (
+                <div className="bg-slate-700/50 rounded p-3">
+                  <h4 className="text-sm font-medium text-yellow-300 mb-2">選中座位</h4>
+                  <p className="text-xs text-gray-300">ID: {selectedSeat.id}</p>
+                  <p className="text-xs text-gray-300">位置: ({selectedSeat.x}, {selectedSeat.y})</p>
+                  <p className="text-xs text-gray-300">大小: {selectedSeat.pixel_x}×{selectedSeat.pixel_y}</p>
+                  <button 
+                    className="w-full mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs transition-colors"
+                    onClick={() => {
+                      // TODO: 實現編輯座位功能
+                      toast({
+                        title: "功能開發中",
+                        description: "編輯座位功能即將推出",
+                      });
+                    }}
+                  >
+                    編輯座位
+                  </button>
+                </div>
+              )}
+              
+              <div className="text-xs text-gray-400 text-center mt-4">
+                點擊容器或座位進行選擇和編輯
+              </div>
+            </div>
+          ) : (
+            /* 一般模式界面 */
+            <div className="flex flex-col items-center justify-center h-full">
+              {/* Monitor Icon - 80px width, 60px height */}
+              <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-8 border border-gray-600 rounded"></div>
+              </div>
+              
+              {/* Text Content - 250px width */}
+              <div className="w-62 text-center">
+                <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
+                <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
