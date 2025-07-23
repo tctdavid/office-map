@@ -186,7 +186,7 @@ const Index = () => {
 
           {/* Container Display Area - Dynamic Canvas Size */}
           <div 
-            className="bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden"
+            className="bg-slate-800/30 rounded-lg relative overflow-hidden"
             style={{
               width: `${canvasSize.width}px`,
               height: `${canvasSize.height}px`
@@ -196,7 +196,7 @@ const Index = () => {
             {containers.map((container) => (
               <div 
                 key={container.id} 
-                className="relative border-2 bg-opacity-10"
+                className="relative border border-gray-700 bg-opacity-10"
                 style={{ 
                   marginLeft: `${container.x}px`,
                   marginTop: `${container.y}px`,
