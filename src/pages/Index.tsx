@@ -218,18 +218,16 @@ const Index = () => {
                 <div 
                   key={container.id} 
                   className={`absolute border-2 transition-all duration-200 ${
-                    isEditMode && isEditingContainer
-                      ? (selectedContainer?.id === container.id 
-                          ? 'border-yellow-400 bg-yellow-400/20 shadow-lg' 
-                          : 'border-cyan-400 bg-cyan-400/10 hover:bg-cyan-400/20 cursor-pointer')
-                      : 'border-transparent'
+                    selectedContainer?.id === container.id && isEditMode && isEditingContainer
+                      ? 'border-yellow-400 bg-yellow-400/20 shadow-lg cursor-pointer'
+                      : 'border-transparent cursor-pointer'
                   }`}
                   style={{ 
                     left: `${container.x}px`,
                     top: `${container.y}px`,
                     width: `${container.width}px`,
                     height: `${container.height}px`,
-                    borderStyle: (isEditMode && isEditingContainer) ? 'dashed' : 'solid'
+                    borderStyle: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'dashed' : 'solid'
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
@@ -278,12 +276,6 @@ const Index = () => {
                         title="移動容器"
                       ></div>
                     </>
-                  )}
-                  
-                  {isEditMode && !isEditingContainer && (
-                    <div className="absolute top-1 left-1 text-xs text-cyan-300 bg-slate-800/90 px-2 py-1 rounded border border-cyan-400">
-                      {container.name}
-                    </div>
                   )}
                 </div>
               ))}
