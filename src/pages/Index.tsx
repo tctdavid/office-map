@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
@@ -86,7 +87,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header - 80px height */}
-      <header className="h-20 w-[1400px] flex items-center justify-between px-6 bg-slate-800/50">
+      <header className="h-20 w-[1600px] flex items-center justify-between px-6 bg-slate-800/50">
         {/* Time Display - 120px width */}
         <div className="w-30 bg-cyan-900/40 rounded-lg px-4 py-2 text-center">
           <div className="text-lg font-mono">15:41</div>
@@ -134,9 +135,9 @@ const Index = () => {
       </header>
 
       {/* Main Content Area */}
-      <div className="w-[1400px] flex px-6 py-6 gap-6">
-        {/* Left Panel - Seat Configuration - 800px width */}
-        <div className="w-200 flex-1">
+      <div className="w-[1600px] flex px-6 py-6 gap-6">
+        {/* Left Panel - Seat Configuration - 1300px width */}
+        <div className="w-[1300px] flex-1">
           <h2 className="text-lg mb-6 text-center">部門座位配置</h2>
           
           {/* Legend - 400px width, 80px height */}
@@ -164,57 +165,59 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Containers Display Area - 700px width, 400px height */}
-          <div className="w-175 h-200 mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4">
-            <h3 className="text-lg font-medium mb-2 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
-            <hr className="border-cyan-300/50 mb-4" />
-            <div className="relative">
-              {/* Render seat coordinates */}
-              {seatCoordinates.map((seat) => {
-                // 找到座位對應的容器
-                const container = containers.find(c => c.id === seat.container_id);
-                const containerX = container ? container.x : 0;
-                const containerY = container ? container.y : 0;
-                
-                return (
-                  <div
-                    key={seat.id}
-                    className="absolute bg-gray-500 border border-gray-400 rounded"
-                    style={{
-                      left: `${containerX + seat.x}px`,
-                      top: `${containerY + seat.y}px`,
-                      width: `${seat.pixel_x}px`,
-                      height: `${seat.pixel_y}px`
-                    }}
-                    title={`座位 ${seat.id} 容器:(${containerX}, ${containerY}) 相對:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
-                  />
-                );
-              })}
+          {/* Container Display Area - 1200px width, 850px height - Blank Canvas */}
+          <div className="w-[1200px] h-[850px] mx-auto bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden">
+            {/* Render containers as parent elements */}
+            {containers.map((container) => (
+              <div 
+                key={container.id} 
+                className="absolute border-2 bg-opacity-10"
+                style={{ 
+                  left: `${container.x}px`,
+                  top: `${container.y}px`,
+                  width: `${container.width}px`,
+                  height: `${container.height}px`,
+                  borderColor: container.color,
+                  backgroundColor: container.color
+                }}
+                title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
+              />
+            ))}
+            
+            {/* Render seats relative to their parent containers */}
+            {seatCoordinates.map((seat) => {
+              // 找到座位對應的容器
+              const container = containers.find(c => c.id === seat.container_id);
+              if (!container) return null;
               
-              {containers.map((container) => (
-                <div 
-                  key={container.id} 
-                  className="absolute border-2 border-blue-500 bg-blue-500/10"
-                  style={{ 
-                    left: `${container.x}px`,
-                    top: `${container.y}px`,
-                    width: `${container.width}px`,
-                    height: `${container.height}px`,
-                    borderColor: container.color
+              // 計算座位的絕對位置 (容器位置 + 座位相對位置)
+              const absoluteX = container.x + seat.x;
+              const absoluteY = container.y + seat.y;
+              
+              // 決定座位顏色
+              let seatColor = '#6b7280'; // 預設灰色 (空位)
+              if (seat.employee_id && seat.pc_id) {
+                seatColor = '#3b82f6'; // 藍色 (有員工)
+              } else if (seat.pc_id) {
+                seatColor = '#10b981'; // 綠色 (有PC)
+              }
+              
+              return (
+                <div
+                  key={seat.id}
+                  className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
+                  style={{
+                    left: `${absoluteX}px`,
+                    top: `${absoluteY}px`,
+                    width: `${seat.pixel_x}px`,
+                    height: `${seat.pixel_y}px`,
+                    backgroundColor: seatColor
                   }}
-                  title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
-                >
-                  <div className="text-xs text-white p-1">{container.name}</div>
-                </div>
-              ))}
-              {containers.length === 0 && seatCoordinates.length === 0 && (
-                <div className="text-center text-gray-400 py-8">
-                  目前沒有容器資料
-                </div>
-              )}
-            </div>
+                  title={`座位 ${seat.id} 絕對位置:(${absoluteX}, ${absoluteY}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                />
+              );
+            })}
           </div>
-
         </div>
 
         {/* Right Panel - Seat Details - 250px width */}
