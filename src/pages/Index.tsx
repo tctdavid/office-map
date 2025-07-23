@@ -227,7 +227,8 @@ const Index = () => {
                     top: `${container.y}px`,
                     width: `${container.width}px`,
                     height: `${container.height}px`,
-                    borderStyle: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'dashed' : 'solid'
+                    borderStyle: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'dashed' : 'solid',
+                    backgroundColor: selectedContainer?.id === container.id && isEditMode && isEditingContainer ? 'rgba(251, 191, 36, 0.2)' : 'transparent'
                   }}
                   title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
                   onClick={() => {
@@ -445,10 +446,17 @@ const Index = () => {
                   </button>
                 </div>
               )}
-              
-              <div className="text-xs text-gray-400 text-center mt-4">
-                點擊容器或座位進行選擇和編輯
-              </div>
+               
+               <div className="text-xs text-gray-400 text-center mt-4">
+                 點擊容器或座位進行選擇和編輯
+               </div>
+               
+               {/* 調試信息 */}
+               <div className="text-xs text-green-400 mt-2 p-2 bg-slate-800 rounded">
+                 <div>編輯模式: {isEditMode ? 'ON' : 'OFF'}</div>
+                 <div>編輯容器: {isEditingContainer ? 'ON' : 'OFF'}</div>
+                 <div>選中容器: {selectedContainer ? selectedContainer.name : '無'}</div>
+               </div>
             </div>
           ) : (
             /* 一般模式界面 */
