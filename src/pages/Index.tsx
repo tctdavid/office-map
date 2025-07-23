@@ -14,6 +14,8 @@ const Index = () => {
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isContainerEditMode, setIsContainerEditMode] = useState(false);
+  const [selectedContainer, setSelectedContainer] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,6 +101,8 @@ const Index = () => {
     setUser(null);
     setCurrentEmployee(null);
     setIsEditMode(false);
+    setIsContainerEditMode(false);
+    setSelectedContainer(null);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -110,10 +114,33 @@ const Index = () => {
 
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
+    if (isEditMode) {
+      setIsContainerEditMode(false);
+      setSelectedContainer(null);
+    }
     toast({
       title: isEditMode ? "退出編輯模式" : "進入編輯模式",
       description: isEditMode ? "已退出編輯模式" : "已進入編輯模式",
     });
+  };
+
+  const toggleContainerEditMode = () => {
+    setIsContainerEditMode(!isContainerEditMode);
+    setSelectedContainer(null);
+    toast({
+      title: isContainerEditMode ? "退出容器編輯" : "進入容器編輯",
+      description: isContainerEditMode ? "已退出容器編輯模式" : "點擊容器進行編輯",
+    });
+  };
+
+  const handleContainerClick = (container: any) => {
+    if (isContainerEditMode) {
+      setSelectedContainer(container);
+      toast({
+        title: "容器已選中",
+        description: `正在編輯: ${container.name}`,
+      });
+    }
   };
 
   return (
@@ -223,7 +250,12 @@ const Index = () => {
             {containers.map((container) => (
               <div 
                 key={container.id} 
-                className="relative border border-gray-700 bg-opacity-10"
+                className={`relative border bg-opacity-10 ${
+                  isContainerEditMode ? 'cursor-pointer hover:border-yellow-400' : ''
+                } ${
+                  selectedContainer?.id === container.id ? 'border-yellow-400 border-2' : 'border-gray-700'
+                }`}
+                onClick={() => handleContainerClick(container)}
                 style={{ 
                   marginLeft: `${container.x}px`,
                   marginTop: `${container.y}px`,
@@ -278,9 +310,16 @@ const Index = () => {
                 新增容器
               </button>
               
-              {/* 退出編輯容器 */}
-              <button className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 rounded text-sm font-medium transition-colors">
-                退出編輯容器
+              {/* 編輯容器 */}
+              <button 
+                onClick={toggleContainerEditMode}
+                className={`w-full px-4 py-3 rounded text-sm font-medium transition-colors ${
+                  isContainerEditMode 
+                    ? 'bg-yellow-600 hover:bg-yellow-700' 
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
+              >
+                {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
               </button>
               
               {/* 新增座位 */}
@@ -296,13 +335,15 @@ const Index = () => {
                     <label className="text-xs text-gray-400">名稱:</label>
                     <input 
                       type="text" 
+                      value={selectedContainer ? selectedContainer.name : '預設部門-通訊測試'}
                       placeholder="預設部門-通訊測試"
                       className="w-full mt-1 px-3 py-2 bg-slate-600 border border-gray-500 rounded text-sm"
+                      readOnly={!selectedContainer}
                     />
                   </div>
                   <div className="text-xs text-gray-400">
-                    <div>位置: (20, 20)</div>
-                    <div>大小: 400×300</div>
+                    <div>位置: ({selectedContainer ? `${selectedContainer.x}, ${selectedContainer.y}` : '20, 20'})</div>
+                    <div>大小: {selectedContainer ? `${selectedContainer.width}×${selectedContainer.height}` : '400×300'}</div>
                   </div>
                   
                   {/* 保存/取消按鈕 */}
@@ -320,8 +361,8 @@ const Index = () => {
               {/* 編輯狀態指示 */}
               <div className="mt-4 text-xs text-green-400 space-y-1">
                 <div>編輯模式: ON</div>
-                <div>編輯容器: ON</div>
-                <div>異更容器: 預設部門-通訊測試</div>
+                <div>編輯容器: {isContainerEditMode ? 'ON' : 'OFF'}</div>
+                <div>異更容器: {selectedContainer ? selectedContainer.name : '未選擇'}</div>
               </div>
             </div>
           ) : (
