@@ -175,12 +175,12 @@ const Index = () => {
                   key={seat.id}
                   className="absolute bg-gray-500 border border-gray-400 rounded"
                   style={{
-                    left: `${seat.pixel_x}px`,
-                    top: `${seat.pixel_y}px`,
-                    width: '16px',
-                    height: '16px'
+                    left: `${seat.x}px`,
+                    top: `${seat.y}px`,
+                    width: `${seat.pixel_x}px`,
+                    height: `${seat.pixel_y}px`
                   }}
-                  title={`座位 ${seat.id} (${seat.pixel_x}, ${seat.pixel_y})`}
+                  title={`座位 ${seat.id} 位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
                 />
               ))}
               
