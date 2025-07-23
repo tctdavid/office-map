@@ -158,13 +158,6 @@ const Index = () => {
                   className="p-3"
                   style={{ height: `${container.height}px` }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-white">{container.name}</h4>
-                    <div 
-                      className="w-4 h-4 rounded border border-gray-400"
-                      style={{ backgroundColor: container.color }}
-                    ></div>
-                  </div>
                 </div>
               ))}
               {containers.length === 0 && (
