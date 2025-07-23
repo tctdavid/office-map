@@ -198,14 +198,6 @@ const Index = () => {
             <h3 className="text-lg font-medium mb-2 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
             <hr className="border-cyan-300/50 mb-4" />
             <div className="relative" style={{ width: '1060px', height: '750px' }}>
-              {/* 首先顯示容器數量和內容調試信息 */}
-              <div className="absolute top-0 left-0 text-xs text-green-400 bg-black/50 p-2 z-50">
-                <div>容器數量: {containers.length}</div>
-                <div>座位數量: {seatCoordinates.length}</div>
-                {containers.map((c, i) => (
-                  <div key={i}>容器{i+1}: {c.name} ({c.width}x{c.height})</div>
-                ))}
-              </div>
 
               {/* 渲染座位座標 */}
               {seatCoordinates.map((seat) => {
