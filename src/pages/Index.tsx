@@ -192,7 +192,7 @@ const Index = () => {
               height: `${canvasSize.height}px`
             }}
           >
-            {/* Render containers with relative positioning */}
+            {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => (
               <div 
                 key={container.id} 
@@ -206,42 +206,37 @@ const Index = () => {
                   backgroundColor: container.color
                 }}
                 title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
-              />
+              >
+                {/* Render seats relative to this container */}
+                {seatCoordinates
+                  .filter(seat => seat.container_id === container.id)
+                  .map((seat) => {
+                    // 決定座位顏色
+                    let seatColor = '#6b7280'; // 預設灰色 (空位)
+                    if (seat.employee_id && seat.pc_id) {
+                      seatColor = '#3b82f6'; // 藍色 (有員工)
+                    } else if (seat.pc_id) {
+                      seatColor = '#10b981'; // 綠色 (有PC)
+                    }
+                    
+                    return (
+                      <div
+                        key={seat.id}
+                        className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
+                        style={{
+                          left: `${seat.x}px`,
+                          top: `${seat.y}px`,
+                          width: `${seat.pixel_x}px`,
+                          height: `${seat.pixel_y}px`,
+                          backgroundColor: seatColor
+                        }}
+                        title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                      />
+                    );
+                  })
+                }
+              </div>
             ))}
-            
-            {/* Render seats relative to their parent containers */}
-            {seatCoordinates.map((seat) => {
-              // 找到座位對應的容器
-              const container = containers.find(c => c.id === seat.container_id);
-              if (!container) return null;
-              
-              // 計算座位的絕對位置 (容器位置 + 座位相對位置)
-              const absoluteX = container.x + seat.x;
-              const absoluteY = container.y + seat.y;
-              
-              // 決定座位顏色
-              let seatColor = '#6b7280'; // 預設灰色 (空位)
-              if (seat.employee_id && seat.pc_id) {
-                seatColor = '#3b82f6'; // 藍色 (有員工)
-              } else if (seat.pc_id) {
-                seatColor = '#10b981'; // 綠色 (有PC)
-              }
-              
-              return (
-                <div
-                  key={seat.id}
-                  className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
-                  style={{
-                    left: `${absoluteX}px`,
-                    top: `${absoluteY}px`,
-                    width: `${seat.pixel_x}px`,
-                    height: `${seat.pixel_y}px`,
-                    backgroundColor: seatColor
-                  }}
-                  title={`座位 ${seat.id} 絕對位置:(${absoluteX}, ${absoluteY}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
-                />
-              );
-            })}
           </div>
         </div>
 
