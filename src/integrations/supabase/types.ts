@@ -157,6 +157,57 @@ export type Database = {
         }
         Relationships: []
       }
+      floor_containers: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          floor: string
+          height: number
+          id: string
+          max_height: number | null
+          max_width: number | null
+          min_height: number | null
+          min_width: number | null
+          name: string
+          updated_at: string | null
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          floor?: string
+          height?: number
+          id?: string
+          max_height?: number | null
+          max_width?: number | null
+          min_height?: number | null
+          min_width?: number | null
+          name: string
+          updated_at?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          floor?: string
+          height?: number
+          id?: string
+          max_height?: number | null
+          max_width?: number | null
+          min_height?: number | null
+          min_width?: number | null
+          name?: string
+          updated_at?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
       pc_details: {
         Row: {
           brand: string | null
@@ -289,13 +340,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "seat_coordinates_container_id_fkey"
-            columns: ["container_id"]
-            isOneToOne: false
-            referencedRelation: "floor_containers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "seat_coordinates_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -360,13 +404,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "seats_container_id_fkey"
-            columns: ["container_id"]
-            isOneToOne: false
-            referencedRelation: "floor_containers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "seats_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -384,51 +421,7 @@ export type Database = {
       }
     }
     Views: {
-      floor_containers: {
-        Row: {
-          color: string | null
-          floor: string | null
-          height: number | null
-          id: string | null
-          max_height: number | null
-          max_width: number | null
-          min_height: number | null
-          min_width: number | null
-          name: string | null
-          width: number | null
-          x: number | null
-          y: number | null
-        }
-        Insert: {
-          color?: string | null
-          floor?: string | null
-          height?: number | null
-          id?: string | null
-          max_height?: number | null
-          max_width?: number | null
-          min_height?: number | null
-          min_width?: number | null
-          name?: string | null
-          width?: number | null
-          x?: number | null
-          y?: number | null
-        }
-        Update: {
-          color?: string | null
-          floor?: string | null
-          height?: number | null
-          id?: string | null
-          max_height?: number | null
-          max_width?: number | null
-          min_height?: number | null
-          min_width?: number | null
-          name?: string | null
-          width?: number | null
-          x?: number | null
-          y?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
