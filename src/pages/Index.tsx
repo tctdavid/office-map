@@ -205,7 +205,7 @@ const Index = () => {
                     }}
                     title={`座位 ${seat.id} 容器:(${containerX}, ${containerY}) 相對:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
                     onClick={() => {
-                      if (isEditMode) {
+                      if (isEditMode && !isEditingContainer) {
                         setSelectedSeat(selectedSeat?.id === seat.id ? null : seat);
                         setSelectedContainer(null);
                       }
