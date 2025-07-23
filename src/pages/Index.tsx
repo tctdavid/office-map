@@ -220,6 +220,7 @@ const Index = () => {
                     onClick={() => {
                       console.log('=== CLICK EVENT START ===');
                       console.log('Container clicked:', container.name);
+                      console.log('Container coordinates from DB:', { x: container.x, y: container.y, width: container.width, height: container.height });
                       console.log('isEditMode:', isEditMode);
                       console.log('isEditingContainer:', isEditingContainer);
                       console.log('Current selectedContainer:', selectedContainer?.name || 'none');
