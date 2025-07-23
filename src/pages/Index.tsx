@@ -12,6 +12,7 @@ const Index = () => {
   const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
+  const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,6 +23,23 @@ const Index = () => {
       if (logoutTimer) {
         clearTimeout(logoutTimer);
         logoutTimer = null;
+      }
+    };
+
+    // 載入畫布大小資料
+    const fetchCanvasSize = async () => {
+      const { data, error } = await supabase
+        .from('floor_containers')
+        .select('width, height')
+        .limit(1);
+      
+      if (error) {
+        console.error('Error fetching canvas size:', error);
+      } else if (data && data.length > 0) {
+        setCanvasSize({
+          width: data[0].width || 1060,
+          height: data[0].height || 850
+        });
       }
     };
 
@@ -53,6 +71,7 @@ const Index = () => {
       }
     };
 
+    fetchCanvasSize();
     fetchContainers();
     fetchSeatCoordinates();
 
@@ -165,16 +184,22 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Container Display Area - 1060px width, 850px height - Blank Canvas */}
-          <div className="w-[1060px] h-[850px] bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden">
-            {/* Render containers as parent elements */}
+          {/* Container Display Area - Dynamic Canvas Size */}
+          <div 
+            className="bg-slate-800/30 rounded-lg border border-gray-700 relative overflow-hidden"
+            style={{
+              width: `${canvasSize.width}px`,
+              height: `${canvasSize.height}px`
+            }}
+          >
+            {/* Render containers with relative positioning */}
             {containers.map((container) => (
               <div 
                 key={container.id} 
-                className="absolute border-2 bg-opacity-10"
+                className="relative border-2 bg-opacity-10"
                 style={{ 
-                  left: `${container.x}px`,
-                  top: `${container.y}px`,
+                  marginLeft: `${container.x}px`,
+                  marginTop: `${container.y}px`,
                   width: `${container.width}px`,
                   height: `${container.height}px`,
                   borderColor: container.color,
