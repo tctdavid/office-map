@@ -16,6 +16,9 @@ const Index = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isContainerEditMode, setIsContainerEditMode] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState<any>(null);
+  const [editingContainer, setEditingContainer] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragHandle, setDragHandle] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,6 +106,8 @@ const Index = () => {
     setIsEditMode(false);
     setIsContainerEditMode(false);
     setSelectedContainer(null);
+    setEditingContainer(null);
+    setIsDragging(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -117,6 +122,7 @@ const Index = () => {
     if (isEditMode) {
       setIsContainerEditMode(false);
       setSelectedContainer(null);
+      setEditingContainer(null);
     }
     toast({
       title: isEditMode ? "退出編輯模式" : "進入編輯模式",
@@ -127,6 +133,7 @@ const Index = () => {
   const toggleContainerEditMode = () => {
     setIsContainerEditMode(!isContainerEditMode);
     setSelectedContainer(null);
+    setEditingContainer(null);
     toast({
       title: isContainerEditMode ? "退出容器編輯" : "進入容器編輯",
       description: isContainerEditMode ? "已退出容器編輯模式" : "點擊容器進行編輯",
@@ -134,11 +141,126 @@ const Index = () => {
   };
 
   const handleContainerClick = (container: any) => {
-    if (isContainerEditMode) {
+    if (isContainerEditMode && !isDragging) {
       setSelectedContainer(container);
+      setEditingContainer({...container});
       toast({
         title: "容器已選中",
         description: `正在編輯: ${container.name}`,
+      });
+    }
+  };
+
+  const handleContainerNameChange = (name: string) => {
+    if (editingContainer) {
+      setEditingContainer({...editingContainer, name});
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, handle: string) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    setDragHandle(handle);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !editingContainer || !dragHandle) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    let newContainer = {...editingContainer};
+    
+    switch(dragHandle) {
+      case 'top':
+        const newHeight = newContainer.height + (newContainer.y - mouseY);
+        if (newHeight > 50) {
+          newContainer.y = mouseY;
+          newContainer.height = newHeight;
+        }
+        break;
+      case 'bottom':
+        const bottomHeight = mouseY - newContainer.y;
+        if (bottomHeight > 50) {
+          newContainer.height = bottomHeight;
+        }
+        break;
+      case 'left':
+        const newWidth = newContainer.width + (newContainer.x - mouseX);
+        if (newWidth > 50) {
+          newContainer.x = mouseX;
+          newContainer.width = newWidth;
+        }
+        break;
+      case 'right':
+        const rightWidth = mouseX - newContainer.x;
+        if (rightWidth > 50) {
+          newContainer.width = rightWidth;
+        }
+        break;
+    }
+    
+    setEditingContainer(newContainer);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragHandle('');
+  };
+
+  const saveContainerChanges = async () => {
+    if (!editingContainer) return;
+    
+    try {
+      const { error } = await supabase
+        .from('containers')
+        .update({
+          name: editingContainer.name,
+          x: editingContainer.x,
+          y: editingContainer.y,
+          width: editingContainer.width,
+          height: editingContainer.height,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingContainer.id);
+
+      if (error) {
+        console.error('Error updating container:', error);
+        toast({
+          title: "保存失敗",
+          description: "無法保存容器變更",
+          variant: "destructive"
+        });
+      } else {
+        // 更新本地狀態
+        const updatedContainers = containers.map(c => 
+          c.id === editingContainer.id ? editingContainer : c
+        );
+        setContainers(updatedContainers);
+        setSelectedContainer(editingContainer);
+        
+        toast({
+          title: "保存成功",
+          description: "容器變更已保存",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving container:', error);
+      toast({
+        title: "保存失敗", 
+        description: "發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const cancelContainerChanges = () => {
+    if (selectedContainer) {
+      setEditingContainer({...selectedContainer});
+      toast({
+        title: "已取消變更",
+        description: "容器變更已取消",
       });
     }
   };
@@ -250,30 +372,63 @@ const Index = () => {
                 : 'none',
               backgroundSize: isEditMode ? '20px 20px' : 'auto'
             }}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
           >
             {/* Render containers with relative positioning and their seats */}
-            {containers.map((container) => (
-              <div 
-                key={container.id} 
-                className={`relative border bg-opacity-10 ${
-                  isContainerEditMode ? 'cursor-pointer hover:border-yellow-400' : ''
-                } ${
-                  selectedContainer?.id === container.id ? 'border-yellow-400 border-2' : 'border-gray-700'
-                }`}
-                onClick={() => handleContainerClick(container)}
-                style={{ 
-                  marginLeft: `${container.x}px`,
-                  marginTop: `${container.y}px`,
-                  width: `${container.width}px`,
-                  height: `${container.height}px`,
-                  backgroundColor: 'transparent'
-                }}
-                title={`容器: ${container.name} 位置:(${container.x}, ${container.y}) 大小:(${container.width}×${container.height})`}
-              >
+            {containers.map((container) => {
+              const currentContainer = editingContainer && editingContainer.id === container.id ? editingContainer : container;
+              const isSelected = selectedContainer?.id === container.id;
+              
+              return (
+                <div 
+                  key={container.id} 
+                  className={`relative border bg-opacity-10 ${
+                    isContainerEditMode ? 'cursor-pointer hover:border-yellow-400' : ''
+                  } ${
+                    isSelected ? 'border-yellow-400 border-2' : 'border-gray-700'
+                  }`}
+                  onClick={() => handleContainerClick(container)}
+                  style={{ 
+                    marginLeft: `${currentContainer.x}px`,
+                    marginTop: `${currentContainer.y}px`,
+                    width: `${currentContainer.width}px`,
+                    height: `${currentContainer.height}px`,
+                    backgroundColor: 'transparent'
+                  }}
+                  title={`容器: ${currentContainer.name} 位置:(${currentContainer.x}, ${currentContainer.y}) 大小:(${currentContainer.width}×${currentContainer.height})`}
+                >
                 {/* 容器名稱 */}
                 <div className="absolute inset-0 flex items-start justify-center text-lg font-medium text-white pointer-events-none pt-2">
-                  {container.name}
+                  {currentContainer.name}
                 </div>
+                
+                {/* Resize Handles - 只在選中時顯示 */}
+                {isSelected && isContainerEditMode && (
+                  <>
+                    {/* Top handle */}
+                    <div 
+                      className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize"
+                      onMouseDown={(e) => handleMouseDown(e, 'top')}
+                    />
+                    {/* Bottom handle */}
+                    <div 
+                      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize"
+                      onMouseDown={(e) => handleMouseDown(e, 'bottom')}
+                    />
+                    {/* Left handle */}
+                    <div 
+                      className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize"
+                      onMouseDown={(e) => handleMouseDown(e, 'left')}
+                    />
+                    {/* Right handle */}
+                    <div 
+                      className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize"
+                      onMouseDown={(e) => handleMouseDown(e, 'right')}
+                    />
+                  </>
+                )}
+
                 {/* Render seats relative to this container */}
                 {seatCoordinates
                   .filter(seat => seat.container_id === container.id)
@@ -303,7 +458,8 @@ const Index = () => {
                   })
                 }
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
 
@@ -344,23 +500,32 @@ const Index = () => {
                     <label className="text-xs text-gray-400">名稱:</label>
                     <input 
                       type="text" 
-                      value={selectedContainer ? selectedContainer.name : '預設部門-通訊測試'}
-                      placeholder="預設部門-通訊測試"
+                      value={editingContainer ? editingContainer.name : ''}
+                      placeholder="容器名稱"
+                      onChange={(e) => handleContainerNameChange(e.target.value)}
                       className="w-full mt-1 px-3 py-2 bg-slate-600 border border-gray-500 rounded text-sm"
-                      readOnly={!selectedContainer}
+                      disabled={!editingContainer}
                     />
                   </div>
                   <div className="text-xs text-gray-400">
-                    <div>位置: ({selectedContainer ? `${selectedContainer.x}, ${selectedContainer.y}` : '20, 20'})</div>
-                    <div>大小: {selectedContainer ? `${selectedContainer.width}×${selectedContainer.height}` : '400×300'}</div>
+                    <div>位置: ({editingContainer ? `${Math.round(editingContainer.x)}, ${Math.round(editingContainer.y)}` : '0, 0'})</div>
+                    <div>大小: {editingContainer ? `${Math.round(editingContainer.width)}×${Math.round(editingContainer.height)}` : '0×0'}</div>
                   </div>
                   
                   {/* 保存/取消按鈕 */}
                   <div className="space-y-2 mt-4">
-                    <button className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors">
+                    <button 
+                      onClick={saveContainerChanges}
+                      disabled={!editingContainer}
+                      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
+                    >
                       保存異更
                     </button>
-                    <button className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-medium transition-colors">
+                    <button 
+                      onClick={cancelContainerChanges}
+                      disabled={!editingContainer}
+                      className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
+                    >
                       取消異更
                     </button>
                   </div>
@@ -371,7 +536,7 @@ const Index = () => {
               <div className="mt-4 text-xs text-green-400 space-y-1">
                 <div>編輯模式: ON</div>
                 <div>編輯容器: {isContainerEditMode ? 'ON' : 'OFF'}</div>
-                <div>異更容器: {selectedContainer ? selectedContainer.name : '未選擇'}</div>
+                <div>異更容器: {editingContainer ? editingContainer.name : '未選擇'}</div>
               </div>
             </div>
           ) : (
