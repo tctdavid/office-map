@@ -13,6 +13,7 @@ const Index = () => {
   const [containers, setContainers] = useState<any[]>([]);
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
+  const [isEditMode, setIsEditMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -97,9 +98,21 @@ const Index = () => {
   const handleLogout = () => {
     setUser(null);
     setCurrentEmployee(null);
+    setIsEditMode(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
+    });
+  };
+
+  // 檢查是否為管理員（暫時使用email判斷）
+  const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name === '管理員';
+
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+    toast({
+      title: isEditMode ? "退出編輯模式" : "進入編輯模式",
+      description: isEditMode ? "已退出編輯模式" : "已進入編輯模式",
     });
   };
 
@@ -128,12 +141,26 @@ const Index = () => {
         {/* Auth Buttons - 200px width */}
         <div className="w-50 flex gap-3">
           {user ? (
-            <button 
-              onClick={handleLogout}
-              className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
-            >
-              登出
-            </button>
+            <>
+              {isAdmin && (
+                <button 
+                  onClick={toggleEditMode}
+                  className={`px-4 py-2 rounded text-sm transition-colors ${
+                    isEditMode 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white'
+                  }`}
+                >
+                  {isEditMode ? '退出編輯' : '編輯位置'}
+                </button>
+              )}
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
+              >
+                登出
+              </button>
+            </>
           ) : (
             <>
               <button 
