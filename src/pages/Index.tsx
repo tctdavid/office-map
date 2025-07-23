@@ -197,7 +197,7 @@ const Index = () => {
           <div className="w-[1100px] h-[800px] mx-auto bg-slate-800/30 rounded-lg border border-gray-700 p-4 overflow-hidden">
             <h3 className="text-lg font-medium mb-2 text-cyan-300 text-center">{containers.length > 0 ? containers[0].name : '容器資料'}</h3>
             <hr className="border-cyan-300/50 mb-4" />
-            <div className="relative">
+            <div className="relative" style={{ width: '1060px', height: '750px' }}>
               {/* Render seat coordinates */}
               {seatCoordinates.map((seat) => {
                 const container = containers.find(c => c.id === seat.container_id);
@@ -254,8 +254,8 @@ const Index = () => {
                       top: `${container.y}px`,
                       width: `${container.width}px`,
                       height: `${container.height}px`,
-                      border: isSelected ? '4px dashed #fbbf24' : '1px solid transparent',
-                      backgroundColor: isSelected ? 'rgba(251, 191, 36, 0.2)' : 'transparent',
+                      border: isSelected ? '4px dashed #fbbf24' : '2px solid #64748b',
+                      backgroundColor: isSelected ? 'rgba(251, 191, 36, 0.2)' : 'rgba(100, 116, 139, 0.1)',
                       boxShadow: isSelected ? '0 0 0 2px rgba(251, 191, 36, 0.5)' : 'none'
                     }}
                     title={`容器: ${container.name}`}
@@ -362,6 +362,13 @@ const Index = () => {
                 }}
               >
                 新增容器
+              </button>
+              
+              <button 
+                className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-sm transition-colors"
+                onClick={refreshData}
+              >
+                重新載入資料
               </button>
               
               <button 
