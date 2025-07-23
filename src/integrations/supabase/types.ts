@@ -65,7 +65,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
-          floor: string
+          department: string
           height: number
           id: string
           max_height: number | null
@@ -81,7 +81,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string | null
-          floor: string
+          department: string
           height?: number
           id?: string
           max_height?: number | null
@@ -97,7 +97,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string | null
-          floor?: string
+          department?: string
           height?: number
           id?: string
           max_height?: number | null
@@ -236,10 +236,10 @@ export type Database = {
       }
       seat_coordinates: {
         Row: {
+          container: string
           container_id: string | null
           created_at: string | null
           employee_id: string | null
-          floor: string
           id: string
           is_empty: boolean | null
           pc_id: string | null
@@ -251,10 +251,10 @@ export type Database = {
           y: number
         }
         Insert: {
+          container: string
           container_id?: string | null
           created_at?: string | null
           employee_id?: string | null
-          floor: string
           id: string
           is_empty?: boolean | null
           pc_id?: string | null
@@ -266,10 +266,10 @@ export type Database = {
           y: number
         }
         Update: {
+          container?: string
           container_id?: string | null
           created_at?: string | null
           employee_id?: string | null
-          floor?: string
           id?: string
           is_empty?: boolean | null
           pc_id?: string | null
