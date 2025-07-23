@@ -22,6 +22,7 @@ const Index = () => {
   useEffect(() => {
     // 載入容器資料
     const fetchContainers = async () => {
+      console.log('=== FETCHING CONTAINERS ===');
       const { data, error } = await supabase
         .from('containers')
         .select('*')
@@ -30,12 +31,14 @@ const Index = () => {
       if (error) {
         console.error('Error fetching containers:', error);
       } else {
+        console.log('Containers fetched from DB:', data);
         setContainers(data || []);
       }
     };
 
     // 載入座位座標資料
     const fetchSeatCoordinates = async () => {
+      console.log('=== FETCHING SEAT COORDINATES ===');
       const { data, error } = await supabase
         .from('seat_coordinates')
         .select('*')
@@ -44,6 +47,7 @@ const Index = () => {
       if (error) {
         console.error('Error fetching seat coordinates:', error);
       } else {
+        console.log('Seat coordinates fetched from DB:', data);
         setSeatCoordinates(data || []);
       }
     };
@@ -51,6 +55,34 @@ const Index = () => {
     fetchContainers();
     fetchSeatCoordinates();
   }, []);
+
+  // 重新載入資料的函數
+  const refreshData = async () => {
+    console.log('=== REFRESHING DATA ===');
+    const { data: containerData, error: containerError } = await supabase
+      .from('containers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (containerError) {
+      console.error('Error refreshing containers:', containerError);
+    } else {
+      console.log('Refreshed containers from DB:', containerData);
+      setContainers(containerData || []);
+    }
+
+    const { data: seatData, error: seatError } = await supabase
+      .from('seat_coordinates')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (seatError) {
+      console.error('Error refreshing seat coordinates:', seatError);
+    } else {
+      console.log('Refreshed seat coordinates from DB:', seatData);
+      setSeatCoordinates(seatData || []);
+    }
+  };
 
   const handleLoginSuccess = (employee: {id: string, name: string, email: string, role?: string}) => {
     console.log('Login success, employee data:', employee);
