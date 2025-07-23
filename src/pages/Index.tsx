@@ -106,7 +106,7 @@ const Index = () => {
   };
 
   // 檢查是否為管理員（暫時使用email判斷）
-  const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name === '管理員';
+  const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name?.includes('管理員');
 
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
