@@ -922,10 +922,8 @@ const Index = () => {
       <div className="w-[1400px] flex px-6 py-6 gap-6">
         {/* Left Panel - Seat Configuration - 1300px width */}
         <div className="w-[1300px] flex-1">
-          <h2 className="text-lg mb-6 text-center">部門座位配置</h2>
-          
           {/* Legend - 400px width, 80px height */}
-          <div className="w-100 mx-auto mb-6">
+          <div className="w-100 mx-auto mb-4">
             <div className="flex items-center justify-center gap-6 mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-blue-500 rounded"></div>
