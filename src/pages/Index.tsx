@@ -27,6 +27,8 @@ const Index = () => {
   const [isSeatEditMode, setIsSeatEditMode] = useState(false);
   const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   const [selectedSeat, setSelectedSeat] = useState<any>(null);
+  const [containerMousePosition, setContainerMousePosition] = useState({ x: 0, y: 0 });
+  const [showSeatPreview, setShowSeatPreview] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -842,7 +844,7 @@ const Index = () => {
           {/* Container Display Area - Dynamic Canvas Size */}
           <div 
             className={`bg-slate-800/30 rounded-lg relative overflow-hidden ${
-              isAddingContainer ? 'cursor-crosshair' : ''
+              isAddingContainer ? 'cursor-crosshair' : isSeatEditMode && selectedContainer ? 'cursor-none' : ''
             }`}
             style={{
               width: `${canvasSize.width}px`,
@@ -855,9 +857,48 @@ const Index = () => {
               userSelect: 'none'
             }}
             onMouseDown={handleCanvasMouseDown}
-            onMouseMove={handleCanvasMouseMove}
+            onMouseMove={(e) => {
+              handleCanvasMouseMove(e);
+              // 追蹤鼠標位置用於座位預覽
+              if (isSeatEditMode && selectedContainer) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+                
+                // 檢查鼠標是否在選中的容器內
+                const isInSelectedContainer = 
+                  mouseX >= selectedContainer.x && 
+                  mouseX <= selectedContainer.x + selectedContainer.width &&
+                  mouseY >= selectedContainer.y && 
+                  mouseY <= selectedContainer.y + selectedContainer.height;
+                
+                if (isInSelectedContainer) {
+                  const seatSize = getSeatSize(selectedSeatTemplate);
+                  const seatX = snapToGrid(mouseX);
+                  const seatY = snapToGrid(mouseY);
+                  
+                  // 確保座位不會超出容器邊界
+                  const maxX = selectedContainer.x + selectedContainer.width - seatSize.width;
+                  const maxY = selectedContainer.y + selectedContainer.height - seatSize.height;
+                  
+                  setContainerMousePosition({
+                    x: Math.max(selectedContainer.x, Math.min(seatX, maxX)),
+                    y: Math.max(selectedContainer.y, Math.min(seatY, maxY))
+                  });
+                  setShowSeatPreview(true);
+                } else {
+                  setShowSeatPreview(false);
+                }
+              } else {
+                setShowSeatPreview(false);
+              }
+            }}
             onMouseUp={handleCanvasMouseUp}
-            onMouseLeave={handleCanvasMouseUp}
+            onMouseLeave={(e) => {
+              handleCanvasMouseUp();
+              setShowSeatPreview(false);
+            }}
           >
             {/* 橡皮筋矩形 */}
             {isAddingContainer && newContainerStart && newContainerEnd && (
@@ -973,6 +1014,69 @@ const Index = () => {
                 </div>
               );
             })}
+            
+            {/* 座位預覽 - 跟隨鼠標的座位模板 */}
+            {showSeatPreview && isSeatEditMode && selectedContainer && (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${containerMousePosition.x}px`,
+                  top: `${containerMousePosition.y}px`,
+                  width: `${getSeatSize(selectedSeatTemplate).width}px`,
+                  height: `${getSeatSize(selectedSeatTemplate).height}px`,
+                  backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                  border: '2px dashed #22c55e',
+                  borderRadius: '4px',
+                  zIndex: 1000
+                }}
+              >
+                {/* 十字線在左上角 */}
+                <div
+                  className="absolute"
+                  style={{
+                    left: '-8px',
+                    top: '-8px',
+                    width: '16px',
+                    height: '16px',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  {/* 垂直線 */}
+                  <div
+                    className="absolute bg-red-500"
+                    style={{
+                      left: '7px',
+                      top: '0px',
+                      width: '2px',
+                      height: '16px'
+                    }}
+                  />
+                  {/* 水平線 */}
+                  <div
+                    className="absolute bg-red-500"
+                    style={{
+                      left: '0px',
+                      top: '7px',
+                      width: '16px',
+                      height: '2px'
+                    }}
+                  />
+                </div>
+                
+                {/* 座位模板標示 */}
+                <div
+                  className="absolute text-white text-xs font-bold flex items-center justify-center bg-black/60 rounded px-1"
+                  style={{
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: '10px'
+                  }}
+                >
+                  {selectedSeatTemplate}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
