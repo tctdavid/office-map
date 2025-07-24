@@ -149,6 +149,11 @@ const Index = () => {
     setNewContainerEnd(null);
     setShowNameDialog(false);
     setPendingContainer(null);
+    setIsSeatEditMode(false);
+    setSelectedSeat(null);
+    setIsDraggingSeat(false);
+    setSeatDragPosition({ x: 0, y: 0 });
+    setShowSeatPreview(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -161,10 +166,16 @@ const Index = () => {
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
     if (isEditMode) {
+      // 退出編輯模式時清除所有編輯狀態
       setIsContainerEditMode(false);
       setSelectedContainer(null);
       setEditingContainer(null);
       setIsAddingContainer(false);
+      setIsSeatEditMode(false);
+      setSelectedSeat(null);
+      setIsDraggingSeat(false);
+      setSeatDragPosition({ x: 0, y: 0 });
+      setShowSeatPreview(false);
     }
     toast({
       title: isEditMode ? "退出編輯模式" : "進入編輯模式",
@@ -647,18 +658,29 @@ const Index = () => {
 
   // 切換座位編輯模式
   const toggleSeatEditMode = () => {
+    const wasInSeatEditMode = isSeatEditMode;
     setIsSeatEditMode(!isSeatEditMode);
-    if (!isSeatEditMode && !selectedContainer) {
+    
+    if (wasInSeatEditMode) {
+      // 退出座位編輯模式時清除座位相關狀態
+      setSelectedSeat(null);
+      setIsDraggingSeat(false);
+      setSeatDragPosition({ x: 0, y: 0 });
+      setShowSeatPreview(false);
+    }
+    
+    if (!wasInSeatEditMode && !selectedContainer) {
       toast({
         title: "請選擇容器",
         description: "請先選擇一個容器來新增座位",
         variant: "destructive"
       });
+      setIsSeatEditMode(false);
       return;
     }
     toast({
-      title: isSeatEditMode ? "退出座位編輯" : "進入座位編輯",
-      description: isSeatEditMode ? "已退出座位編輯模式" : "點擊容器內位置放置座位",
+      title: wasInSeatEditMode ? "退出座位編輯" : "進入座位編輯",
+      description: wasInSeatEditMode ? "已退出座位編輯模式" : "點擊容器內位置放置座位",
     });
   };
 
