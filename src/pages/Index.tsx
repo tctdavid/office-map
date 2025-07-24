@@ -883,7 +883,9 @@ const Index = () => {
                    onClick={(e) => {
                      if (isSeatEditMode) {
                        handleContainerClickForSeat(e, container);
-                     } else {
+                     }
+                     // 在編輯模式下，總是允許選擇容器
+                     if (isEditMode) {
                        handleContainerClick(container);
                      }
                    }}
