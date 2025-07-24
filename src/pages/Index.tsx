@@ -29,7 +29,29 @@ const Index = () => {
   const [selectedSeat, setSelectedSeat] = useState<any>(null);
   const [containerMousePosition, setContainerMousePosition] = useState({ x: 0, y: 0 });
   const [showSeatPreview, setShowSeatPreview] = useState(false);
+  const [isDraggingSeat, setIsDraggingSeat] = useState(false);
+  const [seatDragPosition, setSeatDragPosition] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
+
+  useEffect(() => {
+    // 處理鍵盤事件 - ESC 取消座位拖拽
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDraggingSeat) {
+        setIsDraggingSeat(false);
+        setSeatDragPosition({ x: 0, y: 0 });
+        toast({
+          title: "拖拽已取消",
+          description: "座位拖拽已取消",
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDraggingSeat, toast]);
 
   useEffect(() => {
     let logoutTimer: NodeJS.Timeout | null = null;
@@ -196,7 +218,60 @@ const Index = () => {
     setDragHandle(handle);
   };
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+  const handleCanvasMouseDown = async (e: React.MouseEvent) => {
+    // 處理座位拖拽釋放
+    if (isDraggingSeat && selectedSeat && selectedContainer) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      // 檢查點擊是否在選中的容器內
+      const isInSelectedContainer = 
+        mouseX >= selectedContainer.x && 
+        mouseX <= selectedContainer.x + selectedContainer.width &&
+        mouseY >= selectedContainer.y && 
+        mouseY <= selectedContainer.y + selectedContainer.height;
+      
+      if (isInSelectedContainer) {
+        // 更新座位位置到資料庫
+        const { error } = await supabase
+          .from('seat_coordinates')
+          .update({
+            x: seatDragPosition.x,
+            y: seatDragPosition.y
+          })
+          .eq('id', selectedSeat.id);
+
+        if (error) {
+          console.error('Error updating seat position:', error);
+          toast({
+            title: "更新失敗",
+            description: "無法更新座位位置",
+            variant: "destructive"
+          });
+        } else {
+          // 更新本地狀態
+          setSeatCoordinates(seats => 
+            seats.map(seat => 
+              seat.id === selectedSeat.id 
+                ? { ...seat, x: seatDragPosition.x, y: seatDragPosition.y }
+                : seat
+            )
+          );
+          
+          toast({
+            title: "座位已移動",
+            description: `座位已移動到新位置 (${seatDragPosition.x}, ${seatDragPosition.y})`,
+          });
+        }
+      }
+      
+      // 退出拖拽模式
+      setIsDraggingSeat(false);
+      setSeatDragPosition({ x: 0, y: 0 });
+      return;
+    }
+    
     if (!isAddingContainer) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
@@ -740,10 +815,21 @@ const Index = () => {
     }
     
     setSelectedSeat(seat);
-    toast({
-      title: "座位已選中",
-      description: `已選中座位 ${seat.id}`,
-    });
+    
+    // 如果已經選中同一個座位，開始拖拽模式
+    if (selectedSeat?.id === seat.id && isEditMode) {
+      setIsDraggingSeat(true);
+      setSeatDragPosition({ x: seat.x, y: seat.y });
+      toast({
+        title: "拖拽模式",
+        description: "移動滑鼠至新位置後點擊釋放座位",
+      });
+    } else {
+      toast({
+        title: "座位已選中",
+        description: `已選中座位 ${seat.id}，再次點擊可進入拖拽模式`,
+      });
+    }
   };
 
   return (
@@ -844,7 +930,9 @@ const Index = () => {
           {/* Container Display Area - Dynamic Canvas Size */}
           <div 
             className={`bg-slate-800/30 rounded-lg relative overflow-hidden ${
-              isAddingContainer ? 'cursor-crosshair' : isSeatEditMode && selectedContainer ? 'cursor-none' : ''
+              isAddingContainer ? 'cursor-crosshair' : 
+              isDraggingSeat ? 'cursor-move' : 
+              isSeatEditMode && selectedContainer ? 'cursor-none' : ''
             }`}
             style={{
               width: `${canvasSize.width}px`,
@@ -859,8 +947,40 @@ const Index = () => {
             onMouseDown={handleCanvasMouseDown}
             onMouseMove={(e) => {
               handleCanvasMouseMove(e);
+              
+              // 處理座位拖拽
+              if (isDraggingSeat && selectedSeat && selectedContainer) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+                
+                // 檢查鼠標是否在選中的容器內
+                const isInSelectedContainer = 
+                  mouseX >= selectedContainer.x && 
+                  mouseX <= selectedContainer.x + selectedContainer.width &&
+                  mouseY >= selectedContainer.y && 
+                  mouseY <= selectedContainer.y + selectedContainer.height;
+                
+                if (isInSelectedContainer) {
+                  // 計算相對於容器的位置
+                  const relativeX = mouseX - selectedContainer.x;
+                  const relativeY = mouseY - selectedContainer.y;
+                  const seatX = snapToGrid(relativeX);
+                  const seatY = snapToGrid(relativeY);
+                  
+                  // 確保座位不會超出容器邊界
+                  const maxX = selectedContainer.width - selectedSeat.pixel_x;
+                  const maxY = selectedContainer.height - selectedSeat.pixel_y;
+                  
+                  setSeatDragPosition({
+                    x: Math.max(0, Math.min(seatX, maxX)),
+                    y: Math.max(0, Math.min(seatY, maxY))
+                  });
+                }
+              }
               // 追蹤鼠標位置用於座位預覽
-              if (isSeatEditMode && selectedContainer) {
+              else if (isSeatEditMode && selectedContainer) {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
@@ -987,28 +1107,72 @@ const Index = () => {
                         seatColor = '#10b981'; // 綠色 (有PC)
                       }
                       
-                      return (
-                        <div
-                          key={seat.id}
-                          className={`absolute border rounded cursor-pointer hover:border-white transition-colors ${
-                            selectedSeat?.id === seat.id ? 'border-yellow-400 border-2' : 'border-gray-400'
-                          }`}
-                          style={{
-                            left: `${seat.x}px`,
-                            top: `${seat.y}px`,
-                            width: `${seat.pixel_x}px`,
-                            height: `${seat.pixel_y}px`,
-                            backgroundColor: selectedSeat?.id === seat.id ? '#ef4444' : seatColor
-                          }}
-                           onClick={(e) => {
-                             // 只有在編輯模式下才允許選擇座位進行操作
-                             if (isEditMode) {
-                               handleSeatClick(e, seat);
-                             }
+                       // 如果是選中的座位並且在拖拽模式，使用拖拽位置
+                       const isCurrentSeatDragging = isDraggingSeat && selectedSeat?.id === seat.id;
+                       const displayX = isCurrentSeatDragging ? seatDragPosition.x : seat.x;
+                       const displayY = isCurrentSeatDragging ? seatDragPosition.y : seat.y;
+                       
+                       return (
+                         <div
+                           key={seat.id}
+                           className={`absolute border rounded cursor-pointer hover:border-white transition-colors ${
+                             selectedSeat?.id === seat.id ? 'border-yellow-400 border-2' : 'border-gray-400'
+                           }`}
+                           style={{
+                             left: `${displayX}px`,
+                             top: `${displayY}px`,
+                             width: `${seat.pixel_x}px`,
+                             height: `${seat.pixel_y}px`,
+                             backgroundColor: selectedSeat?.id === seat.id ? '#ef4444' : seatColor,
+                             // 拖拽中的座位加上特殊效果
+                             opacity: isCurrentSeatDragging ? 0.8 : 1,
+                             transform: isCurrentSeatDragging ? 'scale(1.05)' : 'scale(1)',
+                             zIndex: isCurrentSeatDragging ? 1000 : 'auto'
                            }}
-                          title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
-                        />
-                      );
+                            onClick={(e) => {
+                              // 只有在編輯模式下才允許選擇座位進行操作
+                              if (isEditMode) {
+                                handleSeatClick(e, seat);
+                              }
+                            }}
+                           title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
+                         >
+                           {/* 拖拽中的座位顯示十字線 */}
+                           {isCurrentSeatDragging && (
+                             <div
+                               className="absolute"
+                               style={{
+                                 left: '-8px',
+                                 top: '-8px',
+                                 width: '16px',
+                                 height: '16px',
+                                 pointerEvents: 'none'
+                               }}
+                             >
+                               {/* 垂直線 */}
+                               <div
+                                 className="absolute bg-red-500"
+                                 style={{
+                                   left: '7px',
+                                   top: '0px',
+                                   width: '2px',
+                                   height: '16px'
+                                 }}
+                               />
+                               {/* 水平線 */}
+                               <div
+                                 className="absolute bg-red-500"
+                                 style={{
+                                   left: '0px',
+                                   top: '7px',
+                                   width: '16px',
+                                   height: '2px'
+                                 }}
+                               />
+                             </div>
+                           )}
+                         </div>
+                       );
                     })
                   }
                 </div>
