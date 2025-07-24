@@ -24,6 +24,9 @@ const Index = () => {
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [newContainerName, setNewContainerName] = useState('');
   const [pendingContainer, setPendingContainer] = useState<any>(null);
+  const [isSeatEditMode, setIsSeatEditMode] = useState(false);
+  const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
+  const [selectedSeat, setSelectedSeat] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -480,6 +483,245 @@ const Index = () => {
     };
   };
 
+  // 刪除容器
+  const deleteContainer = async () => {
+    if (!selectedContainer) {
+      toast({
+        title: "請選擇容器",
+        description: "請先選擇要刪除的容器",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('containers')
+        .delete()
+        .eq('id', selectedContainer.id);
+
+      if (error) {
+        console.error('Error deleting container:', error);
+        toast({
+          title: "刪除失敗",
+          description: "無法刪除容器",
+          variant: "destructive"
+        });
+      } else {
+        setContainers(containers.filter(c => c.id !== selectedContainer.id));
+        setSelectedContainer(null);
+        setEditingContainer(null);
+        toast({
+          title: "刪除成功",
+          description: "容器已刪除",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting container:', error);
+      toast({
+        title: "刪除失敗",
+        description: "發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 刪除座位
+  const deleteSeat = async () => {
+    if (!selectedSeat) {
+      toast({
+        title: "請選擇座位",
+        description: "請先選擇要刪除的座位",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('seat_coordinates')
+        .delete()
+        .eq('id', selectedSeat.id);
+
+      if (error) {
+        console.error('Error deleting seat:', error);
+        toast({
+          title: "刪除失敗",
+          description: "無法刪除座位",
+          variant: "destructive"
+        });
+      } else {
+        setSeatCoordinates(seatCoordinates.filter(s => s.id !== selectedSeat.id));
+        setSelectedSeat(null);
+        toast({
+          title: "刪除成功",
+          description: "座位已刪除",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting seat:', error);
+      toast({
+        title: "刪除失敗",
+        description: "發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 切換座位編輯模式
+  const toggleSeatEditMode = () => {
+    setIsSeatEditMode(!isSeatEditMode);
+    if (!isSeatEditMode && !selectedContainer) {
+      toast({
+        title: "請選擇容器",
+        description: "請先選擇一個容器來新增座位",
+        variant: "destructive"
+      });
+      return;
+    }
+    toast({
+      title: isSeatEditMode ? "退出座位編輯" : "進入座位編輯",
+      description: isSeatEditMode ? "已退出座位編輯模式" : "點擊容器內位置放置座位",
+    });
+  };
+
+  // 獲取座位模板尺寸
+  const getSeatSize = (template: string) => {
+    switch (template) {
+      case '120x70': return { width: 120, height: 70 };
+      case '70x90': return { width: 70, height: 90 };
+      case '60x50': return { width: 60, height: 50 };
+      default: return { width: 60, height: 50 };
+    }
+  };
+
+  // 檢查座位重疊
+  const checkSeatOverlap = (newSeat: any, containerId: string) => {
+    return seatCoordinates.some(seat => {
+      if (seat.container_id !== containerId) return false;
+      if (seat.id === newSeat.id) return false;
+      
+      // 檢查兩個矩形是否重疊
+      const isOverlapping = !(
+        newSeat.x + newSeat.pixel_x <= seat.x ||
+        seat.x + seat.pixel_x <= newSeat.x ||
+        newSeat.y + newSeat.pixel_y <= seat.y ||
+        seat.y + seat.pixel_y <= newSeat.y
+      );
+      
+      return isOverlapping;
+    });
+  };
+
+  // 處理容器點擊事件以放置座位
+  const handleContainerClickForSeat = (e: React.MouseEvent, container: any) => {
+    if (!isSeatEditMode) return;
+    
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // 鎖定到網格點 (20px 網格)
+    const snapToGrid = (value: number) => Math.round(value / 20) * 20;
+    const seatSize = getSeatSize(selectedSeatTemplate);
+    
+    const newSeat = {
+      id: `seat_${Date.now()}`,
+      x: snapToGrid(mouseX),
+      y: snapToGrid(mouseY),
+      pixel_x: seatSize.width,
+      pixel_y: seatSize.height,
+      container_id: container.id,
+      container: container.name,
+      seat_template: selectedSeatTemplate,
+      is_empty: true,
+      employee_id: null,
+      pc_id: null
+    };
+    
+    // 檢查座位是否超出容器邊界
+    if (newSeat.x + newSeat.pixel_x > container.width || 
+        newSeat.y + newSeat.pixel_y > container.height ||
+        newSeat.x < 0 || newSeat.y < 0) {
+      toast({
+        title: "座位超出邊界",
+        description: "座位不能超出容器邊界",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 檢查重疊
+    if (checkSeatOverlap(newSeat, container.id)) {
+      toast({
+        title: "座位重疊",
+        description: "座位不能與其他座位重疊",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 新增座位到資料庫
+    addSeatToDatabase(newSeat);
+  };
+
+  // 新增座位到資料庫
+  const addSeatToDatabase = async (seat: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('seat_coordinates')
+        .insert({
+          id: seat.id,
+          x: seat.x,
+          y: seat.y,
+          pixel_x: seat.pixel_x,
+          pixel_y: seat.pixel_y,
+          container_id: seat.container_id,
+          container: seat.container,
+          seat_template: seat.seat_template,
+          is_empty: seat.is_empty,
+          employee_id: seat.employee_id,
+          pc_id: seat.pc_id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating seat:', error);
+        toast({
+          title: "創建失敗",
+          description: "無法創建新座位",
+          variant: "destructive"
+        });
+      } else {
+        setSeatCoordinates([data, ...seatCoordinates]);
+        toast({
+          title: "創建成功",
+          description: "新座位已創建",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving seat:', error);
+      toast({
+        title: "創建失敗",
+        description: "發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 處理座位點擊
+  const handleSeatClick = (e: React.MouseEvent, seat: any) => {
+    e.stopPropagation();
+    setSelectedSeat(seat);
+    toast({
+      title: "座位已選中",
+      description: `已選中座位 ${seat.id}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header - 80px height */}
@@ -616,7 +858,13 @@ const Index = () => {
                   } ${
                     isSelected ? 'border-yellow-400 border-2' : 'border-gray-700'
                   }`}
-                  onClick={() => handleContainerClick(container)}
+                   onClick={(e) => {
+                     if (isSeatEditMode) {
+                       handleContainerClickForSeat(e, container);
+                     } else {
+                       handleContainerClick(container);
+                     }
+                   }}
                   style={{ 
                     position: 'absolute',
                     left: `${currentContainer.x}px`,
@@ -677,14 +925,17 @@ const Index = () => {
                       return (
                         <div
                           key={seat.id}
-                          className="absolute border border-gray-400 rounded cursor-pointer hover:border-white transition-colors"
+                          className={`absolute border rounded cursor-pointer hover:border-white transition-colors ${
+                            selectedSeat?.id === seat.id ? 'border-yellow-400 border-2' : 'border-gray-400'
+                          }`}
                           style={{
                             left: `${seat.x}px`,
                             top: `${seat.y}px`,
                             width: `${seat.pixel_x}px`,
                             height: `${seat.pixel_y}px`,
-                            backgroundColor: seatColor
+                            backgroundColor: selectedSeat?.id === seat.id ? '#ef4444' : seatColor
                           }}
+                          onClick={(e) => handleSeatClick(e, seat)}
                           title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
                         />
                       );
@@ -723,9 +974,32 @@ const Index = () => {
                 {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
               </button>
               
+              {/* 刪除容器 */}
+              <button 
+                onClick={deleteContainer}
+                className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
+              >
+                刪除容器
+              </button>
+              
               {/* 新增座位 */}
-              <button className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 rounded text-sm font-medium transition-colors">
+              <button 
+                onClick={toggleSeatEditMode}
+                className={`w-full px-4 py-3 rounded text-sm font-medium transition-colors ${
+                  isSeatEditMode 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
                 新增座位
+              </button>
+              
+              {/* 刪除座位 */}
+              <button 
+                onClick={deleteSeat}
+                className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
+              >
+                刪除座位
               </button>
               
               {/* 編輯容器表單 */}
@@ -768,11 +1042,64 @@ const Index = () => {
                 </div>
               </div>
               
+              {/* 座位模板選擇 */}
+              {isSeatEditMode && (
+                <div className="mt-6 p-4 bg-slate-700/50 rounded-lg">
+                  <h4 className="text-sm font-medium text-cyan-300 mb-3">座位模板</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <input 
+                        type="radio" 
+                        id="template-120x70" 
+                        name="seatTemplate" 
+                        value="120x70" 
+                        checked={selectedSeatTemplate === '120x70'}
+                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                        className="mr-2"
+                      />
+                      <label htmlFor="template-120x70" className="text-xs text-gray-300">
+                        120px × 70px
+                      </label>
+                    </div>
+                    <div>
+                      <input 
+                        type="radio" 
+                        id="template-70x90" 
+                        name="seatTemplate" 
+                        value="70x90" 
+                        checked={selectedSeatTemplate === '70x90'}
+                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                        className="mr-2"
+                      />
+                      <label htmlFor="template-70x90" className="text-xs text-gray-300">
+                        70px × 90px
+                      </label>
+                    </div>
+                    <div>
+                      <input 
+                        type="radio" 
+                        id="template-60x50" 
+                        name="seatTemplate" 
+                        value="60x50" 
+                        checked={selectedSeatTemplate === '60x50'}
+                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                        className="mr-2"
+                      />
+                      <label htmlFor="template-60x50" className="text-xs text-gray-300">
+                        60px × 50px
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {/* 編輯狀態指示 */}
               <div className="mt-4 text-xs text-green-400 space-y-1">
                 <div>編輯模式: ON</div>
                 <div>編輯容器: {isContainerEditMode ? 'ON' : 'OFF'}</div>
+                <div>編輯座位: {isSeatEditMode ? 'ON' : 'OFF'}</div>
                 <div>異更容器: {editingContainer ? editingContainer.name : '未選擇'}</div>
+                <div>選中座位: {selectedSeat ? selectedSeat.id : '未選擇'}</div>
               </div>
             </div>
           ) : (
