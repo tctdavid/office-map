@@ -31,6 +31,9 @@ const Index = () => {
   const [showSeatPreview, setShowSeatPreview] = useState(false);
   const [isDraggingSeat, setIsDraggingSeat] = useState(false);
   const [seatDragPosition, setSeatDragPosition] = useState({ x: 0, y: 0 });
+  // 備份數據用於取消變更
+  const [backupContainers, setBackupContainers] = useState<any[]>([]);
+  const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -154,6 +157,8 @@ const Index = () => {
     setIsDraggingSeat(false);
     setSeatDragPosition({ x: 0, y: 0 });
     setShowSeatPreview(false);
+    setBackupContainers([]);
+    setBackupSeatCoordinates([]);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -164,22 +169,99 @@ const Index = () => {
   const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name?.includes('管理員');
 
   const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
-    if (isEditMode) {
-      // 退出編輯模式時清除所有編輯狀態
-      setIsContainerEditMode(false);
-      setSelectedContainer(null);
-      setEditingContainer(null);
-      setIsAddingContainer(false);
-      setIsSeatEditMode(false);
-      setSelectedSeat(null);
-      setIsDraggingSeat(false);
-      setSeatDragPosition({ x: 0, y: 0 });
-      setShowSeatPreview(false);
+    if (!isEditMode) {
+      // 進入編輯模式 - 備份當前數據
+      setBackupContainers([...containers]);
+      setBackupSeatCoordinates([...seatCoordinates]);
+      setIsEditMode(true);
+      toast({
+        title: "進入編輯模式",
+        description: "已進入編輯模式",
+      });
+    } else {
+      // 退出編輯模式 - 提供保存或取消選項
+      const hasContainerChanges = JSON.stringify(containers) !== JSON.stringify(backupContainers);
+      const hasSeatChanges = JSON.stringify(seatCoordinates) !== JSON.stringify(backupSeatCoordinates);
+      
+      if (hasContainerChanges || hasSeatChanges) {
+        if (confirm("您有未保存的變更。是否要保存變更？\n點擊「確定」保存變更，點擊「取消」放棄變更。")) {
+          // 用戶選擇保存變更
+          exitEditModeWithSave();
+        } else {
+          // 用戶選擇取消變更
+          cancelAllChanges();
+        }
+      } else {
+        // 沒有變更，直接退出
+        exitEditModeWithoutChanges();
+      }
     }
+  };
+
+  const exitEditModeWithSave = () => {
+    // 清除編輯狀態但保留變更
+    setIsEditMode(false);
+    setIsContainerEditMode(false);
+    setSelectedContainer(null);
+    setEditingContainer(null);
+    setIsAddingContainer(false);
+    setIsSeatEditMode(false);
+    setSelectedSeat(null);
+    setIsDraggingSeat(false);
+    setSeatDragPosition({ x: 0, y: 0 });
+    setShowSeatPreview(false);
+    setBackupContainers([]);
+    setBackupSeatCoordinates([]);
+    
     toast({
-      title: isEditMode ? "退出編輯模式" : "進入編輯模式",
-      description: isEditMode ? "已退出編輯模式" : "已進入編輯模式",
+      title: "變更已保存",
+      description: "已退出編輯模式並保存變更",
+    });
+  };
+
+  const cancelAllChanges = () => {
+    // 恢復備份數據
+    setContainers([...backupContainers]);
+    setSeatCoordinates([...backupSeatCoordinates]);
+    
+    // 清除編輯狀態
+    setIsEditMode(false);
+    setIsContainerEditMode(false);
+    setSelectedContainer(null);
+    setEditingContainer(null);
+    setIsAddingContainer(false);
+    setIsSeatEditMode(false);
+    setSelectedSeat(null);
+    setIsDraggingSeat(false);
+    setSeatDragPosition({ x: 0, y: 0 });
+    setShowSeatPreview(false);
+    setBackupContainers([]);
+    setBackupSeatCoordinates([]);
+    
+    toast({
+      title: "變更已取消",
+      description: "已退出編輯模式並取消所有變更",
+    });
+  };
+
+  const exitEditModeWithoutChanges = () => {
+    // 沒有變更，直接清除狀態
+    setIsEditMode(false);
+    setIsContainerEditMode(false);
+    setSelectedContainer(null);
+    setEditingContainer(null);
+    setIsAddingContainer(false);
+    setIsSeatEditMode(false);
+    setSelectedSeat(null);
+    setIsDraggingSeat(false);
+    setSeatDragPosition({ x: 0, y: 0 });
+    setShowSeatPreview(false);
+    setBackupContainers([]);
+    setBackupSeatCoordinates([]);
+    
+    toast({
+      title: "退出編輯模式",
+      description: "已退出編輯模式",
     });
   };
 
@@ -889,7 +971,7 @@ const Index = () => {
                       : 'border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white'
                   }`}
                 >
-                  {isEditMode ? '退出編輯' : '編輯位置'}
+                  {isEditMode ? '完成編輯' : '編輯位置'}
                 </button>
               )}
               <button 
