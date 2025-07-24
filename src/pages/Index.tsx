@@ -615,7 +615,18 @@ const Index = () => {
 
   // 處理容器點擊事件以放置座位
   const handleContainerClickForSeat = (e: React.MouseEvent, container: any) => {
-    if (!isSeatEditMode) return;
+    // 只有在編輯模式且座位編輯模式開啟時才允許新增座位
+    if (!isEditMode || !isSeatEditMode) return;
+    
+    // 只能在選中的編輯容器中新增座位
+    if (!selectedContainer || selectedContainer.id !== container.id) {
+      toast({
+        title: "請選擇容器",
+        description: "請先選擇要編輯的容器",
+        variant: "destructive"
+      });
+      return;
+    }
     
     e.stopPropagation();
     
@@ -715,6 +726,17 @@ const Index = () => {
   // 處理座位點擊
   const handleSeatClick = (e: React.MouseEvent, seat: any) => {
     e.stopPropagation();
+    
+    // 如果在編輯模式下，需要檢查是否在選中的容器中
+    if (isEditMode && selectedContainer && seat.container_id !== selectedContainer.id) {
+      toast({
+        title: "座位不在選中容器中",
+        description: "請在選中的容器中選擇座位",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedSeat(seat);
     toast({
       title: "座位已選中",
@@ -935,7 +957,12 @@ const Index = () => {
                             height: `${seat.pixel_y}px`,
                             backgroundColor: selectedSeat?.id === seat.id ? '#ef4444' : seatColor
                           }}
-                          onClick={(e) => handleSeatClick(e, seat)}
+                           onClick={(e) => {
+                             // 只有在編輯模式下才允許選擇座位進行操作
+                             if (isEditMode) {
+                               handleSeatClick(e, seat);
+                             }
+                           }}
                           title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
                         />
                       );
@@ -982,14 +1009,15 @@ const Index = () => {
                 刪除容器
               </button>
               
-              {/* 新增座位 */}
+               {/* 新增座位 */}
               <button 
                 onClick={toggleSeatEditMode}
+                disabled={!selectedContainer}
                 className={`w-full px-4 py-3 rounded text-sm font-medium transition-colors ${
                   isSeatEditMode 
                     ? 'bg-green-600 hover:bg-green-700' 
                     : 'bg-green-600 hover:bg-green-700'
-                }`}
+                } ${!selectedContainer ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 新增座位
               </button>
@@ -997,7 +1025,12 @@ const Index = () => {
               {/* 刪除座位 */}
               <button 
                 onClick={deleteSeat}
-                className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
+                disabled={!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id}
+                className={`w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors ${
+                  (!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id) 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : ''
+                }`}
               >
                 刪除座位
               </button>
