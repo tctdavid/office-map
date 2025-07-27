@@ -1387,16 +1387,23 @@ const Index = () => {
                                       }
                                       alt={seat.employees.name}
                                       className="w-full h-full object-cover rounded-md"
+                                      onLoad={() => {
+                                        console.log('頭像載入成功:', seat.employees.name, seat.employees.photo);
+                                      }}
                                       onError={(e) => {
-                                        // 如果圖片載入失敗，顯示預設圖示
+                                        console.error('頭像載入失敗:', seat.employees.name, seat.employees.photo);
+                                        console.error('嘗試載入的URL:', e.currentTarget.src);
+                                        // 如果圖片載入失敗，隱藏圖片並顯示預設圖示
                                         e.currentTarget.style.display = 'none';
-                                        if (e.currentTarget.parentElement) {
-                                          e.currentTarget.parentElement.innerHTML = `
-                                            <div class="w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md">
-                                              <div class="text-2xl mb-1">👤</div>
-                                              <div class="text-xs font-bold text-center px-1 leading-tight">${seat.employees.name}</div>
-                                            </div>
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) {
+                                          const fallback = document.createElement('div');
+                                          fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md';
+                                          fallback.innerHTML = `
+                                            <div class="text-2xl mb-1">👤</div>
+                                            <div class="text-xs font-bold text-center px-1 leading-tight">${seat.employees.name}</div>
                                           `;
+                                          parent.appendChild(fallback);
                                         }
                                       }}
                                     />
