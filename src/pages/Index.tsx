@@ -113,7 +113,18 @@ const Index = () => {
     const fetchSeatCoordinates = async () => {
       const { data, error } = await supabase
         .from('seat_coordinates')
-        .select('*')
+        .select(`
+          *,
+          employees:employee_id (
+            id,
+            name,
+            photo,
+            department,
+            position,
+            extension,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) {
