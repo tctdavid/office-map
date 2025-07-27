@@ -1740,7 +1740,7 @@ const Index = () => {
                   </svg>
                   <span className="text-white text-sm">員工資訊</span>
                 </div>
-                <span className="text-white text-sm font-medium">{selectedSeatEmployee.name}</span>
+                <span className="text-white text-[28px] font-medium">{selectedSeatEmployee.name}</span>
               </div>
               
               {/* 第二排: 員工頭像置中，下方顯示部門名稱 */}
