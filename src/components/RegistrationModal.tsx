@@ -19,7 +19,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
     department: "",
     position: "",
     extension: "",
-    photo: ""
+    photo: "",
+    photoPreview: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -38,11 +39,13 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
     if (!file) return;
 
     try {
-      // 這裡可以實現照片上傳功能
-      // 暫時只顯示檔案名稱
+      // 創建預覽URL
+      const previewUrl = URL.createObjectURL(file);
+      
       setFormData(prev => ({
         ...prev,
-        photo: file.name
+        photo: file.name,
+        photoPreview: previewUrl
       }));
       
       toast({
@@ -201,7 +204,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
         department: "",
         position: "",
         extension: "",
-        photo: ""
+        photo: "",
+        photoPreview: ""
       });
       
       // 關閉對話框
@@ -226,7 +230,15 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-[480px] max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-[480px] max-h-[90vh] overflow-y-auto relative">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors z-10"
+        >
+          ✕
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-center mb-6">
           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
@@ -255,8 +267,16 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Photo Upload */}
           <div className="text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-              <User className="w-12 h-12 text-gray-400" />
+            <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center overflow-hidden">
+              {formData.photoPreview ? (
+                <img 
+                  src={formData.photoPreview} 
+                  alt="預覽照片" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 text-gray-400" />
+              )}
             </div>
             <label htmlFor="photo-upload" className="cursor-pointer">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-gray-400 transition-colors">
@@ -283,7 +303,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="請輸入您的姓名"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                 required
               />
             </div>
@@ -296,7 +316,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="example@company.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                 required
               />
             </div>
@@ -307,14 +327,14 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
             <label className="block text-sm font-medium text-gray-700 mb-1">
               密碼 *
             </label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              placeholder="請設定您的密碼"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              required
-            />
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                placeholder="請設定您的密碼"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                required
+              />
           </div>
           
           {/* Department and Position */}
@@ -328,7 +348,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
                 value={formData.department}
                 onChange={(e) => handleInputChange('department', e.target.value)}
                 placeholder="如：資訊部"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
               />
             </div>
             <div>
@@ -340,7 +360,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
                 value={formData.position}
                 onChange={(e) => handleInputChange('position', e.target.value)}
                 placeholder="如：軟體工程師"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
               />
             </div>
           </div>
@@ -355,7 +375,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
               value={formData.extension}
               onChange={(e) => handleInputChange('extension', e.target.value)}
               placeholder="如：1002"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
             />
           </div>
           
@@ -370,14 +390,6 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
             </Button>
           </div>
         </form>
-        
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-        >
-          ✕
-        </button>
       </div>
     </div>
   );
