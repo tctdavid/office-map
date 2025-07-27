@@ -1733,7 +1733,7 @@ const Index = () => {
             /* 員工資訊顯示 */
             <div className="py-2">
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -1744,8 +1744,8 @@ const Index = () => {
               </div>
               
               {/* 第二排: 員工頭像置中，下方顯示部門名稱 */}
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-500">
+              <div className="flex flex-col items-center mb-2">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-500 mb-1">
                   {selectedSeatEmployee.photo ? (
                     <img 
                       src={selectedSeatEmployee.photo.startsWith('http') 
@@ -1772,7 +1772,7 @@ const Index = () => {
               </div>
               
               {/* 第三排: 電話圖示 + "分機:" + 分機內容 */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                 </svg>
