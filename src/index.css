@@ -103,3 +103,13 @@ All colors MUST be HSL.
     @apply bg-slate-900 text-white;
   }
 }
+
+/* 頭像擺動動畫 */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}

@@ -1387,47 +1387,47 @@ const Index = () => {
                           >
                             {/* 員工資訊顯示 */}
                             {seat.employees && (
-                              <div className="absolute inset-1 flex items-center justify-center rounded-md overflow-hidden">
+                              <div className="absolute inset-0 flex items-center justify-center">
                                 {seat.employees.photo ? (
-                                  // 有頭像時顯示頭像
-                                  <div className="relative w-full h-full">
+                                  // 有頭像時顯示圓形頭像
+                                  <div className="relative group">
                                     <img
                                       src={seat.employees.photo.startsWith('http') 
                                         ? seat.employees.photo 
                                         : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employees.photo}`
                                       }
                                       alt={seat.employees.name}
-                                      className="w-full h-full object-cover rounded-md"
+                                      className="w-12 h-12 object-cover rounded-full border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300"
                                       onLoad={() => {
                                         console.log('頭像載入成功:', seat.employees.name, seat.employees.photo);
                                       }}
                                       onError={(e) => {
                                         console.error('頭像載入失敗:', seat.employees.name, seat.employees.photo);
                                         console.error('嘗試載入的URL:', e.currentTarget.src);
-                                        // 如果圖片載入失敗，隱藏圖片並顯示預設圖示
+                                        // 如果圖片載入失敗，隱藏圖片並顯示預設圓形圖示
                                         e.currentTarget.style.display = 'none';
                                         const parent = e.currentTarget.parentElement;
                                         if (parent) {
                                           const fallback = document.createElement('div');
-                                          fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md';
-                                          fallback.innerHTML = `
-                                            <div class="text-2xl mb-1">👤</div>
-                                            <div class="text-xs font-bold text-center px-1 leading-tight">${seat.employees.name}</div>
-                                          `;
+                                          fallback.className = 'w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300';
+                                          fallback.innerHTML = '<div class="text-xl">👤</div>';
                                           parent.appendChild(fallback);
                                         }
                                       }}
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-md"></div>
-                                    <div className="absolute bottom-1 left-1 right-1 text-white text-xs font-bold text-center">
+                                    {/* 懸停時顯示名字 */}
+                                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                       {seat.employees.name}
                                     </div>
                                   </div>
                                 ) : (
-                                  // 沒有頭像時顯示預設圖示和名字
-                                  <div className="w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md">
-                                    <div className="text-2xl mb-1">👤</div>
-                                    <div className="text-xs font-bold text-center px-1 leading-tight">
+                                  // 沒有頭像時顯示圓形預設圖示
+                                  <div className="relative group">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300">
+                                      <div className="text-xl">👤</div>
+                                    </div>
+                                    {/* 懸停時顯示名字 */}
+                                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                       {seat.employees.name}
                                     </div>
                                   </div>
