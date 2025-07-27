@@ -374,7 +374,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
         >
           ✕
         </button>

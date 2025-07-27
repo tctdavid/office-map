@@ -181,6 +181,50 @@ const Index = () => {
     });
   };
 
+  // 處理座位點擊（註冊模式）
+  const handleSeatClickForRegistration = async (seat: any) => {
+    if (!isSelectingSeatForRegistration) return;
+    
+    // 檢查座位是否為空
+    if (!seat.is_empty) {
+      toast({
+        title: "座位已被佔用",
+        description: "請選擇其他空座位",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 再次確認資料庫中的座位狀態
+    const { data, error } = await supabase
+      .from('seat_coordinates')
+      .select('is_empty, employee_id')
+      .eq('id', seat.id)
+      .single();
+    
+    if (error) {
+      toast({
+        title: "檢查座位失敗",
+        description: "無法檢查座位狀態，請重試",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!data.is_empty || data.employee_id) {
+      toast({
+        title: "座位已被佔用",
+        description: "此座位已被其他人註冊，請選擇其他座位",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 座位可用，選中並開啟註冊視窗
+    setSelectedSeatForRegistration(seat);
+    setIsRegistrationModalOpen(true);
+  };
+
   // 處理註冊成功
   const handleRegistrationSuccess = async () => {
     // 重新載入座位資料以顯示更新
@@ -944,24 +988,7 @@ const Index = () => {
     
     // 如果正在選擇註冊座位
     if (isSelectingSeatForRegistration) {
-      // 檢查座位是否為空
-      if (!seat.is_empty || seat.employee_id) {
-        toast({
-          title: "座位已被佔用",
-          description: "請選擇一個空的座位",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // 選中座位並打開註冊表單
-      setSelectedSeatForRegistration(seat);
-      setIsRegistrationModalOpen(true);
-      setIsSelectingSeatForRegistration(false);
-      toast({
-        title: "座位已選中",
-        description: `已選中座位 ${seat.id}，請填寫註冊資訊`,
-      });
+      handleSeatClickForRegistration(seat);
       return;
     }
     
@@ -1266,9 +1293,9 @@ const Index = () => {
                         seatColor = '#10b981'; // 綠色 (有PC)
                       }
                       
-                      // 在註冊座位選擇模式時，突出顯示空座位
-                      if (isSelectingSeatForRegistration && seat.is_empty && !seat.employee_id) {
-                        seatColor = '#22c55e'; // 亮綠色表示可選擇的空座位
+                      // 在註冊座位選擇模式時，如果是選中的座位顯示紅色
+                      if (isSelectingSeatForRegistration && selectedSeatForRegistration?.id === seat.id) {
+                        seatColor = '#ef4444'; // 紅色表示已選中
                       }
                       
                        // 如果是選中的座位並且在拖拽模式，使用拖拽位置
