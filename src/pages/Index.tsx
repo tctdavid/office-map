@@ -39,6 +39,8 @@ const Index = () => {
   // 備份數據用於取消變更
   const [backupContainers, setBackupContainers] = useState<any[]>([]);
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedSeatEmployee, setSelectedSeatEmployee] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -230,14 +232,41 @@ const Index = () => {
 
   // 處理註冊成功
   const handleRegistrationSuccess = async () => {
-    // 重新載入座位資料以顯示更新
+    // 重新載入座位資料和員工資訊以顯示更新
     const { data, error } = await supabase
       .from('seat_coordinates')
-      .select('*')
+      .select(`
+        *,
+        employees:employee_id (
+          id,
+          name,
+          photo,
+          department,
+          position,
+          extension,
+          email
+        )
+      `)
       .order('created_at', { ascending: false });
     
     if (!error && data) {
       setSeatCoordinates(data);
+      
+      // 自動選中剛註冊的座位並顯示員工資訊
+      const registeredSeat = data.find(seat => seat.id === selectedSeatForRegistration?.id);
+      if (registeredSeat && registeredSeat.employees) {
+        setSelectedSeat(registeredSeat);
+        setSelectedSeatEmployee(registeredSeat.employees);
+      }
+    }
+
+    // 重新載入員工資料
+    const { data: employeeData, error: employeeError } = await supabase
+      .from('employees')
+      .select('*');
+    
+    if (!employeeError && employeeData) {
+      setEmployees(employeeData);
     }
     
     // 重置註冊狀態
@@ -1007,6 +1036,13 @@ const Index = () => {
     
     setSelectedSeat(seat);
     
+    // 設定員工資訊
+    if (seat.employees) {
+      setSelectedSeatEmployee(seat.employees);
+    } else {
+      setSelectedSeatEmployee(null);
+    }
+    
     // 如果已經選中同一個座位，開始拖拽模式
     if (selectedSeat?.id === seat.id && isEditMode) {
       setIsDraggingSeat(true);
@@ -1016,9 +1052,10 @@ const Index = () => {
         description: "移動滑鼠至新位置後點擊釋放座位",
       });
     } else {
+      const seatInfo = seat.employees ? `座位 ${seat.id} - ${seat.employees.name}` : `座位 ${seat.id}`;
       toast({
         title: "座位已選中",
-        description: `已選中座位 ${seat.id}，再次點擊可進入拖拽模式`,
+        description: isEditMode ? `已選中${seatInfo}，再次點擊可進入拖拽模式` : `已選中${seatInfo}`,
       });
     }
   };
@@ -1329,10 +1366,27 @@ const Index = () => {
                                  handleSeatClick(e, seat);
                                }
                              }}
-                           title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
-                         >
-                           {/* 拖拽中的座位顯示十字線 */}
-                           {isCurrentSeatDragging && (
+                            title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employees ? `員工: ${seat.employees.name}` : '空座位'}`}
+                          >
+                            {/* 員工頭像 */}
+                            {seat.employees && seat.employees.photo && (
+                              <div
+                                className="absolute inset-0 flex items-center justify-center bg-cover bg-center rounded"
+                                style={{
+                                  backgroundImage: `url(${seat.employees.photo})`,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-black/20 rounded"></div>
+                                <div className="relative text-white text-xs font-bold text-center p-1">
+                                  {seat.employees.name}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* 拖拽中的座位顯示十字線 */}
+                            {isCurrentSeatDragging && (
                              <div
                                className="absolute"
                                style={{
@@ -1619,6 +1673,51 @@ const Index = () => {
                 <div>編輯座位: {isSeatEditMode ? 'ON' : 'OFF'}</div>
                 <div>異更容器: {editingContainer ? editingContainer.name : '未選擇'}</div>
                 <div>選中座位: {selectedSeat ? selectedSeat.id : '未選擇'}</div>
+              </div>
+            </div>
+          ) : selectedSeatEmployee ? (
+            /* 員工資訊顯示 */
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                  {selectedSeatEmployee.photo ? (
+                    <img 
+                      src={selectedSeatEmployee.photo} 
+                      alt={selectedSeatEmployee.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg">👤</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-white">{selectedSeatEmployee.name}</h3>
+                  <p className="text-sm text-blue-300">{selectedSeatEmployee.department}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-400">職位:</label>
+                  <p className="text-sm text-white">{selectedSeatEmployee.position || '未設定'}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-gray-400">分機:</label>
+                  <p className="text-sm text-white">{selectedSeatEmployee.extension || '未設定'}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-gray-400">Email:</label>
+                  <p className="text-sm text-white break-all">{selectedSeatEmployee.email}</p>
+                </div>
+                
+                {selectedSeat && (
+                  <div>
+                    <label className="text-xs text-gray-400">座位:</label>
+                    <p className="text-sm text-white">{selectedSeat.container} - {selectedSeat.id}</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
