@@ -1391,7 +1391,7 @@ const Index = () => {
                                 {seat.employees.photo ? (
                                   // 有頭像時顯示圓形頭像
                                   <div className="relative group">
-                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
+                                    <div className="w-[60px] h-[60px] rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
                                       <img
                                         src={seat.employees.photo.startsWith('http') 
                                           ? seat.employees.photo 
@@ -1418,20 +1418,20 @@ const Index = () => {
                                        />
                                      </div>
                                      {/* 懸停時顯示名字 */}
-                                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                     <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                       {seat.employees.name}
                                     </div>
                                   </div>
                                 ) : (
                                   // 沒有頭像時顯示圓形預設圖示
                                   <div className="relative group">
-                                    <div className="employee-avatar w-16 h-16 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/50 shadow-lg transition-all duration-300">
+                                    <div className="employee-avatar w-[60px] h-[60px] rounded-full overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/50 shadow-lg transition-all duration-300">
                                       <div className="w-full h-full text-white flex items-center justify-center">
                                         <div className="text-2xl">👤</div>
                                       </div>
                                     </div>
                                     {/* 懸停時顯示名字 */}
-                                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                       {seat.employees.name}
                                     </div>
                                   </div>
