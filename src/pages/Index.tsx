@@ -1326,17 +1326,22 @@ const Index = () => {
                   {seatCoordinates
                     .filter(seat => seat.container_id === container.id)
                     .map((seat) => {
-                      // 決定座位顏色
-                      let seatColor = '#6b7280'; // 預設灰色 (空位)
+                      // 決定座位顏色 - 使用透明色
+                      let seatColor = 'rgba(107, 114, 128, 0.6)'; // 透明灰色 (空位)
+                      let borderColor = 'rgba(156, 163, 175, 0.4)'; // 預設邊框
+                      
                       if (seat.employee_id) {
-                        seatColor = '#3b82f6'; // 藍色 (有員工)
+                        seatColor = 'rgba(59, 130, 246, 0.6)'; // 透明藍色 (有員工)
+                        borderColor = 'rgba(59, 130, 246, 0.8)'; // 藍色邊框
                       } else if (seat.pc_id) {
-                        seatColor = '#10b981'; // 綠色 (有PC)
+                        seatColor = 'rgba(16, 185, 129, 0.6)'; // 透明綠色 (有PC)
+                        borderColor = 'rgba(16, 185, 129, 0.8)'; // 綠色邊框
                       }
                       
                       // 在註冊座位選擇模式時，如果是選中的座位顯示紅色
                       if (isSelectingSeatForRegistration && selectedSeatForRegistration?.id === seat.id) {
-                        seatColor = '#ef4444'; // 紅色表示已選中
+                        seatColor = 'rgba(239, 68, 68, 0.6)'; // 透明紅色表示已選中
+                        borderColor = 'rgba(239, 68, 68, 0.8)'; // 紅色邊框
                       }
                       
                        // 如果是選中的座位並且在拖拽模式，使用拖拽位置
@@ -1347,15 +1352,17 @@ const Index = () => {
                        return (
                          <div
                            key={seat.id}
-                           className={`absolute border rounded cursor-pointer hover:border-white transition-colors ${
-                             selectedSeat?.id === seat.id ? 'border-yellow-400 border-2' : 'border-gray-400'
-                           }`}
+                            className={`absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
+                              selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
+                            }`}
                            style={{
                              left: `${displayX}px`,
                              top: `${displayY}px`,
                              width: `${seat.pixel_x}px`,
                              height: `${seat.pixel_y}px`,
-                             backgroundColor: selectedSeat?.id === seat.id ? '#ef4444' : seatColor,
+                              backgroundColor: selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 0.8)' : seatColor,
+                              border: `2px solid ${selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 1)' : borderColor}`,
+                              backdropFilter: 'blur(4px)',
                              // 拖拽中的座位加上特殊效果
                              opacity: isCurrentSeatDragging ? 0.8 : 1,
                              transform: isCurrentSeatDragging ? 'scale(1.05)' : 'scale(1)',
@@ -1369,26 +1376,24 @@ const Index = () => {
                           >
                             {/* 員工資訊顯示 */}
                             {seat.employees && (
-                              <div className="absolute inset-0 flex items-center justify-center rounded overflow-hidden">
+                              <div className="absolute inset-1 flex items-center justify-center rounded-md overflow-hidden">
                                 {seat.employees.photo ? (
                                   // 有頭像時顯示頭像
-                                  <div
-                                    className="absolute inset-0 bg-cover bg-center"
-                                    style={{
-                                      backgroundImage: `url(${seat.employees.photo})`,
-                                      backgroundSize: 'cover',
-                                      backgroundPosition: 'center',
-                                    }}
-                                  >
-                                    <div className="absolute inset-0 bg-black/30"></div>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs font-bold text-center py-1 px-1">
+                                  <div className="relative w-full h-full">
+                                    <img
+                                      src={seat.employees.photo}
+                                      alt={seat.employees.name}
+                                      className="w-full h-full object-cover rounded-md"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-md"></div>
+                                    <div className="absolute bottom-1 left-1 right-1 text-white text-xs font-bold text-center">
                                       {seat.employees.name}
                                     </div>
                                   </div>
                                 ) : (
                                   // 沒有頭像時顯示預設圖示和名字
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-600/90 text-white">
-                                    <div className="text-lg mb-1">👤</div>
+                                  <div className="w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md">
+                                    <div className="text-2xl mb-1">👤</div>
                                     <div className="text-xs font-bold text-center px-1 leading-tight">
                                       {seat.employees.name}
                                     </div>
