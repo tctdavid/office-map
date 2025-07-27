@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
+import RegistrationModal from "@/components/RegistrationModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
+  const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [currentEmployee, setCurrentEmployee] = useState<{name: string, email: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
@@ -159,10 +163,40 @@ const Index = () => {
     setShowSeatPreview(false);
     setBackupContainers([]);
     setBackupSeatCoordinates([]);
+    setIsSelectingSeatForRegistration(false);
+    setSelectedSeatForRegistration(null);
+    setIsRegistrationModalOpen(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
     });
+  };
+
+  // 處理註冊按鈕點擊
+  const handleRegistrationClick = () => {
+    setIsSelectingSeatForRegistration(true);
+    toast({
+      title: "請選擇座位",
+      description: "請在平面圖中點選一個空的座位進行註冊",
+    });
+  };
+
+  // 處理註冊成功
+  const handleRegistrationSuccess = async () => {
+    // 重新載入座位資料以顯示更新
+    const { data, error } = await supabase
+      .from('seat_coordinates')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      setSeatCoordinates(data);
+    }
+    
+    // 重置註冊狀態
+    setIsSelectingSeatForRegistration(false);
+    setSelectedSeatForRegistration(null);
+    setIsRegistrationModalOpen(false);
   };
 
   // 檢查是否為管理員
@@ -908,6 +942,29 @@ const Index = () => {
   const handleSeatClick = (e: React.MouseEvent, seat: any) => {
     e.stopPropagation();
     
+    // 如果正在選擇註冊座位
+    if (isSelectingSeatForRegistration) {
+      // 檢查座位是否為空
+      if (!seat.is_empty || seat.employee_id) {
+        toast({
+          title: "座位已被佔用",
+          description: "請選擇一個空的座位",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // 選中座位並打開註冊表單
+      setSelectedSeatForRegistration(seat);
+      setIsRegistrationModalOpen(true);
+      setIsSelectingSeatForRegistration(false);
+      toast({
+        title: "座位已選中",
+        description: `已選中座位 ${seat.id}，請填寫註冊資訊`,
+      });
+      return;
+    }
+    
     // 如果在編輯模式下，需要檢查是否在選中的容器中
     if (isEditMode && selectedContainer && seat.container_id !== selectedContainer.id) {
       toast({
@@ -990,7 +1047,7 @@ const Index = () => {
                 登入
               </button>
               <button 
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={handleRegistrationClick}
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors"
               >
                 註冊
@@ -1209,6 +1266,11 @@ const Index = () => {
                         seatColor = '#10b981'; // 綠色 (有PC)
                       }
                       
+                      // 在註冊座位選擇模式時，突出顯示空座位
+                      if (isSelectingSeatForRegistration && seat.is_empty && !seat.employee_id) {
+                        seatColor = '#22c55e'; // 亮綠色表示可選擇的空座位
+                      }
+                      
                        // 如果是選中的座位並且在拖拽模式，使用拖拽位置
                        const isCurrentSeatDragging = isDraggingSeat && selectedSeat?.id === seat.id;
                        const displayX = isCurrentSeatDragging ? seatDragPosition.x : seat.x;
@@ -1232,11 +1294,11 @@ const Index = () => {
                              zIndex: isCurrentSeatDragging ? 1000 : 'auto'
                            }}
                             onClick={(e) => {
-                              // 只有在編輯模式下才允許選擇座位進行操作
-                              if (isEditMode) {
-                                handleSeatClick(e, seat);
-                              }
-                            }}
+                               // 允許在編輯模式或註冊座位選擇模式下點擊座位
+                               if (isEditMode || isSelectingSeatForRegistration) {
+                                 handleSeatClick(e, seat);
+                               }
+                             }}
                            title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y})`}
                          >
                            {/* 拖拽中的座位顯示十字線 */}
@@ -1348,7 +1410,29 @@ const Index = () => {
 
         {/* Right Panel - Seat Details or Edit Tools - 250px width */}
         <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
-          {isEditMode ? (
+          {isSelectingSeatForRegistration ? (
+            /* 註冊座位選擇模式 */
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4">
+                <span className="text-2xl">🪑</span>
+              </div>
+              <h3 className="text-lg font-medium text-blue-300 mb-4">選擇座位</h3>
+              <p className="text-sm text-gray-400 mb-4">請在平面圖中點選一個空的座位</p>
+              <p className="text-xs text-gray-500">選中座位後將打開註冊表單</p>
+              <button 
+                onClick={() => {
+                  setIsSelectingSeatForRegistration(false);
+                  toast({
+                    title: "已取消",
+                    description: "已取消座位選擇",
+                  });
+                }}
+                className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm transition-colors"
+              >
+                取消選擇
+              </button>
+            </div>
+          ) : isEditMode ? (
             /* 編輯模式 */
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-cyan-300 text-center mb-6">編輯模式</h3>
@@ -1530,6 +1614,18 @@ const Index = () => {
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Registration Modal */}
+      <RegistrationModal 
+        isOpen={isRegistrationModalOpen} 
+        onClose={() => {
+          setIsRegistrationModalOpen(false);
+          setSelectedSeatForRegistration(null);
+          setIsSelectingSeatForRegistration(false);
+        }}
+        selectedSeat={selectedSeatForRegistration}
+        onRegistrationSuccess={handleRegistrationSuccess}
       />
 
       {/* Name Dialog for New Container */}
