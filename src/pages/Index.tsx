@@ -1034,6 +1034,7 @@ const Index = () => {
       return;
     }
     
+    // 設定選中的座位
     setSelectedSeat(seat);
     
     // 設定員工資訊
@@ -1043,7 +1044,7 @@ const Index = () => {
       setSelectedSeatEmployee(null);
     }
     
-    // 如果已經選中同一個座位，開始拖拽模式
+    // 如果在編輯模式且已經選中同一個座位，開始拖拽模式
     if (selectedSeat?.id === seat.id && isEditMode) {
       setIsDraggingSeat(true);
       setSeatDragPosition({ x: seat.x, y: seat.y });
@@ -1327,7 +1328,7 @@ const Index = () => {
                     .map((seat) => {
                       // 決定座位顏色
                       let seatColor = '#6b7280'; // 預設灰色 (空位)
-                      if (seat.employee_id && seat.pc_id) {
+                      if (seat.employee_id) {
                         seatColor = '#3b82f6'; // 藍色 (有員工)
                       } else if (seat.pc_id) {
                         seatColor = '#10b981'; // 綠色 (有PC)
@@ -1360,12 +1361,10 @@ const Index = () => {
                              transform: isCurrentSeatDragging ? 'scale(1.05)' : 'scale(1)',
                              zIndex: isCurrentSeatDragging ? 1000 : 'auto'
                            }}
-                            onClick={(e) => {
-                               // 允許在編輯模式或註冊座位選擇模式下點擊座位
-                               if (isEditMode || isSelectingSeatForRegistration) {
-                                 handleSeatClick(e, seat);
-                               }
-                             }}
+                             onClick={(e) => {
+                                // 允許所有模式下點擊座位查看資訊
+                                handleSeatClick(e, seat);
+                              }}
                             title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employees ? `員工: ${seat.employees.name}` : '空座位'}`}
                           >
                             {/* 員工頭像 */}
