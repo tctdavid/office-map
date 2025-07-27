@@ -1731,7 +1731,7 @@ const Index = () => {
             </div>
           ) : selectedSeatEmployee ? (
             /* 員工資訊顯示 */
-            <div className="p-6">
+            <div className="p-3">
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
