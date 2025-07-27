@@ -1547,7 +1547,7 @@ const Index = () => {
         </div>
 
         {/* Right Panel - Seat Details or Edit Tools - 250px width */}
-        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 py-6">
           {isSelectingSeatForRegistration ? (
             /* 註冊座位選擇模式 */
             <div className="flex flex-col items-center justify-center h-full text-center">
