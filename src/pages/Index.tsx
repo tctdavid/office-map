@@ -9,6 +9,7 @@ import { User } from '@supabase/supabase-js';
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [registrationModalKey, setRegistrationModalKey] = useState(0);
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
   const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -174,6 +175,8 @@ const Index = () => {
 
   // 處理註冊按鈕點擊
   const handleRegistrationClick = () => {
+    // 每次打開註冊表單時，重置表單內容（通過改變 key 強制重新渲染）
+    setRegistrationModalKey(prev => prev + 1);
     setIsSelectingSeatForRegistration(true);
     toast({
       title: "請選擇座位",
@@ -1645,6 +1648,7 @@ const Index = () => {
 
       {/* Registration Modal */}
       <RegistrationModal 
+        key={registrationModalKey}
         isOpen={isRegistrationModalOpen} 
         onClose={() => {
           setIsRegistrationModalOpen(false);
