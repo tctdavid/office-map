@@ -1367,20 +1367,33 @@ const Index = () => {
                               }}
                             title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employees ? `員工: ${seat.employees.name}` : '空座位'}`}
                           >
-                            {/* 員工頭像 */}
-                            {seat.employees && seat.employees.photo && (
-                              <div
-                                className="absolute inset-0 flex items-center justify-center bg-cover bg-center rounded"
-                                style={{
-                                  backgroundImage: `url(${seat.employees.photo})`,
-                                  backgroundSize: 'cover',
-                                  backgroundPosition: 'center',
-                                }}
-                              >
-                                <div className="absolute inset-0 bg-black/20 rounded"></div>
-                                <div className="relative text-white text-xs font-bold text-center p-1">
-                                  {seat.employees.name}
-                                </div>
+                            {/* 員工資訊顯示 */}
+                            {seat.employees && (
+                              <div className="absolute inset-0 flex items-center justify-center rounded overflow-hidden">
+                                {seat.employees.photo ? (
+                                  // 有頭像時顯示頭像
+                                  <div
+                                    className="absolute inset-0 bg-cover bg-center"
+                                    style={{
+                                      backgroundImage: `url(${seat.employees.photo})`,
+                                      backgroundSize: 'cover',
+                                      backgroundPosition: 'center',
+                                    }}
+                                  >
+                                    <div className="absolute inset-0 bg-black/30"></div>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs font-bold text-center py-1 px-1">
+                                      {seat.employees.name}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  // 沒有頭像時顯示預設圖示和名字
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-600/90 text-white">
+                                    <div className="text-lg mb-1">👤</div>
+                                    <div className="text-xs font-bold text-center px-1 leading-tight">
+                                      {seat.employees.name}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
