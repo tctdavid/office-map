@@ -1381,9 +1381,24 @@ const Index = () => {
                                   // 有頭像時顯示頭像
                                   <div className="relative w-full h-full">
                                     <img
-                                      src={seat.employees.photo}
+                                      src={seat.employees.photo.startsWith('http') 
+                                        ? seat.employees.photo 
+                                        : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employees.photo}`
+                                      }
                                       alt={seat.employees.name}
                                       className="w-full h-full object-cover rounded-md"
+                                      onError={(e) => {
+                                        // 如果圖片載入失敗，顯示預設圖示
+                                        e.currentTarget.style.display = 'none';
+                                        if (e.currentTarget.parentElement) {
+                                          e.currentTarget.parentElement.innerHTML = `
+                                            <div class="w-full h-full flex flex-col items-center justify-center bg-white/20 backdrop-blur-sm text-white rounded-md">
+                                              <div class="text-2xl mb-1">👤</div>
+                                              <div class="text-xs font-bold text-center px-1 leading-tight">${seat.employees.name}</div>
+                                            </div>
+                                          `;
+                                        }
+                                      }}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-md"></div>
                                     <div className="absolute bottom-1 left-1 right-1 text-white text-xs font-bold text-center">
