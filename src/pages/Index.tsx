@@ -1731,45 +1731,94 @@ const Index = () => {
             </div>
           ) : selectedSeatEmployee ? (
             /* 員工資訊顯示 */
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
-                  {selectedSeatEmployee.photo ? (
-                    <img 
-                      src={selectedSeatEmployee.photo} 
-                      alt={selectedSeatEmployee.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-lg">👤</span>
-                  )}
+            <div className="p-6 space-y-6">
+              {/* 標題區域 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">👤</span>
+                  </div>
+                  <h3 className="text-lg font-medium text-white">員工資訊</h3>
                 </div>
-                <div>
-                  <h3 className="text-lg font-medium text-white">{selectedSeatEmployee.name}</h3>
-                  <p className="text-sm text-blue-300">{selectedSeatEmployee.department}</p>
+                <div className="text-lg font-bold text-white">{selectedSeatEmployee.name}</div>
+              </div>
+              
+              {/* 頭像區域 */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg">
+                    {selectedSeatEmployee.photo ? (
+                      <img 
+                        src={selectedSeatEmployee.photo.startsWith('http') 
+                          ? selectedSeatEmployee.photo 
+                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${selectedSeatEmployee.photo}`
+                        }
+                        alt={selectedSeatEmployee.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // 如果圖片載入失敗，顯示預設圖示
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div class="w-full h-full bg-gray-600 flex items-center justify-center"><span class="text-2xl text-white">👤</span></div>';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center">
+                        <span className="text-2xl text-white">👤</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
+              {/* 部門資訊 */}
+              <div className="text-center">
+                <p className="text-lg text-blue-300 font-medium">{selectedSeatEmployee.department || '未設定部門'}</p>
+              </div>
+              
+              {/* 詳細資訊 */}
               <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-gray-400">職位:</label>
-                  <p className="text-sm text-white">{selectedSeatEmployee.position || '未設定'}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">📞</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-400">分機: </span>
+                    <span className="text-sm text-white">{selectedSeatEmployee.extension || 'B1'}</span>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="text-xs text-gray-400">分機:</label>
-                  <p className="text-sm text-white">{selectedSeatEmployee.extension || '未設定'}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">📋</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-400">部門: </span>
+                    <span className="text-sm text-white">{selectedSeatEmployee.position || selectedSeatEmployee.department || '未設定'}</span>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="text-xs text-gray-400">Email:</label>
-                  <p className="text-sm text-white break-all">{selectedSeatEmployee.email}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✉️</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-400">Email: </span>
+                    <span className="text-xs text-white break-all">{selectedSeatEmployee.email}</span>
+                  </div>
                 </div>
                 
                 {selectedSeat && (
-                  <div>
-                    <label className="text-xs text-gray-400">座位:</label>
-                    <p className="text-sm text-white">{selectedSeat.container} - {selectedSeat.id}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">🪑</span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-400">座位: </span>
+                      <span className="text-sm text-white">{selectedSeat.container} - {selectedSeat.id}</span>
+                    </div>
                   </div>
                 )}
               </div>
