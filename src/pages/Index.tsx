@@ -1547,7 +1547,7 @@ const Index = () => {
         </div>
 
         {/* Right Panel - Seat Details or Edit Tools - 250px width */}
-        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 py-6">
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-6">
           {isSelectingSeatForRegistration ? (
             /* 註冊座位選擇模式 */
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -1731,7 +1731,7 @@ const Index = () => {
             </div>
           ) : selectedSeatEmployee ? (
             /* 員工資訊顯示 */
-            <div>
+            <div className="py-2">
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
