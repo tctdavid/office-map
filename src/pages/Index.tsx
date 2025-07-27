@@ -1346,8 +1346,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel - Seat Details or Edit Tools - 125px width */}
-        <div className="w-[125px] bg-slate-800/30 rounded-lg border border-gray-700 p-3">
+        {/* Right Panel - Seat Details or Edit Tools - 250px width */}
+        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 p-6">
           {isEditMode ? (
             /* 編輯模式 */
             <div className="space-y-4">
