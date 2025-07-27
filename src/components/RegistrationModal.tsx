@@ -8,10 +8,11 @@ interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedSeat?: any;
+  containers?: any[];
   onRegistrationSuccess?: () => void;
 }
 
-const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSuccess }: RegistrationModalProps) => {
+const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onRegistrationSuccess }: RegistrationModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -250,15 +251,33 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, onRegistrationSucces
         <p className="text-gray-600 text-center mb-6">請填寫您的資訊以完成註冊</p>
         
         {/* Seat Selection Notice */}
-        {selectedSeat && (
+        {selectedSeat ? (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
             <div className="flex items-center">
               <div className="w-4 h-4 bg-orange-400 rounded-full mr-2"></div>
               <span className="text-sm text-orange-800">
-                請先選擇座位
+                已選擇座位
               </span>
             </div>
             <p className="text-sm text-orange-700 mt-1">
+              容器：{containers.find(c => c.id === selectedSeat.container_id)?.name || selectedSeat.container || '未知容器'} | 
+              座位：{selectedSeat.id}
+            </p>
+            {selectedSeat.employee_id && (
+              <p className="text-sm text-red-600 mt-1 font-medium">
+                ⚠️ 此座位已被佔用，請重新選擇其他座位
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center">
+              <div className="w-4 h-4 bg-blue-400 rounded-full mr-2"></div>
+              <span className="text-sm text-blue-800">
+                請先選擇座位
+              </span>
+            </div>
+            <p className="text-sm text-blue-700 mt-1">
               請在平面圖中選擇一個空的座位
             </p>
           </div>

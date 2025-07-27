@@ -1652,6 +1652,7 @@ const Index = () => {
           setIsSelectingSeatForRegistration(false);
         }}
         selectedSeat={selectedSeatForRegistration}
+        containers={containers}
         onRegistrationSuccess={handleRegistrationSuccess}
       />
 
