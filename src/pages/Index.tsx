@@ -1735,12 +1735,12 @@ const Index = () => {
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-white text-sm">員工資訊</span>
+                  <span className="text-white text-[24px]">員工資訊</span>
                 </div>
-                <span className="text-white text-[28px] font-medium">{selectedSeatEmployee.name}</span>
+                <span className="text-white text-[24px] font-medium">{selectedSeatEmployee.name}</span>
               </div>
               
               {/* 第二排: 員工頭像置中，下方顯示部門名稱 */}
