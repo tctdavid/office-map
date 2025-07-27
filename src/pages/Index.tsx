@@ -771,8 +771,8 @@ const Index = () => {
     switch (template) {
       case '120x70': return { width: 120, height: 70 };
       case '70x90': return { width: 70, height: 90 };
-      case '60x50': return { width: 60, height: 50 };
-      default: return { width: 60, height: 50 };
+      case '40x40': return { width: 40, height: 40 };
+      default: return { width: 40, height: 40 };
     }
   };
 
@@ -1483,15 +1483,15 @@ const Index = () => {
                     <div>
                       <input 
                         type="radio" 
-                        id="template-60x50" 
+                        id="template-40x40" 
                         name="seatTemplate" 
-                        value="60x50" 
-                        checked={selectedSeatTemplate === '60x50'}
+                        value="40x40" 
+                        checked={selectedSeatTemplate === '40x40'}
                         onChange={(e) => setSelectedSeatTemplate(e.target.value)}
                         className="mr-2"
                       />
-                      <label htmlFor="template-60x50" className="text-xs text-gray-300">
-                        60px × 50px
+                      <label htmlFor="template-40x40" className="text-xs text-gray-300">
+                        40px × 40px
                       </label>
                     </div>
                   </div>
