@@ -1363,9 +1363,9 @@ const Index = () => {
                        return (
                          <div
                            key={seat.id}
-                            className={`absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
-                              selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
-                            }`}
+                             className={`seat-container absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
+                               selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
+                             }`}
                            style={{
                              left: `${displayX}px`,
                              top: `${displayY}px`,
@@ -1387,7 +1387,7 @@ const Index = () => {
                           >
                             {/* 員工資訊顯示 */}
                             {seat.employees && (
-                              <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
                                 {seat.employees.photo ? (
                                   // 有頭像時顯示圓形頭像
                                   <div className="relative group">
@@ -1397,7 +1397,7 @@ const Index = () => {
                                         : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employees.photo}`
                                       }
                                       alt={seat.employees.name}
-                                      className="w-12 h-12 object-cover rounded-full border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300"
+                                      className="employee-avatar w-16 h-16 object-cover rounded-full border-2 border-white/50 shadow-lg transition-all duration-300"
                                       onLoad={() => {
                                         console.log('頭像載入成功:', seat.employees.name, seat.employees.photo);
                                       }}
@@ -1409,8 +1409,8 @@ const Index = () => {
                                         const parent = e.currentTarget.parentElement;
                                         if (parent) {
                                           const fallback = document.createElement('div');
-                                          fallback.className = 'w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300';
-                                          fallback.innerHTML = '<div class="text-xl">👤</div>';
+                                          fallback.className = 'employee-avatar w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg transition-all duration-300';
+                                          fallback.innerHTML = '<div class="text-2xl">👤</div>';
                                           parent.appendChild(fallback);
                                         }
                                       }}
@@ -1423,8 +1423,8 @@ const Index = () => {
                                 ) : (
                                   // 沒有頭像時顯示圓形預設圖示
                                   <div className="relative group">
-                                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg animate-[wiggle_2s_ease-in-out_infinite] hover:animate-[wiggle_0.5s_ease-in-out_infinite] transition-all duration-300">
-                                      <div className="text-xl">👤</div>
+                                    <div className="employee-avatar w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center border-2 border-white/50 shadow-lg transition-all duration-300">
+                                      <div className="text-2xl">👤</div>
                                     </div>
                                     {/* 懸停時顯示名字 */}
                                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
