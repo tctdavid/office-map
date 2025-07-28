@@ -1117,6 +1117,12 @@ const Index = () => {
                 </button>
               )}
               <button 
+                onClick={handleProfileEditClick}
+                className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors"
+              >
+                修改個人資料
+              </button>
+              <button 
                 onClick={handleLogout}
                 className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
               >
@@ -1132,10 +1138,10 @@ const Index = () => {
                 登入
               </button>
               <button 
-                onClick={user ? handleProfileEditClick : handleRegistrationClick}
+                onClick={handleRegistrationClick}
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors"
               >
-                {user ? "修改個人資料" : "註冊"}
+                註冊
               </button>
             </>
           )}
