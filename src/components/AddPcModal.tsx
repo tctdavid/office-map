@@ -283,110 +283,120 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">電腦名稱 *</Label>
+                <Label htmlFor="name" className="text-white">電腦名稱 *</Label>
                 <Input
                   id="name"
                   placeholder="例：辦公室PC-001"
                   value={pcData.name}
                   onChange={(e) => setPcData({ ...pcData, name: e.target.value })}
                   required
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="cpu">處理器</Label>
+                <Label htmlFor="cpu" className="text-white">處理器</Label>
                 <Input
                   id="cpu"
                   placeholder="例：Intel Core i5-12400"
                   value={pcData.cpu}
                   onChange={(e) => setPcData({ ...pcData, cpu: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="memory">記憶體</Label>
+                <Label htmlFor="memory" className="text-white">記憶體</Label>
                 <Input
                   id="memory"
                   placeholder="例：16GB DDR4"
                   value={pcData.memory}
                   onChange={(e) => setPcData({ ...pcData, memory: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="storage">儲存空間</Label>
+                <Label htmlFor="storage" className="text-white">儲存空間</Label>
                 <Input
                   id="storage"
                   placeholder="例：512GB SSD"
                   value={pcData.storage}
                   onChange={(e) => setPcData({ ...pcData, storage: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="graphics">顯示卡</Label>
+              <Label htmlFor="graphics" className="text-white">顯示卡</Label>
               <Input
                 id="graphics"
                 placeholder="例：NVIDIA GeForce RTX 3060"
                 value={pcData.graphics}
                 onChange={(e) => setPcData({ ...pcData, graphics: e.target.value })}
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* 詳細資訊 */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">📋 詳細資訊</h3>
+            <h3 className="text-lg font-medium text-white">📋 詳細資訊</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="brand">品牌</Label>
+                <Label htmlFor="brand" className="text-white">品牌</Label>
                 <Input
                   id="brand"
                   placeholder="例：Dell"
                   value={pcData.brand}
                   onChange={(e) => setPcData({ ...pcData, brand: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="model">型號</Label>
+                <Label htmlFor="model" className="text-white">型號</Label>
                 <Input
                   id="model"
                   placeholder="例：OptiPlex 7090"
                   value={pcData.model}
                   onChange={(e) => setPcData({ ...pcData, model: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="serial_number">序號</Label>
+                <Label htmlFor="serial_number" className="text-white">序號</Label>
                 <Input
                   id="serial_number"
                   placeholder="例：ABC123456789"
                   value={pcData.serial_number}
                   onChange={(e) => setPcData({ ...pcData, serial_number: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="purchase_date">購買日期</Label>
+                <Label htmlFor="purchase_date" className="text-white">購買日期</Label>
                 <Input
                   id="purchase_date"
                   type="date"
                   value={pcData.purchase_date}
                   onChange={(e) => setPcData({ ...pcData, purchase_date: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               
               <div className="col-span-2">
-                <Label htmlFor="warranty_expiry">保固到期</Label>
+                <Label htmlFor="warranty_expiry" className="text-white">保固到期</Label>
                 <Input
                   id="warranty_expiry"
                   type="date"
                   value={pcData.warranty_expiry}
                   onChange={(e) => setPcData({ ...pcData, warranty_expiry: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -394,13 +404,14 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
 
           {/* 備註 */}
           <div>
-            <Label htmlFor="notes">備註</Label>
+            <Label htmlFor="notes" className="text-white">備註</Label>
             <Textarea
               id="notes"
               placeholder="其他相關資訊..."
               value={pcData.notes}
               onChange={(e) => setPcData({ ...pcData, notes: e.target.value })}
               rows={3}
+              className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
             />
           </div>
 
