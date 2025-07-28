@@ -1780,7 +1780,7 @@ const Index = () => {
                     </div>
                   )}
                 </div>
-                <span className="text-blue-300 text-sm">{selectedSeatEmployee.department || '未設定部門'}</span>
+                <span className="text-blue-300 text-sm">{selectedSeatEmployee.position || '未設定職位'}</span>
               </div>
               
               {/* 第三排: 電話圖示 + "分機:" + 分機內容 */}
