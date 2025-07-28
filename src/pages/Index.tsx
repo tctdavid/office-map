@@ -197,6 +197,12 @@ const Index = () => {
     });
   };
 
+  // 處理修改個人資料按鈕點擊
+  const handleProfileEditClick = () => {
+    setRegistrationModalKey(prev => prev + 1);
+    setIsRegistrationModalOpen(true);
+  };
+
   // 處理座位點擊（註冊模式）
   const handleSeatClickForRegistration = async (seat: any) => {
     if (!isSelectingSeatForRegistration) return;
@@ -1126,10 +1132,10 @@ const Index = () => {
                 登入
               </button>
               <button 
-                onClick={handleRegistrationClick}
+                onClick={user ? handleProfileEditClick : handleRegistrationClick}
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors"
               >
-                註冊
+                {user ? "修改個人資料" : "註冊"}
               </button>
             </>
           )}
@@ -1824,6 +1830,8 @@ const Index = () => {
         selectedSeat={selectedSeatForRegistration}
         containers={containers}
         onRegistrationSuccess={handleRegistrationSuccess}
+        isEditMode={!!user}
+        currentEmployee={currentEmployee}
       />
 
       {/* Name Dialog for New Container */}

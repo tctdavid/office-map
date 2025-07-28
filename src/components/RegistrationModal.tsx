@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,9 +10,11 @@ interface RegistrationModalProps {
   selectedSeat?: any;
   containers?: any[];
   onRegistrationSuccess?: () => void;
+  isEditMode?: boolean;
+  currentEmployee?: {name: string, email: string, id?: string} | null;
 }
 
-const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onRegistrationSuccess }: RegistrationModalProps) => {
+const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onRegistrationSuccess, isEditMode = false, currentEmployee }: RegistrationModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,6 +25,51 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
     photo: "",
     photoPreview: ""
   });
+  
+  // 加載當前員工數據用於編輯模式
+  useEffect(() => {
+    if (isEditMode && currentEmployee && isOpen) {
+      // 從資料庫載入完整的員工資料
+      const loadEmployeeData = async () => {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('email', currentEmployee.email)
+          .single();
+        
+        if (!error && data) {
+          setFormData({
+            name: data.name || "",
+            email: data.email || "",
+            password: "", // 不預填密碼
+            department: data.department || "",
+            position: data.position || "",
+            extension: data.extension || "",
+            photo: data.photo || "",
+            photoPreview: data.photo && data.photo.startsWith('http') 
+              ? data.photo 
+              : data.photo 
+                ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${data.photo}`
+                : ""
+          });
+        }
+      };
+      
+      loadEmployeeData();
+    } else if (!isEditMode) {
+      // 重置表單用於註冊模式
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        department: "",
+        position: "",
+        extension: "",
+        photo: "",
+        photoPreview: ""
+      });
+    }
+  }, [isEditMode, currentEmployee, isOpen]);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
@@ -83,16 +130,26 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
       return false;
     }
     
-    if (!formData.password.trim()) {
-      toast({
-        title: "請填寫密碼",
-        description: "密碼為必填欄位",
-        variant: "destructive"
-      });
-      return false;
-    }
-    
-    if (formData.password.length < 6) {
+    // 在編輯模式下，如果密碼為空則跳過密碼驗證（表示不修改密碼）
+    if (!isEditMode) {
+      if (!formData.password.trim()) {
+        toast({
+          title: "請填寫密碼",
+          description: "密碼為必填欄位",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      if (formData.password.length < 6) {
+        toast({
+          title: "密碼太短",
+          description: "密碼至少需要6個字元",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } else if (formData.password.trim() && formData.password.length < 6) {
       toast({
         title: "密碼太短",
         description: "密碼至少需要6個字元",
@@ -124,78 +181,114 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
     setIsLoading(true);
     
     try {
-      // 檢查電子郵件是否已存在
-      const { data: existingEmployee, error: checkError } = await supabase
-        .from('employees')
-        .select('email')
-        .eq('email', formData.email)
-        .single();
-      
-      if (existingEmployee) {
-        toast({
-          title: "電子郵件已存在",
-          description: "此電子郵件已被註冊，請使用其他電子郵件",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      // 創建新員工記錄
-      const { data: newEmployee, error } = await supabase
-        .from('employees')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          password_hash: formData.password, // 注意：實際應用中應該使用適當的密碼加密
+      if (isEditMode && currentEmployee) {
+        // 編輯模式：更新現有員工資料
+        const updateData: any = {
           department: formData.department || null,
           position: formData.position || null,
           extension: formData.extension || null,
           photo: formData.photo || null,
-          role: 'employee',
-          is_active: true
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Registration error:', error);
-        toast({
-          title: "註冊失敗",
-          description: "註冊過程中發生錯誤，請重試",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // 如果有選中的座位，更新座位的員工資訊
-      if (selectedSeat && newEmployee) {
-        const { error: seatError } = await supabase
-          .from('seat_coordinates')
-          .update({
-            employee_id: newEmployee.id,
-            is_empty: false
-          })
-          .eq('id', selectedSeat.id);
+        };
         
-        if (seatError) {
-          console.error('Error updating seat:', seatError);
+        // 只有在密碼不為空時才更新密碼
+        if (formData.password.trim()) {
+          updateData.password_hash = formData.password;
+        }
+        
+        const { error } = await supabase
+          .from('employees')
+          .update(updateData)
+          .eq('email', currentEmployee.email);
+          
+        if (error) {
+          console.error('Update error:', error);
           toast({
-            title: "座位分配失敗",
-            description: "員工註冊成功，但座位分配失敗",
+            title: "更新失敗",
+            description: "更新個人資料時發生錯誤，請重試",
             variant: "destructive"
           });
+          return;
+        }
+        
+        toast({
+          title: "更新成功",
+          description: "個人資料已成功更新",
+        });
+        
+      } else {
+        // 註冊模式：檢查電子郵件是否已存在
+        const { data: existingEmployee, error: checkError } = await supabase
+          .from('employees')
+          .select('email')
+          .eq('email', formData.email)
+          .single();
+        
+        if (existingEmployee) {
+          toast({
+            title: "電子郵件已存在",
+            description: "此電子郵件已被註冊，請使用其他電子郵件",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // 創建新員工記錄
+        const { data: newEmployee, error } = await supabase
+          .from('employees')
+          .insert({
+            name: formData.name,
+            email: formData.email,
+            password_hash: formData.password, // 注意：實際應用中應該使用適當的密碼加密
+            department: formData.department || null,
+            position: formData.position || null,
+            extension: formData.extension || null,
+            photo: formData.photo || null,
+            role: 'employee',
+            is_active: true
+          })
+          .select()
+          .single();
+      
+        if (error) {
+          console.error('Registration error:', error);
+          toast({
+            title: "註冊失敗",
+            description: "註冊過程中發生錯誤，請重試",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // 如果有選中的座位，更新座位的員工資訊
+        if (selectedSeat && newEmployee) {
+          const { error: seatError } = await supabase
+            .from('seat_coordinates')
+            .update({
+              employee_id: newEmployee.id,
+              is_empty: false
+            })
+            .eq('id', selectedSeat.id);
+          
+          if (seatError) {
+            console.error('Error updating seat:', seatError);
+            toast({
+              title: "座位分配失敗",
+              description: "員工註冊成功，但座位分配失敗",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "註冊成功",
+              description: `歡迎 ${formData.name}！您已成功註冊並分配到座位。`,
+            });
+          }
         } else {
           toast({
             title: "註冊成功",
-            description: `歡迎 ${formData.name}！您已成功註冊並分配到座位。`,
+            description: `歡迎 ${formData.name}！您已成功註冊。`,
           });
         }
-      } else {
-        toast({
-          title: "註冊成功",
-          description: `歡迎 ${formData.name}！您已成功註冊。`,
-        });
       }
       
       // 重置表單
@@ -248,11 +341,15 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           </div>
         </div>
         
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">加入我們的團隊</h2>
-        <p className="text-gray-600 text-center mb-6">請填寫您的資訊以完成註冊</p>
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-2">
+          {isEditMode ? "修改個人資料" : "加入我們的團隊"}
+        </h2>
+        <p className="text-gray-600 text-center mb-6">
+          {isEditMode ? "請修改您的個人資訊" : "請填寫您的資訊以完成註冊"}
+        </p>
         
-        {/* Seat Selection Notice */}
-        {selectedSeat ? (
+        {/* Seat Selection Notice - 只在註冊模式顯示 */}
+        {!isEditMode && (selectedSeat ? (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
             <div className="flex items-center">
               <div className="w-4 h-4 bg-orange-400 rounded-full mr-2"></div>
@@ -282,7 +379,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
               請在平面圖中選擇一個空的座位
             </p>
           </div>
-        )}
+        ))}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Photo Upload */}
@@ -325,6 +422,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
                 placeholder="請輸入您的姓名"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                 required
+                disabled={isEditMode}
               />
             </div>
             <div>
@@ -338,6 +436,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
                 placeholder="example@company.com"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                 required
+                disabled={isEditMode}
               />
             </div>
           </div>
@@ -345,16 +444,16 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              密碼 *
+              密碼 {isEditMode ? "(留空表示不修改)" : "*"}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="請設定您的密碼"
+                placeholder={isEditMode ? "輸入新密碼（可選）" : "請設定您的密碼"}
                 className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                required
+                required={!isEditMode}
               />
               <button
                 type="button"
@@ -419,7 +518,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
               disabled={isLoading}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-3 text-lg font-medium"
             >
-              {isLoading ? "註冊中..." : "完成註冊"}
+              {isLoading ? (isEditMode ? "更新中..." : "註冊中...") : (isEditMode ? "儲存變更" : "完成註冊")}
             </Button>
           </div>
         </form>
