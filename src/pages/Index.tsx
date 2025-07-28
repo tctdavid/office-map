@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import AuthModal from "@/components/AuthModal";
 import RegistrationModal from "@/components/RegistrationModal";
+import AddPcModal from "@/components/AddPcModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -41,7 +42,59 @@ const Index = () => {
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedSeatEmployee, setSelectedSeatEmployee] = useState<any>(null);
+  const [isAddPcModalOpen, setIsAddPcModalOpen] = useState(false);
+  const [isSelectingSeatForPc, setIsSelectingSeatForPc] = useState(false);
+  const [selectedSeatForPc, setSelectedSeatForPc] = useState<any>(null);
+  const [pcs, setPcs] = useState<any[]>([]);
   const { toast } = useToast();
+
+  // 載入座位座標資料
+  const fetchSeatCoordinates = async () => {
+    const { data, error } = await supabase
+      .from('seat_coordinates')
+      .select(`
+        *,
+        employees:employee_id (
+          id,
+          name,
+          photo,
+          department,
+          position,
+          extension,
+          email
+        ),
+        pcs:pc_id (
+          id,
+          name,
+          cpu,
+          memory,
+          storage,
+          graphics,
+          photo
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching seat coordinates:', error);
+    } else {
+      setSeatCoordinates(data || []);
+    }
+  };
+
+  // 載入電腦資料
+  const fetchPcs = async () => {
+    const { data, error } = await supabase
+      .from('pcs')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching PCs:', error);
+    } else {
+      setPcs(data || []);
+    }
+  };
 
   useEffect(() => {
     // 處理鍵盤事件 - ESC 取消座位拖拽
@@ -109,34 +162,11 @@ const Index = () => {
       }
     };
 
-    // 載入座位座標資料
-    const fetchSeatCoordinates = async () => {
-      const { data, error } = await supabase
-        .from('seat_coordinates')
-        .select(`
-          *,
-          employees:employee_id (
-            id,
-            name,
-            photo,
-            department,
-            position,
-            extension,
-            email
-          )
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching seat coordinates:', error);
-      } else {
-        setSeatCoordinates(data || []);
-      }
-    };
 
     fetchCanvasSize();
     fetchContainers();
     fetchSeatCoordinates();
+    fetchPcs();
 
     return () => {
       clearTimer();
@@ -180,6 +210,9 @@ const Index = () => {
     setIsSelectingSeatForRegistration(false);
     setSelectedSeatForRegistration(null);
     setIsRegistrationModalOpen(false);
+    setIsSelectingSeatForPc(false);
+    setSelectedSeatForPc(null);
+    setIsAddPcModalOpen(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -294,6 +327,44 @@ const Index = () => {
 
   // 檢查是否為管理員
   const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name?.includes('管理員');
+
+  // 處理新增電腦按鈕點擊
+  const handleAddPcClick = () => {
+    setIsSelectingSeatForPc(true);
+    toast({
+      title: "請選擇座位",
+      description: "請點擊要添加電腦的座位",
+    });
+  };
+
+  // 處理座位點擊（新增電腦模式）
+  const handleSeatClickForPc = (seat: any) => {
+    if (!isSelectingSeatForPc) return;
+    
+    if (seat.pc_id) {
+      toast({
+        title: "座位已有電腦",
+        description: "該座位已經配置了電腦設備",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedSeatForPc(seat);
+    setIsSelectingSeatForPc(false);
+    setIsAddPcModalOpen(true);
+  };
+
+  // 新增電腦成功後的處理
+  const handleAddPcSuccess = async () => {
+    await fetchSeatCoordinates();
+    await fetchPcs();
+    setSelectedSeatForPc(null);
+    toast({
+      title: "電腦新增成功",
+      description: "電腦設備已成功新增到座位",
+    });
+  };
 
   const toggleEditMode = () => {
     if (!isEditMode) {
@@ -1041,6 +1112,12 @@ const Index = () => {
       return;
     }
     
+    // 如果正在選擇新增電腦座位
+    if (isSelectingSeatForPc) {
+      handleSeatClickForPc(seat);
+      return;
+    }
+    
     // 如果在編輯模式下，需要檢查是否在選中的容器中
     if (isEditMode && selectedContainer && seat.container_id !== selectedContainer.id) {
       toast({
@@ -1105,16 +1182,28 @@ const Index = () => {
           {user ? (
             <>
               {isAdmin && (
-                <button 
-                  onClick={toggleEditMode}
-                  className={`px-4 py-2 rounded text-sm transition-colors ${
-                    isEditMode 
-                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                      : 'border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white'
-                  }`}
-                >
-                  {isEditMode ? '完成編輯' : '編輯位置'}
-                </button>
+                <>
+                  <button 
+                    onClick={toggleEditMode}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isEditMode 
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                        : 'border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white'
+                    }`}
+                  >
+                    {isEditMode ? '完成編輯' : '編輯位置'}
+                  </button>
+                  <button 
+                    onClick={handleAddPcClick}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isSelectingSeatForPc 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'border border-green-500 text-green-400 hover:bg-green-600 hover:text-white'
+                    }`}
+                  >
+                    {isSelectingSeatForPc ? '選擇座位中...' : '新增電腦'}
+                  </button>
+                </>
               )}
               <button 
                 onClick={handleProfileEditClick}
@@ -1445,11 +1534,19 @@ const Index = () => {
                                     {/* 懸停時顯示名字 */}
                                     <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
                                       {seat.employees.name}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
+                             
+                             {/* 電腦圖示顯示 */}
+                             {seat.pcs && (
+                               <div className="absolute bottom-1 right-1">
+                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                   <span className="text-white text-xs">💻</span>
+                                 </div>
+                               </div>
+                             )}
                             
                             {/* 拖拽中的座位顯示十字線 */}
                             {isCurrentSeatDragging && (
