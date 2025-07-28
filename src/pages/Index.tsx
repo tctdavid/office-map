@@ -1537,8 +1537,9 @@ const Index = () => {
                                    </div>
                                  </div>
                                )}
-                             </div>
-                             
+                              </div>
+                             )}
+                              
                              {/* 電腦圖示顯示 */}
                              {seat.pcs && (
                                <div className="absolute bottom-1 right-1">
@@ -1935,6 +1936,18 @@ const Index = () => {
         onRegistrationSuccess={handleRegistrationSuccess}
         isEditMode={!!user}
         currentEmployee={currentEmployee}
+      />
+
+      {/* Add PC Modal */}
+      <AddPcModal 
+        isOpen={isAddPcModalOpen}
+        onClose={() => {
+          setIsAddPcModalOpen(false);
+          setSelectedSeatForPc(null);
+          setIsSelectingSeatForPc(false);
+        }}
+        selectedSeat={selectedSeatForPc}
+        onSuccess={handleAddPcSuccess}
       />
 
       {/* Name Dialog for New Container */}
