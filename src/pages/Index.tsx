@@ -177,8 +177,24 @@ const Index = () => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
-    // 設置登入員工資訊在右側面板，並保持顯示直到登出
-    setSelectedSeatEmployee(employee);
+    // 需要獲取完整的員工資訊來顯示在右側面板
+    try {
+      const { data: fullEmployeeData, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('id', employee.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching full employee data:', error);
+        setSelectedSeatEmployee(employee); // 使用基本資料作為後備
+      } else {
+        setSelectedSeatEmployee(fullEmployeeData);
+      }
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      setSelectedSeatEmployee(employee); // 使用基本資料作為後備
+    }
     
     // 設定30分鐘後自動登出
     const logoutTimer = setTimeout(() => {
