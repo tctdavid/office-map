@@ -173,9 +173,16 @@ const Index = () => {
     };
   }, [isContainerEditMode, editingContainer, isDragging]);
 
-  const handleLoginSuccess = (employee: {id: string, name: string, email: string}) => {
+  const handleLoginSuccess = async (employee: {id: string, name: string, email: string}) => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
+    
+    // 找到該員工的座位並顯示在右側資訊區
+    const employeeSeat = seatCoordinates.find(seat => seat.employee_id === employee.id);
+    if (employeeSeat) {
+      setSelectedSeat(employeeSeat);
+      setSelectedSeatEmployee(employeeSeat.employees || employee);
+    }
     
     // 設定30分鐘後自動登出
     const logoutTimer = setTimeout(() => {
