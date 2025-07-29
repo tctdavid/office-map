@@ -295,6 +295,15 @@ const Index = () => {
           position,
           extension,
           email
+        ),
+        pcs:pc_id (
+          id,
+          name,
+          cpu,
+          memory,
+          storage,
+          graphics,
+          photo
         )
       `)
       .order('created_at', { ascending: false });
