@@ -177,12 +177,8 @@ const Index = () => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
-    // 找到該員工的座位並顯示在右側資訊區
-    const employeeSeat = seatCoordinates.find(seat => seat.employee_id === employee.id);
-    if (employeeSeat) {
-      setSelectedSeat(employeeSeat);
-      setSelectedSeatEmployee(employeeSeat.employees || employee);
-    }
+    // 不自動選擇座位和設置員工資訊，讓用戶手動點擊座位查看
+    // 這樣右側面板就不會一直顯示登入員工的資訊
     
     // 設定30分鐘後自動登出
     const logoutTimer = setTimeout(() => {
@@ -1858,7 +1854,7 @@ const Index = () => {
                 <div>選中座位: {selectedSeat ? selectedSeat.id : '未選擇'}</div>
               </div>
             </div>
-          ) : selectedSeatEmployee ? (
+          ) : selectedSeat && selectedSeatEmployee ? (
             /* 員工資訊顯示 */
             <div className="py-2">
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
