@@ -177,8 +177,8 @@ const Index = () => {
     setCurrentEmployee(employee);
     setUser({ email: employee.email } as User);
     
-    // 不自動選擇座位和設置員工資訊，讓用戶手動點擊座位查看
-    // 這樣右側面板就不會一直顯示登入員工的資訊
+    // 設置登入員工資訊在右側面板，並保持顯示直到登出
+    setSelectedSeatEmployee(employee);
     
     // 設定30分鐘後自動登出
     const logoutTimer = setTimeout(() => {
@@ -193,6 +193,7 @@ const Index = () => {
   const handleLogout = () => {
     setUser(null);
     setCurrentEmployee(null);
+    setSelectedSeatEmployee(null); // 清除右側面板的員工資訊
     setIsEditMode(false);
     setIsContainerEditMode(false);
     setSelectedContainer(null);
@@ -1144,14 +1145,17 @@ const Index = () => {
     setSelectedSeat(seat);
     console.log('Selected seat:', seat);
     
-    // 設定員工資訊
-    if (seat.employees) {
-      setSelectedSeatEmployee(seat.employees);
-      console.log('Selected employee:', seat.employees);
-    } else {
-      setSelectedSeatEmployee(null);
-      console.log('No employee on this seat');
+    // 設定員工資訊 - 只有在沒有登入用戶時才更新右側面板的員工資訊
+    if (!user) {
+      if (seat.employees) {
+        setSelectedSeatEmployee(seat.employees);
+        console.log('Selected employee:', seat.employees);
+      } else {
+        setSelectedSeatEmployee(null);
+        console.log('No employee on this seat');
+      }
     }
+    // 如果有登入用戶，保持顯示登入員工的資訊，不因點擊座位而改變
     
     // 如果在編輯模式且已經選中同一個座位，開始拖拽模式
     if (selectedSeat?.id === seat.id && isEditMode) {
@@ -1854,7 +1858,7 @@ const Index = () => {
                 <div>選中座位: {selectedSeat ? selectedSeat.id : '未選擇'}</div>
               </div>
             </div>
-          ) : selectedSeat && selectedSeatEmployee ? (
+          ) : selectedSeatEmployee ? (
             /* 員工資訊顯示 */
             <div className="py-2">
               {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
