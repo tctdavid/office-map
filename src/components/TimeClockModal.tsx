@@ -187,8 +187,13 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
               <Clock className="h-5 w-5 text-blue-600" />
               打卡鐘
             </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
           </div>
         </DialogHeader>
