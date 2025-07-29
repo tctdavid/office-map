@@ -1146,12 +1146,15 @@ const Index = () => {
     
     // 設定選中的座位
     setSelectedSeat(seat);
+    console.log('Selected seat:', seat);
     
     // 設定員工資訊
     if (seat.employees) {
       setSelectedSeatEmployee(seat.employees);
+      console.log('Selected employee:', seat.employees);
     } else {
       setSelectedSeatEmployee(null);
+      console.log('No employee on this seat');
     }
     
     // 如果在編輯模式且已經選中同一個座位，開始拖拽模式
