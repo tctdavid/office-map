@@ -15,7 +15,7 @@ const Index = () => {
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
   const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [currentEmployee, setCurrentEmployee] = useState<{id: string, name: string, email: string} | null>(null);
+  const [currentEmployee, setCurrentEmployee] = useState<{id: string, name: string, email: string, role?: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
@@ -176,7 +176,27 @@ const Index = () => {
   }, [isContainerEditMode, editingContainer, isDragging]);
 
   const handleLoginSuccess = async (employee: {id: string, name: string, email: string}) => {
-    setCurrentEmployee(employee);
+    // 需要獲取完整的員工資訊包含role
+    try {
+      const { data: fullEmployee, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('id', employee.id)
+        .single();
+      
+      if (error) throw error;
+      
+      setCurrentEmployee({
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        role: fullEmployee.role
+      });
+    } catch (error) {
+      console.error('Error fetching employee role:', error);
+      setCurrentEmployee(employee);
+    }
+    
     setUser({ email: employee.email } as User);
     
     // 需要獲取完整的員工資訊來顯示在右側面板
@@ -2003,6 +2023,7 @@ const Index = () => {
           onClose={() => setIsTimeClockModalOpen(false)}
           employeeId={currentEmployee.id}
           employeeName={currentEmployee.name}
+          isAdmin={currentEmployee.role === 'admin'}
         />
       )}
 

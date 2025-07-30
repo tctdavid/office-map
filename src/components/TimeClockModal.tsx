@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Clock, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, X, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -10,11 +11,13 @@ interface TimeClockModalProps {
   onClose: () => void;
   employeeId: string;
   employeeName: string;
+  isAdmin?: boolean;
 }
 
-export default function TimeClockModal({ isOpen, onClose, employeeId, employeeName }: TimeClockModalProps) {
+export default function TimeClockModal({ isOpen, onClose, employeeId, employeeName, isAdmin = false }: TimeClockModalProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRecord, setTodayRecord] = useState<any>(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const { toast } = useToast();
 
   useEffect(() => {
@@ -178,6 +181,115 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
 
   const timeColor = isWorkingHours(currentTime) ? "text-blue-600" : "text-red-600";
 
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' });
+      options.push({ value, label });
+    }
+    
+    return options;
+  };
+
+  const downloadCSV = (data: any[], filename: string) => {
+    const headers = [
+      '員工姓名',
+      '日期', 
+      '上班時間',
+      '下班時間',
+      '加班上班時間',
+      '加班下班時間',
+      '工作記錄'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...data.map(record => [
+        record.employee_name || '',
+        record.record_date || '',
+        record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
+        record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
+        record.overtime_in_time ? new Date(record.overtime_in_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
+        record.overtime_out_time ? new Date(record.overtime_out_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
+        record.work_log || ''
+      ].map(field => `"${field}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const [year, month] = selectedMonth.split('-');
+      const startDate = `${year}-${month}-01`;
+      const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+      let query = supabase
+        .from('attendance_records')
+        .select(`
+          *,
+          employees!inner(name)
+        `)
+        .gte('record_date', startDate)
+        .lte('record_date', endDate);
+
+      // 如果不是管理員，只查詢自己的記錄
+      if (!isAdmin) {
+        query = query.eq('employee_id', employeeId);
+      }
+
+      const { data, error } = await query.order('record_date', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "無資料",
+          description: "選擇的月份沒有出勤記錄",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // 轉換資料格式
+      const csvData = data.map(record => ({
+        ...record,
+        employee_name: record.employees?.name || ''
+      }));
+
+      const filename = isAdmin 
+        ? `全員出勤記錄_${selectedMonth}.csv`
+        : `${employeeName}_出勤記錄_${selectedMonth}.csv`;
+
+      downloadCSV(csvData, filename);
+
+      toast({
+        title: "匯出成功",
+        description: `已匯出 ${data.length} 筆記錄`
+      });
+
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "匯出失敗",
+        description: "匯出CSV時發生錯誤",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -271,6 +383,37 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
                 )}
               </Button>
             </div>
+          </div>
+
+          {/* CSV匯出功能 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">匯出出勤記錄</span>
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="選擇月份" />
+                </SelectTrigger>
+                <SelectContent>
+                  {generateMonthOptions().map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Button onClick={handleExportCSV} variant="outline" size="sm">
+                匯出CSV
+              </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              {isAdmin ? "將匯出所有員工的出勤記錄" : "將匯出您的個人出勤記錄"}
+            </p>
           </div>
         </div>
       </DialogContent>
