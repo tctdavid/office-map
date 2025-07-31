@@ -234,9 +234,11 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
     try {
       const [year, month] = selectedMonth.split('-');
       const startDate = `${year}-${month}-01`;
-      // 計算下個月的第一天，然後減一天得到當月最後一天
-      const nextMonth = new Date(parseInt(year), parseInt(month), 1);
-      const endDate = new Date(nextMonth.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // 使用更簡單的方法計算月底
+      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+      const endDate = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+      
+      console.log('查詢日期範圍:', { selectedMonth, startDate, endDate });
 
       let query = supabase
         .from('attendance_records')
