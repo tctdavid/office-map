@@ -4,6 +4,7 @@ import AuthModal from "@/components/AuthModal";
 import RegistrationModal from "@/components/RegistrationModal";
 import AddPcModal from "@/components/AddPcModal";
 import TimeClockModal from "@/components/TimeClockModal";
+import WorkLogPanel from "@/components/WorkLogPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -1956,12 +1957,20 @@ const Index = () => {
               </div>
               
               {/* 第四排: 圖示 + "部門:" + 部門內容 */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-4">
                 <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-white text-sm">部門: {selectedSeatEmployee.department || '未設定部門'}</span>
               </div>
+              
+              {/* 工作日誌面板 */}
+              {currentEmployee && currentEmployee.id === selectedSeatEmployee.id && (
+                <WorkLogPanel 
+                  employeeId={selectedSeatEmployee.id}
+                  employeeName={selectedSeatEmployee.name}
+                />
+              )}
             </div>
           ) : (
             /* 一般模式 */
