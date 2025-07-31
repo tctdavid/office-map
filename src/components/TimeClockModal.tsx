@@ -187,7 +187,9 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
     
     for (let i = 11; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const value = date.toISOString().slice(0, 7);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份+1因為getMonth()返回0-11
+      const value = `${year}-${month}`;
       const label = date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' });
       options.push({ value, label });
     }
