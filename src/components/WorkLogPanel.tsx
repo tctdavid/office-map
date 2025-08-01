@@ -19,6 +19,7 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
   const [workLog, setWorkLog] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { toast } = useToast();
 
   // 檢查日期是否為過去
@@ -46,7 +47,7 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
       return;
     }
 
-    setWorkLog(data?.work_log || "");
+    setWorkLog(data?.work_log ?? "");
   };
 
   // 當選擇的日期改變時
@@ -129,7 +130,7 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
       {/* 日期選擇器 */}
       <div className="mb-4">
         <label className="block text-sm text-gray-300 mb-2">選擇日期</label>
-        <Popover>
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -146,7 +147,12 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
+              onSelect={(date) => {
+                if (date) {
+                  setSelectedDate(date);
+                  setCalendarOpen(false);
+                }
+              }}
               initialFocus
               className="pointer-events-auto bg-slate-800 text-white"
             />

@@ -15,6 +15,7 @@ interface WorkLogViewerProps {
 export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [workLog, setWorkLog] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // 載入工作日誌
   const fetchWorkLog = async (date: Date) => {
@@ -47,7 +48,7 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
       {/* 日期選擇器 */}
       <div className="mb-4">
         <label className="block text-sm text-gray-300 mb-2">選擇日期</label>
-        <Popover>
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -64,7 +65,12 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
+              onSelect={(date) => {
+                if (date) {
+                  setSelectedDate(date);
+                  setCalendarOpen(false);
+                }
+              }}
               initialFocus
               className="pointer-events-auto bg-slate-800 text-white"
             />
