@@ -19,7 +19,7 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
 
   // 載入工作日誌
   const fetchWorkLog = async (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = format(date, 'yyyy-MM-dd');
     
     const { data, error } = await supabase
       .from('attendance_records')

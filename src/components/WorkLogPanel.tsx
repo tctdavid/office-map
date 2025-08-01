@@ -33,7 +33,7 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
 
   // 載入工作日誌
   const fetchWorkLog = async (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = format(date, 'yyyy-MM-dd');
     
     const { data, error } = await supabase
       .from('attendance_records')
@@ -71,7 +71,7 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
     setIsLoading(true);
     
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
       
       // 先檢查是否已有記錄
       const { data: existingRecord, error: fetchError } = await supabase
