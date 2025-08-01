@@ -5,6 +5,7 @@ import RegistrationModal from "@/components/RegistrationModal";
 import AddPcModal from "@/components/AddPcModal";
 import TimeClockModal from "@/components/TimeClockModal";
 import WorkLogPanel from "@/components/WorkLogPanel";
+import WorkLogViewer from "@/components/WorkLogViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -1965,8 +1966,13 @@ const Index = () => {
               </div>
               
               {/* 工作日誌面板 */}
-              {currentEmployee && currentEmployee.id === selectedSeatEmployee.id && (
+              {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
+                  employeeId={selectedSeatEmployee.id}
+                  employeeName={selectedSeatEmployee.name}
+                />
+              ) : (
+                <WorkLogViewer 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
                 />
