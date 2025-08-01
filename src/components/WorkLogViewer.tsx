@@ -68,8 +68,8 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
               onSelect={(date) => {
                 if (date) {
                   setSelectedDate(date);
-                  setCalendarOpen(false);
                 }
+                setCalendarOpen(false);
               }}
               initialFocus
               className="pointer-events-auto bg-slate-800 text-white"
