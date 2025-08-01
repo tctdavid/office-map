@@ -14,7 +14,7 @@ interface WorkLogViewerProps {
 
 export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [workLog, setWorkLog] = useState("");
+  const [workLog, setWorkLog] = useState<string | null>(null);
 
   // 載入工作日誌
   const fetchWorkLog = async (date: Date) => {
@@ -32,7 +32,7 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
       return;
     }
 
-    setWorkLog(data?.work_log || "");
+    setWorkLog(data?.work_log ?? null);
   };
 
   // 當選擇的日期改變時
