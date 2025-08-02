@@ -269,33 +269,45 @@ export type Database = {
       }
       pcs: {
         Row: {
+          case_photo: string | null
           cpu: string | null
           created_at: string | null
           graphics: string | null
           id: string
           memory: string | null
+          monitor_a: string | null
+          monitor_a_photo: string | null
+          monitor_b: string | null
+          monitor_b_photo: string | null
           name: string
-          photo: string | null
           storage: string | null
         }
         Insert: {
+          case_photo?: string | null
           cpu?: string | null
           created_at?: string | null
           graphics?: string | null
           id?: string
           memory?: string | null
+          monitor_a?: string | null
+          monitor_a_photo?: string | null
+          monitor_b?: string | null
+          monitor_b_photo?: string | null
           name: string
-          photo?: string | null
           storage?: string | null
         }
         Update: {
+          case_photo?: string | null
           cpu?: string | null
           created_at?: string | null
           graphics?: string | null
           id?: string
           memory?: string | null
+          monitor_a?: string | null
+          monitor_a_photo?: string | null
+          monitor_b?: string | null
+          monitor_b_photo?: string | null
           name?: string
-          photo?: string | null
           storage?: string | null
         }
         Relationships: []
