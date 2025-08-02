@@ -26,12 +26,22 @@ interface PcData {
   memory: string;
   storage: string;
   graphics: string;
+  case_photo: string;
+  monitor_a: string;
+  monitor_a_photo: string;
+  monitor_b: string;
+  monitor_b_photo: string;
   brand: string;
-  model: string;
+  mac_add: string;
   serial_number: string;
   purchase_date: string;
   warranty_expiry: string;
   notes: string;
+  case: string;
+  psu: string;
+  main_board: string;
+  os: string;
+  cpu_fan: string;
 }
 
 const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: AddPcModalProps) => {
@@ -44,12 +54,22 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     memory: '',
     storage: '',
     graphics: '',
+    case_photo: '',
+    monitor_a: '',
+    monitor_a_photo: '',
+    monitor_b: '',
+    monitor_b_photo: '',
     brand: '',
-    model: '',
+    mac_add: '',
     serial_number: '',
     purchase_date: '',
     warranty_expiry: '',
-    notes: ''
+    notes: '',
+    case: '',
+    psu: '',
+    main_board: '',
+    os: '',
+    cpu_fan: ''
   });
 
   // 重置表單數據
@@ -60,12 +80,22 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
       memory: '',
       storage: '',
       graphics: '',
+      case_photo: '',
+      monitor_a: '',
+      monitor_a_photo: '',
+      monitor_b: '',
+      monitor_b_photo: '',
       brand: '',
-      model: '',
+      mac_add: '',
       serial_number: '',
       purchase_date: '',
       warranty_expiry: '',
-      notes: ''
+      notes: '',
+      case: '',
+      psu: '',
+      main_board: '',
+      os: '',
+      cpu_fan: ''
     });
   };
 
@@ -80,6 +110,11 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
         memory: existingPc.memory || '',
         storage: existingPc.storage || '',
         graphics: existingPc.graphics || '',
+        case_photo: existingPc.case_photo || '',
+        monitor_a: existingPc.monitor_a || '',
+        monitor_a_photo: existingPc.monitor_a_photo || '',
+        monitor_b: existingPc.monitor_b || '',
+        monitor_b_photo: existingPc.monitor_b_photo || '',
       }));
 
       // 載入 PC 詳細資料
@@ -94,11 +129,16 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
           setPcData(prev => ({
             ...prev,
             brand: details.brand || '',
-            model: details.model || '',
+            mac_add: details.mac_add || '',
             serial_number: details.serial_number || '',
             purchase_date: details.purchase_date || '',
             warranty_expiry: details.warranty_expiry || '',
-            notes: details.notes || ''
+            notes: details.notes || '',
+            case: details.case || '',
+            psu: details.psu || '',
+            main_board: details.main_board || '',
+            os: details.os || '',
+            cpu_fan: details.cpu_fan || ''
           }));
         }
       };
@@ -145,6 +185,11 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             memory: pcData.memory,
             storage: pcData.storage,
             graphics: pcData.graphics,
+            case_photo: pcData.case_photo,
+            monitor_a: pcData.monitor_a,
+            monitor_a_photo: pcData.monitor_a_photo,
+            monitor_b: pcData.monitor_b,
+            monitor_b_photo: pcData.monitor_b_photo,
           })
           .eq('id', existingPc.id);
 
@@ -162,11 +207,16 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             .from('pc_details')
             .update({
               brand: pcData.brand,
-              model: pcData.model,
+              mac_add: pcData.mac_add,
               serial_number: pcData.serial_number,
               purchase_date: pcData.purchase_date || null,
               warranty_expiry: pcData.warranty_expiry || null,
               notes: pcData.notes,
+              case: pcData.case,
+              psu: pcData.psu,
+              main_board: pcData.main_board,
+              os: pcData.os,
+              cpu_fan: pcData.cpu_fan,
             })
             .eq('pc_id', existingPc.id);
 
@@ -177,11 +227,16 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             .insert({
               pc_id: existingPc.id,
               brand: pcData.brand,
-              model: pcData.model,
+              mac_add: pcData.mac_add,
               serial_number: pcData.serial_number,
               purchase_date: pcData.purchase_date || null,
               warranty_expiry: pcData.warranty_expiry || null,
               notes: pcData.notes,
+              case: pcData.case,
+              psu: pcData.psu,
+              main_board: pcData.main_board,
+              os: pcData.os,
+              cpu_fan: pcData.cpu_fan,
             });
 
           if (detailsError) throw detailsError;
@@ -201,6 +256,11 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             memory: pcData.memory,
             storage: pcData.storage,
             graphics: pcData.graphics,
+            case_photo: pcData.case_photo,
+            monitor_a: pcData.monitor_a,
+            monitor_a_photo: pcData.monitor_a_photo,
+            monitor_b: pcData.monitor_b,
+            monitor_b_photo: pcData.monitor_b_photo,
           })
           .select()
           .single();
@@ -214,11 +274,16 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
           .insert({
             pc_id: pcId,
             brand: pcData.brand,
-            model: pcData.model,
+            mac_add: pcData.mac_add,
             serial_number: pcData.serial_number,
             purchase_date: pcData.purchase_date || null,
             warranty_expiry: pcData.warranty_expiry || null,
             notes: pcData.notes,
+            case: pcData.case,
+            psu: pcData.psu,
+            main_board: pcData.main_board,
+            os: pcData.os,
+            cpu_fan: pcData.cpu_fan,
           });
 
         if (detailsError) throw detailsError;
@@ -338,6 +403,63 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
                 className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="case_photo" className="text-white">機殼照片</Label>
+                <Input
+                  id="case_photo"
+                  placeholder="機殼照片 URL"
+                  value={pcData.case_photo}
+                  onChange={(e) => setPcData({ ...pcData, case_photo: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="monitor_a" className="text-white">主顯示器</Label>
+                <Input
+                  id="monitor_a"
+                  placeholder="例：Dell 27 inch 4K Monitor"
+                  value={pcData.monitor_a}
+                  onChange={(e) => setPcData({ ...pcData, monitor_a: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="monitor_a_photo" className="text-white">主顯示器照片</Label>
+                <Input
+                  id="monitor_a_photo"
+                  placeholder="主顯示器照片 URL"
+                  value={pcData.monitor_a_photo}
+                  onChange={(e) => setPcData({ ...pcData, monitor_a_photo: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="monitor_b" className="text-white">副顯示器</Label>
+                <Input
+                  id="monitor_b"
+                  placeholder="例：ASUS 24 inch Monitor"
+                  value={pcData.monitor_b}
+                  onChange={(e) => setPcData({ ...pcData, monitor_b: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="monitor_b_photo" className="text-white">副顯示器照片</Label>
+                <Input
+                  id="monitor_b_photo"
+                  placeholder="副顯示器照片 URL"
+                  value={pcData.monitor_b_photo}
+                  onChange={(e) => setPcData({ ...pcData, monitor_b_photo: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+            </div>
           </div>
 
           {/* 詳細資訊 */}
@@ -357,12 +479,12 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
               </div>
               
               <div>
-                <Label htmlFor="model" className="text-white">型號</Label>
+                <Label htmlFor="mac_add" className="text-white">MAC地址</Label>
                 <Input
-                  id="model"
-                  placeholder="例：OptiPlex 7090"
-                  value={pcData.model}
-                  onChange={(e) => setPcData({ ...pcData, model: e.target.value })}
+                  id="mac_add"
+                  placeholder="例：00:11:22:33:44:55"
+                  value={pcData.mac_add}
+                  onChange={(e) => setPcData({ ...pcData, mac_add: e.target.value })}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
@@ -389,13 +511,68 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
                 />
               </div>
               
-              <div className="col-span-2">
+              <div>
                 <Label htmlFor="warranty_expiry" className="text-white">保固到期</Label>
                 <Input
                   id="warranty_expiry"
                   type="date"
                   value={pcData.warranty_expiry}
                   onChange={(e) => setPcData({ ...pcData, warranty_expiry: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="case" className="text-white">機殼</Label>
+                <Input
+                  id="case"
+                  placeholder="例：Corsair 4000D"
+                  value={pcData.case}
+                  onChange={(e) => setPcData({ ...pcData, case: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="psu" className="text-white">電源供應器</Label>
+                <Input
+                  id="psu"
+                  placeholder="例：Corsair RM750x 750W"
+                  value={pcData.psu}
+                  onChange={(e) => setPcData({ ...pcData, psu: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="main_board" className="text-white">主機板</Label>
+                <Input
+                  id="main_board"
+                  placeholder="例：ASUS ROG STRIX B550-F"
+                  value={pcData.main_board}
+                  onChange={(e) => setPcData({ ...pcData, main_board: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="os" className="text-white">作業系統</Label>
+                <Input
+                  id="os"
+                  placeholder="例：Windows 11 Pro"
+                  value={pcData.os}
+                  onChange={(e) => setPcData({ ...pcData, os: e.target.value })}
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="cpu_fan" className="text-white">CPU散熱器</Label>
+                <Input
+                  id="cpu_fan"
+                  placeholder="例：Noctua NH-D15"
+                  value={pcData.cpu_fan}
+                  onChange={(e) => setPcData({ ...pcData, cpu_fan: e.target.value })}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
