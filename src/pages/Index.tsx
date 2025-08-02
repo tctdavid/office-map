@@ -74,7 +74,7 @@ const Index = () => {
           memory,
           storage,
           graphics,
-          photo
+          case_photo
         )
       `)
       .order('created_at', { ascending: false });
@@ -347,7 +347,7 @@ const Index = () => {
           memory,
           storage,
           graphics,
-          photo
+          case_photo
         )
       `)
       .order('created_at', { ascending: false });
