@@ -1961,11 +1961,13 @@ const Index = () => {
                 <WorkLogPanel 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
+                  pcData={selectedSeat?.pcs}
                 />
               ) : (
                 <WorkLogViewer 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
+                  pcData={selectedSeat?.pcs}
                 />
               )}
             </div>

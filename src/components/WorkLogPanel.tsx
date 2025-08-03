@@ -8,13 +8,27 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import PcDataDisplay from "./PcDataDisplay";
 
 interface WorkLogPanelProps {
   employeeId: string;
   employeeName: string;
+  pcData?: {
+    id: string;
+    name: string;
+    cpu?: string;
+    memory?: string;
+    storage?: string;
+    graphics?: string;
+    case_photo?: string;
+    monitor_a?: string;
+    monitor_a_photo?: string;
+    monitor_b?: string;
+    monitor_b_photo?: string;
+  };
 }
 
-export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelProps) {
+export default function WorkLogPanel({ employeeId, employeeName, pcData }: WorkLogPanelProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [workLog, setWorkLog] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -203,6 +217,9 @@ export default function WorkLogPanel({ employeeId, employeeName }: WorkLogPanelP
           </Button>
         )}
       </div>
+      
+      {/* PC Data Display */}
+      {pcData && <PcDataDisplay pcData={pcData} />}
     </div>
   );
 }

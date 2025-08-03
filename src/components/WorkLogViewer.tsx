@@ -6,13 +6,27 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import PcDataDisplay from "./PcDataDisplay";
 
 interface WorkLogViewerProps {
   employeeId: string;
   employeeName: string;
+  pcData?: {
+    id: string;
+    name: string;
+    cpu?: string;
+    memory?: string;
+    storage?: string;
+    graphics?: string;
+    case_photo?: string;
+    monitor_a?: string;
+    monitor_a_photo?: string;
+    monitor_b?: string;
+    monitor_b_photo?: string;
+  };
 }
 
-export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewerProps) {
+export default function WorkLogViewer({ employeeId, employeeName, pcData }: WorkLogViewerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [workLog, setWorkLog] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -93,6 +107,9 @@ export default function WorkLogViewer({ employeeId, employeeName }: WorkLogViewe
           {workLog || "該日期無工作日誌記錄"}
         </div>
       </div>
+      
+      {/* PC Data Display */}
+      {pcData && <PcDataDisplay pcData={pcData} />}
     </div>
   );
 }
