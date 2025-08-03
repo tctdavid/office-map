@@ -386,22 +386,13 @@ const Index = () => {
     setIsSelectingSeatForPc(true);
     toast({
       title: "請選擇座位",
-      description: "請點擊要添加電腦的座位",
+      description: "請點擊要新增電腦的座位，或點擊已有電腦的座位進行修改",
     });
   };
 
   // 處理座位點擊（新增電腦模式）
   const handleSeatClickForPc = (seat: any) => {
     if (!isSelectingSeatForPc) return;
-    
-    if (seat.pc_id) {
-      toast({
-        title: "座位已有電腦",
-        description: "該座位已經配置了電腦設備",
-        variant: "destructive",
-      });
-      return;
-    }
     
     setSelectedSeatForPc(seat);
     setIsSelectingSeatForPc(false);
@@ -2028,6 +2019,7 @@ const Index = () => {
           setIsSelectingSeatForPc(false);
         }}
         selectedSeat={selectedSeatForPc}
+        existingPc={selectedSeatForPc?.pcs}
         onSuccess={handleAddPcSuccess}
       />
 
