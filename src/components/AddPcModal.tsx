@@ -27,10 +27,13 @@ interface PcData {
   storage: string;
   graphics: string;
   case_photo: string;
+  case_photo_preview?: string;
   monitor_a: string;
   monitor_a_photo: string;
+  monitor_a_photo_preview?: string;
   monitor_b: string;
   monitor_b_photo: string;
+  monitor_b_photo_preview?: string;
   brand: string;
   mac_add: string;
   serial_number: string;
@@ -317,6 +320,35 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     }
   };
 
+  // 處理照片上傳
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'case_photo' | 'monitor_a_photo' | 'monitor_b_photo') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // 創建預覽URL
+      const previewUrl = URL.createObjectURL(file);
+      
+      setPcData(prev => ({
+        ...prev,
+        [field]: file.name,
+        [`${field}_preview`]: previewUrl
+      }));
+      
+      toast({
+        title: "照片已選擇",
+        description: `${field === 'case_photo' ? '機殼' : field === 'monitor_a_photo' ? '主顯示器' : '副顯示器'}照片已準備上傳`,
+      });
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast({
+        title: "上傳失敗",
+        description: "照片上傳失敗，請重試",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleClose = () => {
     onClose();
     resetForm();
@@ -404,18 +436,37 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="case_photo" className="text-white">機殼照片</Label>
-                <Input
-                  id="case_photo"
-                  placeholder="機殼照片 URL"
-                  value={pcData.case_photo}
-                  onChange={(e) => setPcData({ ...pcData, case_photo: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
+            {/* 機殼照片上傳 */}
+            <div>
+              <Label className="text-white">機殼照片</Label>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                  {pcData.case_photo_preview ? (
+                    <img 
+                      src={pcData.case_photo_preview} 
+                      alt="機殼照片預覽" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-400">📷</span>
+                  )}
+                </div>
+                <label htmlFor="case-photo-upload" className="cursor-pointer">
+                  <div className="border-2 border-dashed border-slate-600 rounded-lg p-3 hover:border-slate-500 transition-colors">
+                    <span className="text-sm text-gray-300">📤 選擇機殼照片</span>
+                  </div>
+                  <input
+                    id="case-photo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(e, 'case_photo')}
+                    className="hidden"
+                  />
+                </label>
               </div>
-              
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="monitor_a" className="text-white">主顯示器</Label>
                 <Input
@@ -423,17 +474,6 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
                   placeholder="例：Dell 27 inch 4K Monitor"
                   value={pcData.monitor_a}
                   onChange={(e) => setPcData({ ...pcData, monitor_a: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="monitor_a_photo" className="text-white">主顯示器照片</Label>
-                <Input
-                  id="monitor_a_photo"
-                  placeholder="主顯示器照片 URL"
-                  value={pcData.monitor_a_photo}
-                  onChange={(e) => setPcData({ ...pcData, monitor_a_photo: e.target.value })}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
@@ -448,16 +488,66 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
+            </div>
+
+            {/* 顯示器照片上傳 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">主顯示器照片</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                    {pcData.monitor_a_photo_preview ? (
+                      <img 
+                        src={pcData.monitor_a_photo_preview} 
+                        alt="主顯示器照片預覽" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-400">🖥️</span>
+                    )}
+                  </div>
+                  <label htmlFor="monitor-a-photo-upload" className="cursor-pointer">
+                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-2 hover:border-slate-500 transition-colors">
+                      <span className="text-xs text-gray-300">📤 選擇照片</span>
+                    </div>
+                    <input
+                      id="monitor-a-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(e, 'monitor_a_photo')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
               
               <div>
-                <Label htmlFor="monitor_b_photo" className="text-white">副顯示器照片</Label>
-                <Input
-                  id="monitor_b_photo"
-                  placeholder="副顯示器照片 URL"
-                  value={pcData.monitor_b_photo}
-                  onChange={(e) => setPcData({ ...pcData, monitor_b_photo: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
+                <Label className="text-white">副顯示器照片</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                    {pcData.monitor_b_photo_preview ? (
+                      <img 
+                        src={pcData.monitor_b_photo_preview} 
+                        alt="副顯示器照片預覽" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-400">🖥️</span>
+                    )}
+                  </div>
+                  <label htmlFor="monitor-b-photo-upload" className="cursor-pointer">
+                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-2 hover:border-slate-500 transition-colors">
+                      <span className="text-xs text-gray-300">📤 選擇照片</span>
+                    </div>
+                    <input
+                      id="monitor-b-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(e, 'monitor_b_photo')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
