@@ -329,27 +329,40 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 先創建預覽URL
+    const previewUrl = URL.createObjectURL(file);
+    setPcData(prev => ({
+      ...prev,
+      [`${field}_preview`]: previewUrl
+    }));
+
     try {
       // 創建唯一檔名
       const fileExt = file.name.split('.').pop();
-      const fileName = `${field}_${Date.now()}.${fileExt}`;
+      const timestamp = Date.now();
+      const fileName = `${field}_${timestamp}.${fileExt}`;
+      
+      console.log('Starting upload for:', fileName);
       
       // 上傳到 Supabase Storage
       const { data, error } = await supabase.storage
         .from('pcs')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (error) {
+        console.error('Upload error:', error);
         throw error;
       }
 
-      // 創建預覽URL
-      const previewUrl = URL.createObjectURL(file);
+      console.log('Upload successful:', data);
       
+      // 設置檔名到表單數據
       setPcData(prev => ({
         ...prev,
-        [field]: fileName,
-        [`${field}_preview`]: previewUrl
+        [field]: fileName
       }));
       
       toast({
@@ -360,9 +373,16 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
       console.error('Photo upload error:', error);
       toast({
         title: "上傳失敗",
-        description: "照片上傳失敗，請重試",
+        description: `照片上傳失敗: ${error.message || '請重試'}`,
         variant: "destructive",
       });
+      
+      // 清除預覽和檔名
+      setPcData(prev => ({
+        ...prev,
+        [field]: '',
+        [`${field}_preview`]: ''
+      }));
     }
   };
 
