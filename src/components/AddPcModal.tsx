@@ -118,6 +118,10 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
         monitor_a_photo: existingPc.monitor_a_photo || '',
         monitor_b: existingPc.monitor_b || '',
         monitor_b_photo: existingPc.monitor_b_photo || '',
+        // 設置現有圖片的預覽URL
+        case_photo_preview: existingPc.case_photo ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pcs/${existingPc.case_photo}` : '',
+        monitor_a_photo_preview: existingPc.monitor_a_photo ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pcs/${existingPc.monitor_a_photo}` : '',
+        monitor_b_photo_preview: existingPc.monitor_b_photo ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pcs/${existingPc.monitor_b_photo}` : '',
       }));
 
       // 載入 PC 詳細資料
@@ -126,7 +130,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
           .from('pc_details')
           .select('*')
           .eq('pc_id', existingPc.id)
-          .single();
+          .maybeSingle();
 
         if (details) {
           setPcData(prev => ({
