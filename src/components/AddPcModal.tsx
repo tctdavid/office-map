@@ -177,6 +177,13 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
       return;
     }
 
+    console.log('Submitting PC data:', pcData);
+    console.log('Image files:', {
+      case_photo: pcData.case_photo,
+      monitor_a_photo: pcData.monitor_a_photo,
+      monitor_b_photo: pcData.monitor_b_photo
+    });
+
     setLoading(true);
 
     try {
