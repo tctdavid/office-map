@@ -326,18 +326,31 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     if (!file) return;
 
     try {
+      // 創建唯一檔名
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${field}_${Date.now()}.${fileExt}`;
+      
+      // 上傳到 Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('pcs')
+        .upload(fileName, file);
+
+      if (error) {
+        throw error;
+      }
+
       // 創建預覽URL
       const previewUrl = URL.createObjectURL(file);
       
       setPcData(prev => ({
         ...prev,
-        [field]: file.name,
+        [field]: fileName,
         [`${field}_preview`]: previewUrl
       }));
       
       toast({
-        title: "照片已選擇",
-        description: `${field === 'case_photo' ? '機殼' : field === 'monitor_a_photo' ? '主顯示器' : '副顯示器'}照片已準備上傳`,
+        title: "上傳成功",
+        description: `${field === 'case_photo' ? '機殼' : field === 'monitor_a_photo' ? '主顯示器' : '副顯示器'}照片已成功上傳`,
       });
     } catch (error) {
       console.error('Photo upload error:', error);
