@@ -1715,249 +1715,111 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel - Seat Details or Edit Tools - 250px width */}
-        <div className="w-[250px] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-6">
-          {isSelectingSeatForRegistration ? (
-            /* 註冊座位選擇模式 */
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4">
-                <span className="text-2xl">🪑</span>
-              </div>
-              <h3 className="text-lg font-medium text-blue-300 mb-4">選擇座位</h3>
-              <p className="text-sm text-gray-400 mb-4">請在平面圖中點選一個空的座位</p>
-              <p className="text-xs text-gray-500">選中座位後將打開註冊表單</p>
-              <button 
-                onClick={() => {
-                  setIsSelectingSeatForRegistration(false);
-                  toast({
-                    title: "已取消",
-                    description: "已取消座位選擇",
-                  });
-                }}
-                className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm transition-colors"
-              >
-                取消選擇
-              </button>
-            </div>
-          ) : isEditMode ? (
-            /* 編輯模式 */
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-cyan-300 text-center mb-6">編輯模式</h3>
-              
-              {/* 新增容器 */}
-              <button 
-                onClick={startAddingContainer}
-                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
-              >
-                新增容器
-              </button>
-              
-              {/* 編輯容器 */}
-              <button 
-                onClick={toggleContainerEditMode}
-                className={`w-full px-4 py-3 rounded text-sm font-medium transition-colors ${
-                  isContainerEditMode 
-                    ? 'bg-yellow-600 hover:bg-yellow-700' 
-                    : 'bg-orange-600 hover:bg-orange-700'
-                }`}
-              >
-                {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
-              </button>
-              
-              {/* 刪除容器 */}
-              <button 
-                onClick={deleteContainer}
-                className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
-              >
-                刪除容器
-              </button>
-              
-               {/* 新增座位 */}
-              <button 
-                onClick={toggleSeatEditMode}
-                disabled={!selectedContainer}
-                className={`w-full px-4 py-3 rounded text-sm font-medium transition-colors ${
-                  isSeatEditMode 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-green-600 hover:bg-green-700'
-                } ${!selectedContainer ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                新增座位
-              </button>
-              
-              {/* 刪除座位 */}
-              <button 
-                onClick={deleteSeat}
-                disabled={!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id}
-                className={`w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors ${
-                  (!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id) 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : ''
-                }`}
-              >
-                刪除座位
-              </button>
-              
-              {/* 編輯容器表單 */}
-              <div className="mt-6 p-4 bg-slate-700/50 rounded-lg">
-                <h4 className="text-sm font-medium text-cyan-300 mb-3">編輯容器</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-gray-400">名稱:</label>
-                    <input 
-                      type="text" 
-                      value={editingContainer ? editingContainer.name : ''}
-                      placeholder="容器名稱"
-                      onChange={(e) => handleContainerNameChange(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 bg-slate-600 border border-gray-500 rounded text-sm"
-                      disabled={!editingContainer}
-                    />
+        {/* Right Panel - 3 Containers - 250px width */}
+        <div className="w-[250px] flex flex-col gap-2">
+          {/* Staff Info Container - 1/3 height */}
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+            {selectedSeatEmployee ? (
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-white text-lg font-medium">員工資訊</span>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    <div>位置: ({editingContainer ? `${Math.round(editingContainer.x)}, ${Math.round(editingContainer.y)}` : '0, 0'})</div>
-                    <div>大小: {editingContainer ? `${Math.round(editingContainer.width)}×${Math.round(editingContainer.height)}` : '0×0'}</div>
-                  </div>
-                  
-                  {/* 保存/取消按鈕 */}
-                  <div className="space-y-2 mt-4">
-                    <button 
-                      onClick={saveContainerChanges}
-                      disabled={!editingContainer}
-                      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-                    >
-                      保存異更
-                    </button>
-                    <button 
-                      onClick={cancelContainerChanges}
-                      disabled={!editingContainer}
-                      className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-                    >
-                      取消異更
-                    </button>
-                  </div>
+                  <span className="text-white text-lg font-medium">{selectedSeatEmployee.name}</span>
                 </div>
-              </div>
-              
-              {/* 座位模板選擇 */}
-              {isSeatEditMode && (
-                <div className="mt-6 p-4 bg-slate-700/50 rounded-lg">
-                  <h4 className="text-sm font-medium text-cyan-300 mb-3">座位模板</h4>
-                  <div className="space-y-2">
-                    <div>
-                      <input 
-                        type="radio" 
-                        id="template-120x70" 
-                        name="seatTemplate" 
-                        value="120x70" 
-                        checked={selectedSeatTemplate === '120x70'}
-                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
-                        className="mr-2"
-                      />
-                      <label htmlFor="template-120x70" className="text-xs text-gray-300">
-                        120px × 70px
-                      </label>
-                    </div>
-                    <div>
-                      <input 
-                        type="radio" 
-                        id="template-70x90" 
-                        name="seatTemplate" 
-                        value="70x90" 
-                        checked={selectedSeatTemplate === '70x90'}
-                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
-                        className="mr-2"
-                      />
-                      <label htmlFor="template-70x90" className="text-xs text-gray-300">
-                        70px × 90px
-                      </label>
-                    </div>
-                    <div>
-                      <input 
-                        type="radio" 
-                        id="template-40x40" 
-                        name="seatTemplate" 
-                        value="40x40" 
-                        checked={selectedSeatTemplate === '40x40'}
-                        onChange={(e) => setSelectedSeatTemplate(e.target.value)}
-                        className="mr-2"
-                      />
-                      <label htmlFor="template-40x40" className="text-xs text-gray-300">
-                        40px × 40px
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* 編輯狀態指示 */}
-              <div className="mt-4 text-xs text-green-400 space-y-1">
-                <div>編輯模式: ON</div>
-                <div>編輯容器: {isContainerEditMode ? 'ON' : 'OFF'}</div>
-                <div>編輯座位: {isSeatEditMode ? 'ON' : 'OFF'}</div>
-                <div>異更容器: {editingContainer ? editingContainer.name : '未選擇'}</div>
-                <div>選中座位: {selectedSeat ? selectedSeat.id : '未選擇'}</div>
-              </div>
-            </div>
-          ) : selectedSeatEmployee ? (
-            /* 員工資訊顯示 */
-            <div className="py-2">
-              {/* 第一排: 小人圖示 + "員工資訊" 靠左 + 員工姓名 靠右 */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-white text-[24px]">員工資訊</span>
-                </div>
-                <span className="text-white text-[24px] font-medium">{selectedSeatEmployee.name}</span>
-              </div>
-              
-              {/* 第二排: 員工頭像置中，下方顯示部門名稱 */}
-              <div className="flex flex-col items-center mb-2">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-500 mb-1">
-                  {selectedSeatEmployee.photo ? (
-                    <img 
-                      src={selectedSeatEmployee.photo.startsWith('http') 
-                        ? selectedSeatEmployee.photo 
-                        : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${selectedSeatEmployee.photo}`
-                      }
-                      alt={selectedSeatEmployee.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const parent = e.currentTarget.parentElement;
-                        if (parent) {
-                          parent.innerHTML = '<div class="w-full h-full bg-gray-600 flex items-center justify-center"><span class="text-2xl text-white">👤</span></div>';
+                
+                {/* Avatar and basic info */}
+                <div className="flex flex-col items-center mb-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-blue-500 mb-2">
+                    {selectedSeatEmployee.photo ? (
+                      <img 
+                        src={selectedSeatEmployee.photo.startsWith('http') 
+                          ? selectedSeatEmployee.photo 
+                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${selectedSeatEmployee.photo}`
                         }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-600 flex items-center justify-center">
-                      <span className="text-2xl text-white">👤</span>
-                    </div>
-                  )}
+                        alt={selectedSeatEmployee.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div class="w-full h-full bg-gray-600 flex items-center justify-center"><span class="text-xl text-white">👤</span></div>';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center">
+                        <span className="text-xl text-white">👤</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-blue-300 text-sm">{selectedSeatEmployee.position || '未設定職位'}</span>
                 </div>
-                <span className="text-blue-300 text-sm">{selectedSeatEmployee.position || '未設定職位'}</span>
+                
+                {/* Contact info */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                    <span className="text-white">分機: {selectedSeatEmployee.extension || '未設定'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-white">部門: {selectedSeatEmployee.department || '未設定部門'}</span>
+                  </div>
+                </div>
               </div>
-              
-              {/* 第三排: 電話圖示 + "分機:" + 分機內容 */}
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
-                <span className="text-white text-sm">分機: {selectedSeatEmployee.extension || '未設定'}</span>
+            ) : isSelectingSeatForRegistration ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-3">
+                  <span className="text-lg">🪑</span>
+                </div>
+                <h3 className="text-sm font-medium text-blue-300 mb-2">選擇座位</h3>
+                <p className="text-xs text-gray-400 mb-2">請在平面圖中點選一個空的座位</p>
+                <button 
+                  onClick={() => {
+                    setIsSelectingSeatForRegistration(false);
+                    toast({
+                      title: "已取消",
+                      description: "已取消座位選擇",
+                    });
+                  }}
+                  className="mt-2 px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs transition-colors"
+                >
+                  取消選擇
+                </button>
               </div>
-              
-              {/* 第四排: 圖示 + "部門:" + 部門內容 */}
-              <div className="flex items-center gap-2 mb-4">
-                <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-white text-sm">部門: {selectedSeatEmployee.department || '未設定部門'}</span>
+            ) : isEditMode ? (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-cyan-300 text-center">系統管理員</h3>
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-lg text-white">👤</span>
+                  </div>
+                  <span className="text-blue-300 text-sm">系統管理員</span>
+                </div>
               </div>
-              
-              {/* 工作日誌面板 */}
-              {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-6 border border-gray-600 rounded"></div>
+                </div>
+                <p className="text-xs text-gray-400 text-center">請點選座位查看員工信息</p>
+              </div>
+            )}
+          </div>
+
+          {/* Work Log Container - 1/3 height */}
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+            {selectedSeatEmployee ? (
+              currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
@@ -1969,23 +1831,236 @@ const Index = () => {
                   employeeName={selectedSeatEmployee.name}
                   pcData={selectedSeat?.pcs}
                 />
-              )}
-            </div>
-          ) : (
-            /* 一般模式 */
-            <div className="flex flex-col items-center justify-center h-full">
-              {/* Monitor Icon - 80px width, 60px height */}
-              <div className="w-20 h-15 mb-4 border-2 border-gray-600 rounded-lg flex items-center justify-center">
-                <div className="w-12 h-8 border border-gray-600 rounded"></div>
+              )
+            ) : isEditMode ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
+                <button 
+                  onClick={startAddingContainer}
+                  className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors"
+                >
+                  新增容器
+                </button>
+                <button 
+                  onClick={toggleContainerEditMode}
+                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
+                    isContainerEditMode 
+                      ? 'bg-yellow-600 hover:bg-yellow-700' 
+                      : 'bg-orange-600 hover:bg-orange-700'
+                  }`}
+                >
+                  {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
+                </button>
+                <button 
+                  onClick={deleteContainer}
+                  className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors"
+                >
+                  刪除容器
+                </button>
+                <button 
+                  onClick={toggleSeatEditMode}
+                  disabled={!selectedContainer}
+                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
+                    isSeatEditMode 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  } ${!selectedContainer ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  新增座位
+                </button>
+                <button 
+                  onClick={deleteSeat}
+                  disabled={!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id}
+                  className={`w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors ${
+                    (!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id) 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : ''
+                  }`}
+                >
+                  刪除座位
+                </button>
               </div>
-              
-              {/* Text Content - 250px width */}
-              <div className="w-62 text-center">
-                <p className="text-sm text-gray-400 mb-2">請點選座位查看詳細信息</p>
-                <p className="text-xs text-gray-500">可按拖選進行位置調整</p>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-6 border border-gray-600 rounded"></div>
+                </div>
+                <p className="text-xs text-gray-400 text-center">工作日誌</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* PC Data Container - 1/3 height */}
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+            {selectedSeat?.pcs ? (
+              <div>
+                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <span className="text-gray-400">名稱: </span>
+                    <span className="text-white">{selectedSeat.pcs.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">CPU: </span>
+                    <span className="text-white">{selectedSeat.pcs.cpu}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">記憶體: </span>
+                    <span className="text-white">{selectedSeat.pcs.memory}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">儲存: </span>
+                    <span className="text-white">{selectedSeat.pcs.storage}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">顯卡: </span>
+                    <span className="text-white">{selectedSeat.pcs.graphics}</span>
+                  </div>
+                  
+                  {/* PC Images */}
+                  <div className="grid grid-cols-3 gap-1 mt-3">
+                    {selectedSeat.pcs.case_photo && (
+                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                        <img 
+                          src={selectedSeat.pcs.case_photo.startsWith('http') 
+                            ? selectedSeat.pcs.case_photo 
+                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.case_photo}`
+                          }
+                          alt="主機"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    {selectedSeat.pcs.monitor_a_photo && (
+                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                        <img 
+                          src={selectedSeat.pcs.monitor_a_photo.startsWith('http') 
+                            ? selectedSeat.pcs.monitor_a_photo 
+                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_a_photo}`
+                          }
+                          alt="螢幕A"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    {selectedSeat.pcs.monitor_b_photo && (
+                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                        <img 
+                          src={selectedSeat.pcs.monitor_b_photo.startsWith('http') 
+                            ? selectedSeat.pcs.monitor_b_photo 
+                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_b_photo}`
+                          }
+                          alt="螢幕B"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : isEditMode ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯容器</h3>
+                {editingContainer && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs text-gray-400">名稱:</label>
+                      <input 
+                        type="text" 
+                        value={editingContainer.name}
+                        placeholder="容器名稱"
+                        onChange={(e) => handleContainerNameChange(e.target.value)}
+                        className="w-full mt-1 px-2 py-1 bg-slate-600 border border-gray-500 rounded text-xs"
+                      />
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      <div>位置: ({Math.round(editingContainer.x)}, {Math.round(editingContainer.y)})</div>
+                      <div>大小: {Math.round(editingContainer.width)}×{Math.round(editingContainer.height)}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <button 
+                        onClick={saveContainerChanges}
+                        className="w-full px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium transition-colors"
+                      >
+                        保存變更
+                      </button>
+                      <button 
+                        onClick={cancelContainerChanges}
+                        className="w-full px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs font-medium transition-colors"
+                      >
+                        取消變更
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {isSeatEditMode && (
+                  <div className="mt-3 space-y-2">
+                    <h4 className="text-xs font-medium text-cyan-300">座位模板</h4>
+                    <div className="space-y-1">
+                      <div>
+                        <input 
+                          type="radio" 
+                          id="template-120x70" 
+                          name="seatTemplate" 
+                          value="120x70" 
+                          checked={selectedSeatTemplate === '120x70'}
+                          onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                          className="mr-2"
+                        />
+                        <label htmlFor="template-120x70" className="text-xs text-gray-300">
+                          120×70
+                        </label>
+                      </div>
+                      <div>
+                        <input 
+                          type="radio" 
+                          id="template-70x90" 
+                          name="seatTemplate" 
+                          value="70x90" 
+                          checked={selectedSeatTemplate === '70x90'}
+                          onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                          className="mr-2"
+                        />
+                        <label htmlFor="template-70x90" className="text-xs text-gray-300">
+                          70×90
+                        </label>
+                      </div>
+                      <div>
+                        <input 
+                          type="radio" 
+                          id="template-40x40" 
+                          name="seatTemplate" 
+                          value="40x40" 
+                          checked={selectedSeatTemplate === '40x40'}
+                          onChange={(e) => setSelectedSeatTemplate(e.target.value)}
+                          className="mr-2"
+                        />
+                        <label htmlFor="template-40x40" className="text-xs text-gray-300">
+                          40×40
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-6 border border-gray-600 rounded"></div>
+                </div>
+                <p className="text-xs text-gray-400 text-center">電腦設備</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
