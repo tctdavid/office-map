@@ -191,20 +191,24 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
 
       if (existingPc) {
         // 更新現有電腦
+        const updateData = {
+          name: pcData.name,
+          cpu: pcData.cpu,
+          memory: pcData.memory,
+          storage: pcData.storage,
+          graphics: pcData.graphics,
+          case_photo: pcData.case_photo,
+          monitor_a: pcData.monitor_a,
+          monitor_a_photo: pcData.monitor_a_photo,
+          monitor_b: pcData.monitor_b,
+          monitor_b_photo: pcData.monitor_b_photo,
+        };
+        
+        console.log('Updating PC with data:', updateData);
+        
         const { error: pcError } = await supabase
           .from('pcs')
-          .update({
-            name: pcData.name,
-            cpu: pcData.cpu,
-            memory: pcData.memory,
-            storage: pcData.storage,
-            graphics: pcData.graphics,
-            case_photo: pcData.case_photo,
-            monitor_a: pcData.monitor_a,
-            monitor_a_photo: pcData.monitor_a_photo,
-            monitor_b: pcData.monitor_b,
-            monitor_b_photo: pcData.monitor_b_photo,
-          })
+          .update(updateData)
           .eq('id', existingPc.id);
 
         if (pcError) throw pcError;
