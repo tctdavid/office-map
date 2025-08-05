@@ -1817,7 +1817,7 @@ const Index = () => {
           </div>
 
           {/* Work Log Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700">
             {selectedSeatEmployee ? (
               currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
@@ -1833,7 +1833,7 @@ const Index = () => {
                 />
               )
             ) : isEditMode ? (
-              <div className="space-y-2">
+              <div className="px-2 py-4 space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
                 <button 
                   onClick={startAddingContainer}
@@ -1881,7 +1881,7 @@ const Index = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full">
+              <div className="flex flex-col items-center justify-center h-full px-2 py-4">
                 <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
                   <div className="w-8 h-6 border border-gray-600 rounded"></div>
                 </div>
@@ -1965,6 +1965,11 @@ const Index = () => {
                       </div>
                     )}
                   </div>
+                  
+                  {/* View detailed specs button */}
+                  <button className="w-full mt-3 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors">
+                    查看詳細規格
+                  </button>
                 </div>
               </div>
             ) : isEditMode ? (
