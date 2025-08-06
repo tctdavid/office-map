@@ -1817,7 +1817,7 @@ const Index = () => {
           </div>
 
           {/* Work Log Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700">
             {selectedSeatEmployee ? (
               currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
@@ -1833,7 +1833,7 @@ const Index = () => {
                 />
               )
             ) : isEditMode ? (
-              <div className="space-y-2">
+              <div className="px-2 py-4 space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
                 <button 
                   onClick={startAddingContainer}
