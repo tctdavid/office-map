@@ -1957,7 +1957,7 @@ const Index = () => {
               </div>
               
               {/* 工作日誌面板 */}
-              {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
+               {/* currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
@@ -1969,7 +1969,7 @@ const Index = () => {
                   employeeName={selectedSeatEmployee.name}
                   pcData={selectedSeat?.pcs}
                 />
-              )}
+              )*/}
             </div>
           ) : (
             /* 一般模式 */
