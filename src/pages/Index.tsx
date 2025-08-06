@@ -1819,21 +1819,23 @@ const Index = () => {
           {/* Work Log Container - 1/3 height */}
           <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeatEmployee ? (
-              <div>
+              <div className="h-full flex flex-col">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">工作日誌查詢</h3>
-                {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
-                  <WorkLogPanel 
-                    employeeId={selectedSeatEmployee.id}
-                    employeeName={selectedSeatEmployee.name}
-                    pcData={selectedSeat?.pcs}
-                  />
-                ) : (
-                  <WorkLogViewer 
-                    employeeId={selectedSeatEmployee.id}
-                    employeeName={selectedSeatEmployee.name}
-                    pcData={selectedSeat?.pcs}
-                  />
-                )}
+                <div className="flex-1 overflow-auto min-h-0">
+                  {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
+                    <WorkLogPanel 
+                      employeeId={selectedSeatEmployee.id}
+                      employeeName={selectedSeatEmployee.name}
+                      pcData={null}
+                    />
+                  ) : (
+                    <WorkLogViewer 
+                      employeeId={selectedSeatEmployee.id}
+                      employeeName={selectedSeatEmployee.name}
+                      pcData={null}
+                    />
+                  )}
+                </div>
               </div>
             ) : isEditMode ? (
               <div className="space-y-2">
