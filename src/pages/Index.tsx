@@ -1819,24 +1819,19 @@ const Index = () => {
           {/* Work Log Container - 1/3 height */}
           <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeatEmployee ? (
-              <div className="h-full flex flex-col">
-                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">工作日誌查詢</h3>
-                <div className="flex-1 overflow-auto min-h-0">
-                  {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
-                    <WorkLogPanel 
-                      employeeId={selectedSeatEmployee.id}
-                      employeeName={selectedSeatEmployee.name}
-                      pcData={null}
-                    />
-                  ) : (
-                    <WorkLogViewer 
-                      employeeId={selectedSeatEmployee.id}
-                      employeeName={selectedSeatEmployee.name}
-                      pcData={null}
-                    />
-                  )}
-                </div>
-              </div>
+              currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
+                <WorkLogPanel 
+                  employeeId={selectedSeatEmployee.id}
+                  employeeName={selectedSeatEmployee.name}
+                  pcData={null}
+                />
+              ) : (
+                <WorkLogViewer 
+                  employeeId={selectedSeatEmployee.id}
+                  employeeName={selectedSeatEmployee.name}
+                  pcData={null}
+                />
+              )
             ) : isEditMode ? (
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
@@ -1900,82 +1895,60 @@ const Index = () => {
             {selectedSeat?.pcs ? (
               <div>
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <span className="text-gray-400">名稱: </span>
-                    <span className="text-white">{selectedSeat.pcs.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">CPU: </span>
-                    <span className="text-white">{selectedSeat.pcs.cpu}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">記憶體: </span>
-                    <span className="text-white">{selectedSeat.pcs.memory}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">儲存: </span>
-                    <span className="text-white">{selectedSeat.pcs.storage}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">顯卡: </span>
-                    <span className="text-white">{selectedSeat.pcs.graphics}</span>
-                  </div>
-                  
-                  {/* PC Images */}
-                  <div className="grid grid-cols-3 gap-1 mt-3">
-                    {selectedSeat.pcs.case_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.case_photo.startsWith('http') 
-                            ? selectedSeat.pcs.case_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.case_photo}`
-                          }
-                          alt="主機"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    {selectedSeat.pcs.monitor_a_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.monitor_a_photo.startsWith('http') 
-                            ? selectedSeat.pcs.monitor_a_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_a_photo}`
-                          }
-                          alt="螢幕A"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    {selectedSeat.pcs.monitor_b_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.monitor_b_photo.startsWith('http') 
-                            ? selectedSeat.pcs.monitor_b_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_b_photo}`
-                          }
-                          alt="螢幕B"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* View detailed specs button */}
-                  <button className="w-full mt-3 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors">
-                    查看詳細規格
-                  </button>
+                
+                {/* PC Images */}
+                <div className="grid grid-cols-3 gap-1 mt-3">
+                  {selectedSeat.pcs.case_photo && (
+                    <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                      <img 
+                        src={selectedSeat.pcs.case_photo.startsWith('http') 
+                          ? selectedSeat.pcs.case_photo 
+                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.case_photo}`
+                        }
+                        alt="主機"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  {selectedSeat.pcs.monitor_a_photo && (
+                    <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                      <img 
+                        src={selectedSeat.pcs.monitor_a_photo.startsWith('http') 
+                          ? selectedSeat.pcs.monitor_a_photo 
+                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_a_photo}`
+                        }
+                        alt="螢幕A"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  {selectedSeat.pcs.monitor_b_photo && (
+                    <div className="aspect-square bg-gray-700 rounded overflow-hidden">
+                      <img 
+                        src={selectedSeat.pcs.monitor_b_photo.startsWith('http') 
+                          ? selectedSeat.pcs.monitor_b_photo 
+                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_b_photo}`
+                        }
+                        alt="螢幕B"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
+                
+                {/* View detailed specs button */}
+                <button className="w-full mt-3 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors">
+                  查看詳細規格
+                </button>
               </div>
             ) : isEditMode ? (
               <div className="space-y-2">
