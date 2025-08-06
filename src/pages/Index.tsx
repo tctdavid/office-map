@@ -1817,23 +1817,26 @@ const Index = () => {
           </div>
 
           {/* Work Log Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700">
+          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeatEmployee ? (
-              currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
-                <WorkLogPanel 
-                  employeeId={selectedSeatEmployee.id}
-                  employeeName={selectedSeatEmployee.name}
-                  pcData={selectedSeat?.pcs}
-                />
-              ) : (
-                <WorkLogViewer 
-                  employeeId={selectedSeatEmployee.id}
-                  employeeName={selectedSeatEmployee.name}
-                  pcData={selectedSeat?.pcs}
-                />
-              )
+              <div>
+                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">工作日誌查詢</h3>
+                {currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
+                  <WorkLogPanel 
+                    employeeId={selectedSeatEmployee.id}
+                    employeeName={selectedSeatEmployee.name}
+                    pcData={selectedSeat?.pcs}
+                  />
+                ) : (
+                  <WorkLogViewer 
+                    employeeId={selectedSeatEmployee.id}
+                    employeeName={selectedSeatEmployee.name}
+                    pcData={selectedSeat?.pcs}
+                  />
+                )}
+              </div>
             ) : isEditMode ? (
-              <div className="px-2 py-4 space-y-2">
+              <div className="space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
                 <button 
                   onClick={startAddingContainer}
@@ -1881,7 +1884,7 @@ const Index = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full px-2 py-4">
+              <div className="flex flex-col items-center justify-center h-full">
                 <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
                   <div className="w-8 h-6 border border-gray-600 rounded"></div>
                 </div>
