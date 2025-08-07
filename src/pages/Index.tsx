@@ -1717,8 +1717,8 @@ const Index = () => {
 
         {/* Right Panel - 3 Containers - 250px width */}
         <div className="w-[250px] flex flex-col gap-2">
-          {/* Staff Info Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          {/* Staff Info Container - shorter height */}
+          <div className="flex-[0.7] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeatEmployee ? (
               <div>
                 {/* Header */}
@@ -1816,8 +1816,8 @@ const Index = () => {
             )}
           </div>
 
-          {/* Work Log Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          {/* Work Log Container - larger height */}
+          <div className="flex-[1.15] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">工作日誌查詢</h3>
             {selectedSeatEmployee ? (
               currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
@@ -1891,8 +1891,8 @@ const Index = () => {
             )}
           </div>
 
-          {/* PC Data Container - 1/3 height */}
-          <div className="flex-1 bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          {/* PC Data Container - larger height */}
+          <div className="flex-[1.15] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeat?.pcs ? (
               <div>
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
