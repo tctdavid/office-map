@@ -56,9 +56,7 @@ export default function WorkLogViewer({ employeeId, employeeName, pcData }: Work
   }, [selectedDate, employeeId]);
 
   return (
-    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-600">
-      <h3 className="text-white text-lg font-medium mb-4">工作日誌查詢</h3>
-      
+    <>
       {/* 日期選擇器 */}
       <div className="mb-4">
         <label className="block text-sm text-gray-300 mb-2">選擇日期</label>
@@ -110,6 +108,6 @@ export default function WorkLogViewer({ employeeId, employeeName, pcData }: Work
       
       {/* PC Data Display */}
       {pcData && <PcDataDisplay pcData={pcData} />}
-    </div>
+    </>
   );
 }
