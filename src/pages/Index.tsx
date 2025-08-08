@@ -6,6 +6,7 @@ import AddPcModal from "@/components/AddPcModal";
 import TimeClockModal from "@/components/TimeClockModal";
 import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
+import PcDataDisplay from "@/components/PcDataDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -74,7 +75,11 @@ const Index = () => {
           memory,
           storage,
           graphics,
-          case_photo
+          case_photo,
+          monitor_a,
+          monitor_a_photo,
+          monitor_b,
+          monitor_b_photo
         )
       `)
       .order('created_at', { ascending: false });
@@ -1894,85 +1899,7 @@ const Index = () => {
           {/* PC Data Container - larger height */}
           <div className="flex-[1.15] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeat?.pcs ? (
-              <div>
-                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <span className="text-gray-400">名稱: </span>
-                    <span className="text-white">{selectedSeat.pcs.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">CPU: </span>
-                    <span className="text-white">{selectedSeat.pcs.cpu}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">記憶體: </span>
-                    <span className="text-white">{selectedSeat.pcs.memory}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">儲存: </span>
-                    <span className="text-white">{selectedSeat.pcs.storage}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">顯卡: </span>
-                    <span className="text-white">{selectedSeat.pcs.graphics}</span>
-                  </div>
-                  
-                  {/* PC Images */}
-                  <div className="grid grid-cols-3 gap-1 mt-3">
-                    {selectedSeat.pcs.case_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.case_photo.startsWith('http') 
-                            ? selectedSeat.pcs.case_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.case_photo}`
-                          }
-                          alt="主機"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    {selectedSeat.pcs.monitor_a_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.monitor_a_photo.startsWith('http') 
-                            ? selectedSeat.pcs.monitor_a_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_a_photo}`
-                          }
-                          alt="螢幕A"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    {selectedSeat.pcs.monitor_b_photo && (
-                      <div className="aspect-square bg-gray-700 rounded overflow-hidden">
-                        <img 
-                          src={selectedSeat.pcs.monitor_b_photo.startsWith('http') 
-                            ? selectedSeat.pcs.monitor_b_photo 
-                            : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pc_images/${selectedSeat.pcs.monitor_b_photo}`
-                          }
-                          alt="螢幕B"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* View detailed specs button */}
-                  <button className="w-full mt-3 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors">
-                    查看詳細規格
-                  </button>
-                </div>
-              </div>
+              <PcDataDisplay pcData={selectedSeat.pcs} />
             ) : isEditMode ? (
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯容器</h3>
