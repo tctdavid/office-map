@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Monitor, HardDrive } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 interface PcDataDisplayProps {
   pcData: {
@@ -49,82 +50,105 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
   return (
     <>
       {/* Three images in a row */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {/* Case Photo */}
-        <div className="text-center">
-          <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
-            {pcData.case_photo ? (
-              <img
-                src={getImageUrl(pcData.case_photo)}
-                alt="主機"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.innerHTML = '<div class="w-full h-full bg-slate-600 flex items-center justify-center"><span class="text-white text-2xl">💻</span></div>';
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-slate-600 flex items-center justify-center">
-                <HardDrive className="w-6 h-6 text-slate-400" />
-              </div>
-            )}
+      <TooltipProvider>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {/* Case Photo */}
+          <div className="text-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
+                  {pcData.case_photo ? (
+                    <img
+                      src={getImageUrl(pcData.case_photo)}
+                      alt="主機"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="w-full h-full bg-slate-600 flex items-center justify-center"><span class="text-white text-2xl">💻</span></div>';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-600 flex items-center justify-center">
+                      <HardDrive className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {pcData.name || '主機'}
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-xs text-slate-300">主機</span>
           </div>
-          <span className="text-xs text-slate-300">主機</span>
-        </div>
 
-        {/* Monitor A Photo */}
-        <div className="text-center">
-          <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
-            {pcData.monitor_a_photo ? (
-              <img
-                src={getImageUrl(pcData.monitor_a_photo)}
-                alt="螢幕A"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.innerHTML = '<div class="w-full h-full bg-slate-600 flex items-center justify-center"><span class="text-white text-2xl">🖥️</span></div>';
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-slate-600 flex items-center justify-center">
-                <Monitor className="w-6 h-6 text-slate-400" />
-              </div>
-            )}
+          {/* Monitor A Photo */}
+          <div className="text-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
+                  {pcData.monitor_a_photo ? (
+                    <img
+                      src={getImageUrl(pcData.monitor_a_photo)}
+                      alt="螢幕A"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="w-full h-full bg-slate-600 flex items-center justify-center"><span class="text-white text-2xl">🖥️</span></div>';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-600 flex items-center justify-center">
+                      <Monitor className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {pcData.monitor_a || '螢幕A'}
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-xs text-slate-300">螢幕A</span>
           </div>
-          <span className="text-xs text-slate-300">螢幕A</span>
-        </div>
 
-        {/* Monitor B Photo */}
-        <div className="text-center">
-          <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
-            {pcData.monitor_b_photo ? (
-              <img
-                src={getImageUrl(pcData.monitor_b_photo)}
-                alt="螢幕B"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.innerHTML = '<div class=\"w-full h-full bg-slate-600 flex items-center justify-center\"><span class=\"text-white text-2xl\">🖥️</span></div>';
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-slate-600 flex items-center justify-center">
-                <Monitor className="w-6 h-6 text-slate-400" />
-              </div>
-            )}
+          {/* Monitor B Photo */}
+          <div className="text-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full h-16 bg-slate-700 rounded-lg border border-slate-500 overflow-hidden mb-1">
+                  {pcData.monitor_b_photo ? (
+                    <img
+                      src={getImageUrl(pcData.monitor_b_photo)}
+                      alt="螢幕B"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class=\"w-full h-full bg-slate-600 flex items-center justify-center\"><span class=\"text-white text-2xl\">🖥️</span></div>';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-600 flex items-center justify-center">
+                      <Monitor className="w-6 h-6 text-slate-400" />
+                    </div>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {pcData.monitor_b || '螢幕B'}
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-xs text-slate-300">螢幕B</span>
           </div>
-          <span className="text-xs text-slate-300">螢幕B</span>
         </div>
-      </div>
+      </TooltipProvider>
 
       {/* Quick specs */}
       <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
