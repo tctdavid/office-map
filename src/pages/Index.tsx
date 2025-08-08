@@ -1899,7 +1899,10 @@ const Index = () => {
           {/* PC Data Container - larger height */}
           <div className="flex-[1.15] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
             {selectedSeat?.pcs ? (
-              <PcDataDisplay pcData={selectedSeat.pcs} />
+              <>
+                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
+                <PcDataDisplay pcData={selectedSeat.pcs} />
+              </>
             ) : isEditMode ? (
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯容器</h3>

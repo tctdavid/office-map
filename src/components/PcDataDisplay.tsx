@@ -26,9 +26,7 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
   };
 
   return (
-    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-slate-600">
-      <h3 className="text-white text-lg font-medium mb-4">電腦設備</h3>
-      
+    <>
       {/* Three images in a row */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {/* Case Photo */}
@@ -93,7 +91,7 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    parent.innerHTML = '<div class="w-full h-full bg-slate-600 flex items-center justify-center"><span class="text-white text-2xl">🖥️</span></div>';
+                    parent.innerHTML = '<div class=\"w-full h-full bg-slate-600 flex items-center justify-center\"><span class=\"text-white text-2xl\">🖥️</span></div>';
                   }
                 }}
               />
@@ -155,6 +153,6 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
