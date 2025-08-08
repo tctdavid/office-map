@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Monitor, HardDrive } from "lucide-react";
-
+import { supabase } from "@/integrations/supabase/client";
 interface PcDataDisplayProps {
   pcData: {
     id: string;
@@ -24,6 +25,26 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
     if (imageName.startsWith('http')) return imageName;
     return `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pcs/${imageName}`;
   };
+
+  const [serialNumber, setSerialNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSerial = async () => {
+      const { data, error } = await supabase
+        .from('pc_details')
+        .select('serial_number')
+        .eq('pc_id', pcData.id)
+        .maybeSingle();
+      if (!error && isMounted) {
+        setSerialNumber(data?.serial_number ?? null);
+      }
+    };
+    fetchSerial();
+    return () => {
+      isMounted = false;
+    };
+  }, [pcData.id]);
 
   return (
     <>
@@ -103,6 +124,15 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
           </div>
           <span className="text-xs text-slate-300">螢幕B</span>
         </div>
+      </div>
+
+      {/* Quick specs */}
+      <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+        <div className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1.5"><span className="text-slate-400">序號</span><span className="text-white font-medium">{serialNumber || '未設定'}</span></div>
+        <div className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1.5"><span className="text-slate-400">處理器</span><span className="text-white font-medium">{pcData.cpu || '未設定'}</span></div>
+        <div className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1.5"><span className="text-slate-400">記憶體</span><span className="text-white font-medium">{pcData.memory || '未設定'}</span></div>
+        <div className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1.5"><span className="text-slate-400">顯示卡</span><span className="text-white font-medium">{pcData.graphics || '未設定'}</span></div>
+        <div className="col-span-2 flex items-center justify-between bg-slate-700/50 rounded px-2 py-1.5"><span className="text-slate-400">儲存空間</span><span className="text-white font-medium">{pcData.storage || '未設定'}</span></div>
       </div>
 
       {/* Details button */}
