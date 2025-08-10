@@ -1722,8 +1722,9 @@ const Index = () => {
 
         {/* Right Panel - 3 Containers - 250px width */}
         <div className="w-[250px] flex flex-col gap-2">
-          {/* Staff Info Container - shorter height */}
-          <div className="flex-[0.7] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
+          {/* Combined Staff Info + Work Log Container */}
+          <div className="flex-[1.85] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4 space-y-4">
+            {/* Staff Info Section */}
             {selectedSeatEmployee ? (
               <div>
                 {/* Header */}
@@ -1819,11 +1820,8 @@ const Index = () => {
                 <p className="text-xs text-gray-400 text-center">請點選座位查看員工信息</p>
               </div>
             )}
-          </div>
 
-          {/* Work Log Container - larger height */}
-          <div className="flex-[1.15] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4">
-            <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">工作日誌查詢</h3>
+            {/* Work Log Section (title removed) */}
             {selectedSeatEmployee ? (
               currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
                 <WorkLogPanel 
