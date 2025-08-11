@@ -52,6 +52,15 @@ const Index = () => {
   const [pcs, setPcs] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Header clock (GMT+8)
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const formatHeaderTime = (d: Date) => d.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
+  const formatHeaderDate = (d: Date) => d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Taipei' });
 
   // 載入座位座標資料
   const fetchSeatCoordinates = async () => {
@@ -1216,8 +1225,8 @@ const Index = () => {
       <header className="h-20 w-[1400px] flex items-center justify-between px-6 bg-slate-800/50">
         {/* Time Display - 120px width */}
         <div className="w-30 bg-cyan-900/40 rounded-lg px-4 py-2 text-center">
-          <div className="text-lg font-mono">15:41</div>
-          <div className="text-xs text-cyan-300">07/21</div>
+          <div className="text-lg font-mono">{formatHeaderTime(currentTime)}</div>
+          <div className="text-xs text-cyan-300">{formatHeaderDate(currentTime)}</div>
         </div>
         
         {/* Title - flexible width */}

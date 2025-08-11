@@ -61,7 +61,8 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
+      timeZone: 'Asia/Taipei'
     });
   };
 
@@ -69,7 +70,8 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
     return time.toLocaleDateString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
+      timeZone: 'Asia/Taipei'
     });
   };
 
@@ -213,10 +215,10 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
       ...data.map(record => [
         record.employee_name || '',
         record.record_date || '',
-        record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
-        record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
-        record.overtime_in_time ? new Date(record.overtime_in_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
-        record.overtime_out_time ? new Date(record.overtime_out_time).toLocaleTimeString('zh-TW', { hour12: false }) : '',
+        record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '',
+        record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '',
+        record.overtime_in_time ? new Date(record.overtime_in_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '',
+        record.overtime_out_time ? new Date(record.overtime_out_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '',
         record.work_log || ''
       ].map(field => `"${field}"`).join(','))
     ].join('\n');
@@ -342,7 +344,7 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
                 上班
                 {todayRecord?.clock_in_time && (
                   <span className="ml-2 text-xs">
-                    {new Date(todayRecord.clock_in_time).toLocaleTimeString('zh-TW', { hour12: false })}
+                    {new Date(todayRecord.clock_in_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' })}
                   </span>
                 )}
               </Button>
@@ -356,7 +358,7 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
                 下班
                 {todayRecord?.clock_out_time && (
                   <span className="ml-2 text-xs">
-                    {new Date(todayRecord.clock_out_time).toLocaleTimeString('zh-TW', { hour12: false })}
+                    {new Date(todayRecord.clock_out_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' })}
                   </span>
                 )}
               </Button>
@@ -370,7 +372,7 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
                 加班上班
                 {todayRecord?.overtime_in_time && (
                   <span className="ml-2 text-xs">
-                    {new Date(todayRecord.overtime_in_time).toLocaleTimeString('zh-TW', { hour12: false })}
+                    {new Date(todayRecord.overtime_in_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' })}
                   </span>
                 )}
               </Button>
@@ -384,7 +386,7 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
                 加班下班
                 {todayRecord?.overtime_out_time && (
                   <span className="ml-2 text-xs">
-                    {new Date(todayRecord.overtime_out_time).toLocaleTimeString('zh-TW', { hour12: false })}
+                    {new Date(todayRecord.overtime_out_time).toLocaleTimeString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' })}
                   </span>
                 )}
               </Button>
