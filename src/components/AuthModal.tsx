@@ -80,58 +80,52 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           setIsSignUp(false);
         }
       } else {
-        // 與資料庫比對員工資料
-        const { data: employee, error } = await supabase
-          .from('employees')
-          .select('id, name, email, password_hash')
-          .eq('email', email)
-          .single();
-
-        if (error || !employee) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
           toast({
             title: "登入失敗",
-            description: "帳號不存在",
+            description: error.message,
             variant: "destructive",
           });
           return;
         }
 
-        // 簡單密碼比對
-        if (employee.password_hash !== password) {
-          toast({
-            title: "登入失敗", 
-            description: "密碼錯誤",
-            variant: "destructive",
-          });
-          return;
+        // 取得或建立員工資料
+        const safeColumns = 'id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at';
+        let { data: employeeProfile } = await supabase
+          .from('employees')
+          .select(safeColumns)
+          .eq('email', email)
+          .maybeSingle();
+
+        if (!employeeProfile) {
+          const guessedName = email.split('@')[0];
+          const { data: inserted } = await supabase
+            .from('employees')
+            .insert({
+              name: guessedName,
+              email,
+              department: null,
+              position: null,
+              extension: null,
+              photo: null,
+              role: 'employee',
+              is_active: true,
+              password_hash: ''
+            })
+            .select(safeColumns)
+            .single();
+          employeeProfile = inserted || null;
         }
 
-        // 建立自訂登入狀態
-        setUser({ 
-          id: employee.id, 
-          email: employee.email,
-          user_metadata: { name: employee.name }
-        } as any);
-        
-        // 通知父組件登入成功
-        if (onLoginSuccess) {
-          onLoginSuccess({
-            id: employee.id,
-            name: employee.name,
-            email: employee.email
-          });
+        if (onLoginSuccess && employeeProfile) {
+          onLoginSuccess({ id: employeeProfile.id, name: employeeProfile.name, email: employeeProfile.email });
         }
-        
+
         // 清空輸入框
-        setEmail("");
-        setPassword("");
+        setEmail('');
+        setPassword('');
         setShowPassword(false);
-        
-        onClose();
-        toast({
-          title: "登入成功",
-          description: `歡迎回來，${employee.name}！`,
-        });
       }
     } catch (error) {
       toast({

@@ -196,7 +196,7 @@ const Index = () => {
     try {
       const { data: fullEmployee, error } = await supabase
         .from('employees')
-        .select('*')
+        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at')
         .eq('id', employee.id)
         .single();
       
@@ -219,7 +219,7 @@ const Index = () => {
     try {
       const { data: fullEmployeeData, error } = await supabase
         .from('employees')
-        .select('*')
+        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at')
         .eq('id', employee.id)
         .single();
       
@@ -378,12 +378,14 @@ const Index = () => {
     }
 
     // 重新載入員工資料
-    const { data: employeeData, error: employeeError } = await supabase
-      .from('employees')
-      .select('*');
-    
-    if (!employeeError && employeeData) {
-      setEmployees(employeeData);
+    if (currentEmployee?.role === 'admin') {
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at');
+      
+      if (!employeeError && employeeData) {
+        setEmployees(employeeData);
+      }
     }
     
     // 重置註冊狀態

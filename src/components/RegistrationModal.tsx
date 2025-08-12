@@ -33,7 +33,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
       const loadEmployeeData = async () => {
         const { data, error } = await supabase
           .from('employees')
-          .select('*')
+          .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at')
           .eq('email', currentEmployee.email)
           .single();
         
@@ -190,16 +190,11 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           photo: formData.photo || null,
         };
         
-        // 只有在密碼不為空時才更新密碼
-        if (formData.password.trim()) {
-          updateData.password_hash = formData.password;
-        }
-        
         const { error } = await supabase
           .from('employees')
           .update(updateData)
           .eq('email', currentEmployee.email);
-          
+        
         if (error) {
           console.error('Update error:', error);
           toast({
@@ -210,85 +205,67 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           return;
         }
         
+        // 如果有新密碼，更新 Supabase Auth 密碼
+        if (formData.password.trim()) {
+          const { error: pwdError } = await supabase.auth.updateUser({ password: formData.password });
+          if (pwdError) {
+            toast({ title: '密碼更新失敗', description: pwdError.message, variant: 'destructive' });
+          }
+        }
+        
         toast({
           title: "更新成功",
           description: "個人資料已成功更新",
         });
         
       } else {
-        // 註冊模式：檢查電子郵件是否已存在
-        const { data: existingEmployee, error: checkError } = await supabase
-          .from('employees')
-          .select('email')
-          .eq('email', formData.email)
-          .single();
-        
-        if (existingEmployee) {
-          toast({
-            title: "電子郵件已存在",
-            description: "此電子郵件已被註冊，請使用其他電子郵件",
-            variant: "destructive"
-          });
-          setIsLoading(false);
+        // 註冊模式：使用 Supabase Auth 建立帳號
+        const redirectUrl = `${window.location.origin}/`;
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: { emailRedirectTo: redirectUrl }
+        });
+        if (signUpError) {
+          toast({ title: '註冊失敗', description: signUpError.message, variant: 'destructive' });
           return;
         }
         
-        // 創建新員工記錄
-        const { data: newEmployee, error } = await supabase
-          .from('employees')
-          .insert({
-            name: formData.name,
-            email: formData.email,
-            password_hash: formData.password, // 注意：實際應用中應該使用適當的密碼加密
-            department: formData.department || null,
-            position: formData.position || null,
-            extension: formData.extension || null,
-            photo: formData.photo || null,
-            role: 'employee',
-            is_active: true
-          })
-          .select()
-          .single();
-      
-        if (error) {
-          console.error('Registration error:', error);
-          toast({
-            title: "註冊失敗",
-            description: "註冊過程中發生錯誤，請重試",
-            variant: "destructive"
-          });
-          return;
-        }
+        // 嘗試立即登入以建立會話（若需信箱驗證則可能失敗）
+        await supabase.auth.signInWithPassword({ email: formData.email, password: formData.password });
         
-        // 如果有選中的座位，更新座位的員工資訊
+        // 嘗試建立員工資料（若無權限會被 RLS 阻擋）
+        const safeInsert = {
+          name: formData.name,
+          email: formData.email,
+          department: formData.department || null,
+          position: formData.position || null,
+          extension: formData.extension || null,
+          photo: formData.photo || null,
+          role: 'employee',
+          is_active: true,
+          password_hash: ''
+        };
+        const { data: newEmployee, error: insertError } = await supabase
+          .from('employees')
+          .insert(safeInsert as any)
+          .select('id, name, email')
+          .maybeSingle();
+        
         if (selectedSeat && newEmployee) {
           const { error: seatError } = await supabase
             .from('seat_coordinates')
-            .update({
-              employee_id: newEmployee.id,
-              is_empty: false
-            })
+            .update({ employee_id: newEmployee.id, is_empty: false })
             .eq('id', selectedSeat.id);
-          
           if (seatError) {
-            console.error('Error updating seat:', seatError);
-            toast({
-              title: "座位分配失敗",
-              description: "員工註冊成功，但座位分配失敗",
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "註冊成功",
-              description: `歡迎 ${formData.name}！您已成功註冊並分配到座位。`,
-            });
+            toast({ title: '座位分配失敗', description: '員工已註冊，但座位分配失敗', variant: 'destructive' });
           }
-        } else {
-          toast({
-            title: "註冊成功",
-            description: `歡迎 ${formData.name}！您已成功註冊。`,
-          });
         }
+        
+        toast({
+          title: '註冊成功',
+          description: '請查看電子郵件完成驗證，之後可登入並完善個人資料。'
+        });
       }
       
       // 重置表單
