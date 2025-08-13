@@ -82,9 +82,18 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
+          let errorMessage = error.message;
+          if (error.message.includes('Invalid login credentials')) {
+            errorMessage = '電子郵件或密碼錯誤，請確認後重試';
+          } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = '請先到電子郵件確認您的帳號';
+          } else if (error.message.includes('Too many requests')) {
+            errorMessage = '嘗試次數過多，請稍後再試';
+          }
+          
           toast({
             title: "登入失敗",
-            description: error.message,
+            description: errorMessage,
             variant: "destructive",
           });
           return;

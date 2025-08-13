@@ -377,11 +377,11 @@ const Index = () => {
       }
     }
 
-    // 重新載入員工資料
-    if (currentEmployee?.role === 'admin') {
+    // 重新載入員工資料 - 只有管理員才能看全部員工
+    if (isAdmin) {
       const { data: employeeData, error: employeeError } = await supabase
         .from('employees')
-        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at');
+        .select('id, name, email, department, position, extension, photo, role, is_active');
       
       if (!employeeError && employeeData) {
         setEmployees(employeeData);
@@ -395,7 +395,7 @@ const Index = () => {
   };
 
   // 檢查是否為管理員
-  const isAdmin = currentEmployee?.email === 'admin@company.com' || currentEmployee?.name?.includes('管理員');
+  const isAdmin = currentEmployee?.role === 'admin';
 
   // 處理新增電腦按鈕點擊
   const handleAddPcClick = () => {

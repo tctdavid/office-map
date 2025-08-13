@@ -88,18 +88,34 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
     if (!file) return;
 
     try {
-      // 創建預覽URL
-      const previewUrl = URL.createObjectURL(file);
+      // 生成唯一檔名
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatars/${formData.email || 'user'}_${timestamp}.${fileExt}`;
+      
+      // 上傳到 Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('staff')
+        .upload(fileName, file, { upsert: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // 獲取公開 URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('staff')
+        .getPublicUrl(fileName);
       
       setFormData(prev => ({
         ...prev,
-        photo: file.name,
-        photoPreview: previewUrl
+        photo: fileName,
+        photoPreview: publicUrl
       }));
       
       toast({
-        title: "照片已選擇",
-        description: `已選擇照片: ${file.name}`,
+        title: "照片上傳成功",
+        description: `照片已上傳: ${file.name}`,
       });
     } catch (error) {
       console.error('Error uploading photo:', error);
