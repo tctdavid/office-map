@@ -451,6 +451,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_auth_for_existing_employees: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
