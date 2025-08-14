@@ -7,12 +7,13 @@ import TimeClockModal from "@/components/TimeClockModal";
 import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
 import PcDataDisplay from "@/components/PcDataDisplay";
+import AdminMigrationPanel from "@/components/AdminMigrationPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
 
 const Index = () => {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationModalKey, setRegistrationModalKey] = useState(0);
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
@@ -1296,7 +1297,7 @@ const Index = () => {
           ) : (
             <>
               <button 
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={() => setIsLoginModalOpen(true)}
                 className="px-4 py-2 border border-gray-500 rounded text-sm hover:bg-gray-700 transition-colors"
               >
                 登入
@@ -1311,6 +1312,14 @@ const Index = () => {
           )}
         </div>
       </header>
+
+      {/* Admin Migration Panel */}
+      <div className="w-[1400px] px-6 py-2">
+        <AdminMigrationPanel 
+          isVisible={isAdmin && currentEmployee?.role === 'admin'} 
+          currentEmployee={currentEmployee}
+        />
+      </div>
 
       {/* Main Content Area */}
       <div className="w-[1400px] flex px-6 py-6 gap-6">
@@ -2062,8 +2071,8 @@ const Index = () => {
 
       {/* Auth Modal */}
       <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
 
