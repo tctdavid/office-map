@@ -23,7 +23,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
     position: "",
     extension: "",
     photo: "",
-    photoPreview: ""
+    photoPreview: "",
+    tempPhotoFile: null as File | null
   });
   
   // 加載當前員工數據用於編輯模式
@@ -50,7 +51,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
               ? data.photo 
               : data.photo 
                 ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${data.photo}`
-                : ""
+                : "",
+            tempPhotoFile: null
           });
         }
       };
@@ -66,7 +68,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
         position: "",
         extension: "",
         photo: "",
-        photoPreview: ""
+        photoPreview: "",
+        tempPhotoFile: null
       });
     }
   }, [isEditMode, currentEmployee, isOpen]);
@@ -87,43 +90,69 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      // 生成唯一檔名
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `avatars/${formData.email || 'user'}_${timestamp}.${fileExt}`;
-      
-      // 上傳到 Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('staff')
-        .upload(fileName, file, { upsert: true });
-      
-      if (error) {
-        throw error;
+    if (isEditMode) {
+      // 編輯模式：用戶已登入，可以直接上傳
+      try {
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `avatars/${formData.email || 'user'}_${timestamp}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('staff')
+          .upload(fileName, file, { upsert: true });
+        
+        if (error) {
+          throw error;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('staff')
+          .getPublicUrl(fileName);
+        
+        setFormData(prev => ({
+          ...prev,
+          photo: fileName,
+          photoPreview: publicUrl
+        }));
+        
+        toast({
+          title: "照片上傳成功",
+          description: `照片已上傳: ${file.name}`,
+        });
+      } catch (error) {
+        console.error('Error uploading photo:', error);
+        toast({
+          title: "上傳失敗",
+          description: "照片上傳失敗，請重試",
+          variant: "destructive"
+        });
       }
-      
-      // 獲取公開 URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('staff')
-        .getPublicUrl(fileName);
-      
-      setFormData(prev => ({
-        ...prev,
-        photo: fileName,
-        photoPreview: publicUrl
-      }));
-      
-      toast({
-        title: "照片上傳成功",
-        description: `照片已上傳: ${file.name}`,
-      });
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast({
-        title: "上傳失敗",
-        description: "照片上傳失敗，請重試",
-        variant: "destructive"
-      });
+    } else {
+      // 註冊模式：暫存文件，稍後在帳號建立後上傳
+      try {
+        // 創建本地預覽
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFormData(prev => ({
+            ...prev,
+            photoPreview: e.target?.result as string,
+            tempPhotoFile: file // 暫存文件
+          }));
+        };
+        reader.readAsDataURL(file);
+        
+        toast({
+          title: "照片已選擇",
+          description: `將在註冊完成後上傳: ${file.name}`,
+        });
+      } catch (error) {
+        console.error('Error processing photo:', error);
+        toast({
+          title: "照片處理失敗",
+          description: "無法處理選擇的照片",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -260,6 +289,27 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
         // 等待短暫時間讓 Auth 系統處理
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        // 如果有暫存的照片文件，現在上傳它
+        let photoFileName = '';
+        if (formData.tempPhotoFile) {
+          try {
+            const timestamp = Date.now();
+            const fileExt = formData.tempPhotoFile.name.split('.').pop();
+            const fileName = `avatars/${formData.email}_${timestamp}.${fileExt}`;
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('staff')
+              .upload(fileName, formData.tempPhotoFile, { upsert: true });
+            
+            if (!uploadError) {
+              photoFileName = fileName;
+            }
+          } catch (uploadError) {
+            console.warn('Photo upload failed during registration:', uploadError);
+            // 不阻止註冊流程，只是照片上傳失敗
+          }
+        }
+        
         // 嘗試建立員工資料 - 必須在 Auth 帳號建立後執行
         if (authUser.user) {
           const employeeData = {
@@ -268,7 +318,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
             department: formData.department || null,
             position: formData.position || null,
             extension: formData.extension || null,
-            photo: formData.photo || null,
+            photo: photoFileName || null,
             role: 'employee' as const,
             is_active: true,
             password_hash: '' // 不再需要這個欄位，但保留以符合 schema
@@ -316,7 +366,8 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
         position: "",
         extension: "",
         photo: "",
-        photoPreview: ""
+        photoPreview: "",
+        tempPhotoFile: null
       });
       
       // 關閉對話框
