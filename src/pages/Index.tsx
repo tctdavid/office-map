@@ -53,6 +53,10 @@ const Index = () => {
   const [pcs, setPcs] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
   const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
+  const [isManagingEmployees, setIsManagingEmployees] = useState(false);
+  const [disabledEmployees, setDisabledEmployees] = useState<any[]>([]);
+  const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
+  const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
   const { toast } = useToast();
   
   // Header clock (GMT+8)
@@ -387,6 +391,7 @@ const Index = () => {
       
       if (!employeeError && employeeData) {
         setEmployees(employeeData);
+        setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
       }
     }
     
@@ -1164,9 +1169,113 @@ const Index = () => {
     }
   };
 
+  // 停用員工
+  const handleDisableEmployee = async (employeeId: string, seatId: string) => {
+    try {
+      // 停用員工
+      const { error: employeeError } = await supabase
+        .from('employees')
+        .update({ is_active: false })
+        .eq('id', employeeId);
+
+      if (employeeError) throw employeeError;
+
+      // 清空座位
+      const { error: seatError } = await supabase
+        .from('seat_coordinates')
+        .update({ employee_id: null, is_empty: true })
+        .eq('id', seatId);
+
+      if (seatError) throw seatError;
+
+      toast({
+        title: "員工已停用",
+        description: "員工已被停用並從座位移除",
+      });
+
+      // 重新載入數據
+      fetchSeatCoordinates();
+      if (isAdmin) {
+        const { data: employeeData } = await supabase
+          .from('employees')
+          .select('id, name, email, department, position, extension, photo, role, is_active');
+        if (employeeData) {
+          setEmployees(employeeData);
+          setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
+        }
+      }
+    } catch (error) {
+      console.error('Error disabling employee:', error);
+      toast({
+        title: "停用失敗",
+        description: "無法停用員工",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 啟用員工並分配座位
+  const handleEnableEmployee = async (employeeId: string, seatId: string) => {
+    try {
+      // 啟用員工
+      const { error: employeeError } = await supabase
+        .from('employees')
+        .update({ is_active: true })
+        .eq('id', employeeId);
+
+      if (employeeError) throw employeeError;
+
+      // 分配座位
+      const { error: seatError } = await supabase
+        .from('seat_coordinates')
+        .update({ employee_id: employeeId, is_empty: false })
+        .eq('id', seatId);
+
+      if (seatError) throw seatError;
+
+      toast({
+        title: "員工已啟用",
+        description: "員工已被啟用並分配座位",
+      });
+
+      // 重新載入數據
+      fetchSeatCoordinates();
+      if (isAdmin) {
+        const { data: employeeData } = await supabase
+          .from('employees')
+          .select('id, name, email, department, position, extension, photo, role, is_active');
+        if (employeeData) {
+          setEmployees(employeeData);
+          setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
+        }
+      }
+      setShowDisabledEmployeesModal(false);
+    } catch (error) {
+      console.error('Error enabling employee:', error);
+      toast({
+        title: "啟用失敗",
+        description: "無法啟用員工",
+        variant: "destructive"
+      });
+    }
+  };
+
   // 處理座位點擊
   const handleSeatClick = (e: React.MouseEvent, seat: any) => {
     e.stopPropagation();
+    
+    // 如果正在管理員工
+    if (isManagingEmployees) {
+      if (seat.employees && seat.employees.is_active !== false) {
+        // 停用員工
+        handleDisableEmployee(seat.employees.id, seat.id);
+      } else if (!seat.employees || seat.is_empty) {
+        // 顯示已停用員工列表
+        setSelectedEmptySeat(seat);
+        setShowDisabledEmployeesModal(true);
+      }
+      return;
+    }
     
     // 如果正在選擇註冊座位
     if (isSelectingSeatForRegistration) {
@@ -1280,6 +1389,16 @@ const Index = () => {
                     }`}
                   >
                     系統整合管理
+                  </button>
+                  <button 
+                    onClick={() => setIsManagingEmployees(!isManagingEmployees)}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isManagingEmployees 
+                        ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                        : 'border border-orange-500 text-orange-400 hover:bg-orange-600 hover:text-white'
+                    }`}
+                  >
+                    {isManagingEmployees ? '停止管理員工' : '管理員工狀態'}
                   </button>
                 </>
               )}
@@ -2156,6 +2275,40 @@ const Index = () => {
               <button
                 onClick={cancelNewContainer}
                 className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 已停用員工選擇模態框 */}
+      {showDisabledEmployeesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">選擇要啟用的員工</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {disabledEmployees.length === 0 ? (
+                <p className="text-gray-400 text-sm">沒有已停用的員工</p>
+              ) : (
+                disabledEmployees.map(employee => (
+                  <button
+                    key={employee.id}
+                    onClick={() => handleEnableEmployee(employee.id, selectedEmptySeat?.id)}
+                    className="w-full text-left p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                  >
+                    <div className="text-white font-medium">{employee.name}</div>
+                    <div className="text-gray-400 text-sm">{employee.email}</div>
+                    <div className="text-gray-400 text-sm">{employee.department} - {employee.position}</div>
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowDisabledEmployeesModal(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
               >
                 取消
               </button>
