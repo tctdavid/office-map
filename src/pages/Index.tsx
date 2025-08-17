@@ -140,6 +140,19 @@ const Index = () => {
     };
   }, [isDraggingSeat, toast]);
 
+  // 檢查是否為管理員
+  const isAdmin = currentEmployee?.role === 'admin';
+
+  // 監控管理員狀態變化，非管理員時重置員工管理功能
+  useEffect(() => {
+    if (!isAdmin && isManagingEmployees) {
+      setIsManagingEmployees(false);
+      setShowDisabledEmployeesModal(false);
+      setSelectedEmptySeat(null);
+      setIsAdminMigrationPanelOpen(false);
+    }
+  }, [isAdmin, isManagingEmployees]);
+
   useEffect(() => {
     let logoutTimer: NodeJS.Timeout | null = null;
 
@@ -277,6 +290,11 @@ const Index = () => {
     setIsSelectingSeatForPc(false);
     setSelectedSeatForPc(null);
     setIsAddPcModalOpen(false);
+    // 重置員工管理狀態
+    setIsManagingEmployees(false);
+    setShowDisabledEmployeesModal(false);
+    setSelectedEmptySeat(null);
+    setIsAdminMigrationPanelOpen(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -401,8 +419,6 @@ const Index = () => {
     setIsRegistrationModalOpen(false);
   };
 
-  // 檢查是否為管理員
-  const isAdmin = currentEmployee?.role === 'admin';
 
   // 處理新增電腦按鈕點擊
   const handleAddPcClick = () => {
@@ -1391,7 +1407,14 @@ const Index = () => {
                     系統整合管理
                   </button>
                   <button 
-                    onClick={() => setIsManagingEmployees(!isManagingEmployees)}
+                    onClick={() => {
+                      setIsManagingEmployees(!isManagingEmployees);
+                      // 如果停止管理員工，重置相關狀態
+                      if (isManagingEmployees) {
+                        setShowDisabledEmployeesModal(false);
+                        setSelectedEmptySeat(null);
+                      }
+                    }}
                     className={`px-4 py-2 rounded text-sm transition-colors ${
                       isManagingEmployees 
                         ? 'bg-orange-600 hover:bg-orange-700 text-white' 
