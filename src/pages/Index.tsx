@@ -52,6 +52,7 @@ const Index = () => {
   const [selectedSeatForPc, setSelectedSeatForPc] = useState<any>(null);
   const [pcs, setPcs] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
+  const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
   const { toast } = useToast();
   
   // Header clock (GMT+8)
@@ -1270,6 +1271,16 @@ const Index = () => {
                   >
                     {isSelectingSeatForPc ? '選擇座位中...' : '新增電腦'}
                   </button>
+                  <button 
+                    onClick={() => setIsAdminMigrationPanelOpen(!isAdminMigrationPanelOpen)}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isAdminMigrationPanelOpen 
+                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                        : 'border border-yellow-500 text-yellow-400 hover:bg-yellow-600 hover:text-white'
+                    }`}
+                  >
+                    系統整合管理
+                  </button>
                 </>
               )}
               <button 
@@ -1314,12 +1325,14 @@ const Index = () => {
       </header>
 
       {/* Admin Migration Panel */}
-      <div className="w-[1400px] px-6 py-2">
-        <AdminMigrationPanel 
-          isVisible={isAdmin && currentEmployee?.role === 'admin'} 
-          currentEmployee={currentEmployee}
-        />
-      </div>
+      {isAdminMigrationPanelOpen && (
+        <div className="w-[1400px] px-6 py-2">
+          <AdminMigrationPanel 
+            isVisible={true} 
+            currentEmployee={currentEmployee}
+          />
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="w-[1400px] flex px-6 py-6 gap-6">
