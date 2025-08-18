@@ -57,6 +57,12 @@ const Index = () => {
   const [disabledEmployees, setDisabledEmployees] = useState<any[]>([]);
   const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
+  
+  // 員工位置交換功能狀態
+  const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
+  const [selectedSeatsForSwap, setSelectedSeatsForSwap] = useState<any[]>([]);
+  const [showSwapConfirmModal, setShowSwapConfirmModal] = useState(false);
+  
   const { toast } = useToast();
   
   // Header clock (GMT+8)
@@ -145,13 +151,20 @@ const Index = () => {
 
   // 監控管理員狀態變化，非管理員時重置員工管理功能
   useEffect(() => {
-    if (!isAdmin && isManagingEmployees) {
-      setIsManagingEmployees(false);
-      setShowDisabledEmployeesModal(false);
-      setSelectedEmptySeat(null);
-      setIsAdminMigrationPanelOpen(false);
+    if (!isAdmin) {
+      if (isManagingEmployees) {
+        setIsManagingEmployees(false);
+        setShowDisabledEmployeesModal(false);
+        setSelectedEmptySeat(null);
+        setIsAdminMigrationPanelOpen(false);
+      }
+      if (isSwappingEmployees) {
+        setIsSwappingEmployees(false);
+        setSelectedSeatsForSwap([]);
+        setShowSwapConfirmModal(false);
+      }
     }
-  }, [isAdmin, isManagingEmployees]);
+  }, [isAdmin, isManagingEmployees, isSwappingEmployees]);
 
   useEffect(() => {
     let logoutTimer: NodeJS.Timeout | null = null;
@@ -295,6 +308,10 @@ const Index = () => {
     setShowDisabledEmployeesModal(false);
     setSelectedEmptySeat(null);
     setIsAdminMigrationPanelOpen(false);
+    // 重置員工位置交換狀態
+    setIsSwappingEmployees(false);
+    setSelectedSeatsForSwap([]);
+    setShowSwapConfirmModal(false);
     toast({
       title: "登出成功",
       description: "已成功登出系統",
@@ -1276,9 +1293,106 @@ const Index = () => {
     }
   };
 
+  // 交換員工位置
+  const handleSwapEmployees = async (swapPc: boolean = false) => {
+    if (selectedSeatsForSwap.length !== 2) return;
+    
+    const [seat1, seat2] = selectedSeatsForSwap;
+    
+    try {
+      // 交換員工信息
+      const { error: error1 } = await supabase
+        .from('seat_coordinates')
+        .update({
+          employee_id: seat2.employee_id,
+          is_empty: seat2.is_empty
+        })
+        .eq('id', seat1.id);
+
+      if (error1) throw error1;
+
+      const { error: error2 } = await supabase
+        .from('seat_coordinates')
+        .update({
+          employee_id: seat1.employee_id,
+          is_empty: seat1.is_empty
+        })
+        .eq('id', seat2.id);
+
+      if (error2) throw error2;
+
+      // 如果選擇交換電腦
+      if (swapPc) {
+        const { error: pcError1 } = await supabase
+          .from('seat_coordinates')
+          .update({
+            pc_id: seat2.pc_id
+          })
+          .eq('id', seat1.id);
+
+        if (pcError1) throw pcError1;
+
+        const { error: pcError2 } = await supabase
+          .from('seat_coordinates')
+          .update({
+            pc_id: seat1.pc_id
+          })
+          .eq('id', seat2.id);
+
+        if (pcError2) throw pcError2;
+      }
+
+      // 重新載入座位數據
+      await fetchSeatCoordinates();
+      
+      // 重置狀態
+      setSelectedSeatsForSwap([]);
+      setShowSwapConfirmModal(false);
+      setIsSwappingEmployees(false);
+
+      toast({
+        title: "交換成功",
+        description: swapPc ? "員工和電腦位置已成功交換" : "員工位置已成功交換",
+      });
+    } catch (error) {
+      console.error('Error swapping employees:', error);
+      toast({
+        title: "交換失敗",
+        description: "無法交換員工位置",
+        variant: "destructive"
+      });
+    }
+  };
+
   // 處理座位點擊
   const handleSeatClick = (e: React.MouseEvent, seat: any) => {
     e.stopPropagation();
+    
+    // 如果正在交換員工位置
+    if (isSwappingEmployees) {
+      // 避免重複選擇同一座位
+      if (selectedSeatsForSwap.find(s => s.id === seat.id)) {
+        toast({
+          title: "座位已選中",
+          description: "請選擇不同的座位",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const newSelection = [...selectedSeatsForSwap, seat];
+      setSelectedSeatsForSwap(newSelection);
+      
+      if (newSelection.length === 1) {
+        toast({
+          title: "已選中第一個座位",
+          description: "請選擇第二個座位進行交換",
+        });
+      } else if (newSelection.length === 2) {
+        setShowSwapConfirmModal(true);
+      }
+      return;
+    }
     
     // 如果正在管理員工
     if (isManagingEmployees) {
@@ -1422,6 +1536,23 @@ const Index = () => {
                     }`}
                   >
                     {isManagingEmployees ? '停止管理員工' : '管理員工狀態'}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsSwappingEmployees(!isSwappingEmployees);
+                      // 如果停止交換，重置相關狀態
+                      if (isSwappingEmployees) {
+                        setSelectedSeatsForSwap([]);
+                        setShowSwapConfirmModal(false);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isSwappingEmployees 
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                        : 'border border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
+                    }`}
+                  >
+                    {isSwappingEmployees ? '停止交換' : '交換員工位置'}
                   </button>
                 </>
               )}
@@ -1703,16 +1834,21 @@ const Index = () => {
                        return (
                          <div
                            key={seat.id}
-                             className={`seat-container absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
-                               selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
-                             }`}
+                              className={`seat-container absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
+                                selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
+                              } ${
+                                isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) 
+                                  ? 'ring-4 ring-purple-400 ring-opacity-100' : ''
+                              }`}
                            style={{
                              left: `${displayX}px`,
                              top: `${displayY}px`,
                              width: `${seat.pixel_x}px`,
                              height: `${seat.pixel_y}px`,
-                              backgroundColor: selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 0.8)' : seatColor,
-                              border: `2px solid ${selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 1)' : borderColor}`,
+                               backgroundColor: selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 0.8)' : 
+                                 isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) ? 'rgba(168, 85, 247, 0.8)' : seatColor,
+                               border: `2px solid ${selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 1)' : 
+                                 isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) ? 'rgba(168, 85, 247, 1)' : borderColor}`,
                               backdropFilter: 'blur(4px)',
                              // 拖拽中的座位加上特殊效果
                              opacity: isCurrentSeatDragging ? 0.8 : 1,
@@ -2332,6 +2468,101 @@ const Index = () => {
               <button
                 onClick={() => setShowDisabledEmployeesModal(false)}
                 className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 員工位置交換確認模態框 */}
+      {showSwapConfirmModal && selectedSeatsForSwap.length === 2 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-lg w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">確認交換員工位置</h3>
+            
+            <div className="space-y-4 mb-6">
+              {/* 第一個座位信息 */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-2">座位 1: {selectedSeatsForSwap[0].id}</h4>
+                {selectedSeatsForSwap[0].employees ? (
+                  <div>
+                    <p className="text-gray-300">員工: {selectedSeatsForSwap[0].employees.name}</p>
+                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[0].employees.department} - {selectedSeatsForSwap[0].employees.position}</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">空座位</p>
+                )}
+                {selectedSeatsForSwap[0].pcs && (
+                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[0].pcs.name}</p>
+                )}
+              </div>
+
+              {/* 交換箭頭 */}
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-8 h-8 bg-purple-600 rounded-full">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8l3.707-3.707a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* 第二個座位信息 */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <h4 className="text-white font-medium mb-2">座位 2: {selectedSeatsForSwap[1].id}</h4>
+                {selectedSeatsForSwap[1].employees ? (
+                  <div>
+                    <p className="text-gray-300">員工: {selectedSeatsForSwap[1].employees.name}</p>
+                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[1].employees.department} - {selectedSeatsForSwap[1].employees.position}</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">空座位</p>
+                )}
+                {selectedSeatsForSwap[1].pcs && (
+                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[1].pcs.name}</p>
+                )}
+              </div>
+            </div>
+
+            {/* 是否交換電腦的選項 */}
+            {(selectedSeatsForSwap[0].pcs || selectedSeatsForSwap[1].pcs) && (
+              <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
+                <p className="text-yellow-400 text-sm mb-2">⚠️ 檢測到電腦設備</p>
+                <p className="text-gray-300 text-sm">是否同時交換電腦設備？</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              {(selectedSeatsForSwap[0].pcs || selectedSeatsForSwap[1].pcs) ? (
+                <>
+                  <button
+                    onClick={() => handleSwapEmployees(false)}
+                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                  >
+                    僅交換員工
+                  </button>
+                  <button
+                    onClick={() => handleSwapEmployees(true)}
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                  >
+                    交換員工和電腦
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => handleSwapEmployees(false)}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                >
+                  確認交換
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowSwapConfirmModal(false);
+                  setSelectedSeatsForSwap([]);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
               >
                 取消
               </button>
