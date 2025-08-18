@@ -1293,6 +1293,70 @@ const Index = () => {
     }
   };
 
+  // 修復遺失的員工分配
+  const restoreMissingEmployees = async () => {
+    try {
+      // 獲取所有活躍員工
+      const { data: employees, error: empError } = await supabase
+        .from('employees')
+        .select('id, name')
+        .eq('is_active', true)
+        .neq('role', 'admin');
+
+      if (empError) throw empError;
+
+      // 獲取已分配座位的員工ID
+      const { data: assignedSeats, error: seatError } = await supabase
+        .from('seat_coordinates')
+        .select('employee_id')
+        .not('employee_id', 'is', null);
+
+      if (seatError) throw seatError;
+
+      const assignedEmployeeIds = assignedSeats.map(seat => seat.employee_id);
+      const unassignedEmployees = employees.filter(emp => !assignedEmployeeIds.includes(emp.id));
+
+      if (unassignedEmployees.length > 0) {
+        // 獲取空座位
+        const { data: emptySeats, error: emptySeatError } = await supabase
+          .from('seat_coordinates')
+          .select('id')
+          .eq('is_empty', true)
+          .limit(unassignedEmployees.length);
+
+        if (emptySeatError) throw emptySeatError;
+
+        // 分配員工到空座位
+        for (let i = 0; i < Math.min(unassignedEmployees.length, emptySeats.length); i++) {
+          const { error: updateError } = await supabase
+            .from('seat_coordinates')
+            .update({
+              employee_id: unassignedEmployees[i].id,
+              is_empty: false,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', emptySeats[i].id);
+
+          if (updateError) throw updateError;
+        }
+
+        await fetchSeatCoordinates();
+        
+        toast({
+          title: "員工位置已修復",
+          description: `已重新分配 ${Math.min(unassignedEmployees.length, emptySeats.length)} 位員工到座位`,
+        });
+      }
+    } catch (error) {
+      console.error('修復員工位置時發生錯誤:', error);
+      toast({
+        title: "修復失敗",
+        description: "無法修復員工位置分配",
+        variant: "destructive"
+      });
+    }
+  };
+
   // 交換員工位置
   const handleSwapEmployees = async (swapPc: boolean = false) => {
     if (selectedSeatsForSwap.length !== 2) return;
@@ -1527,23 +1591,29 @@ const Index = () => {
                   >
                     {isManagingEmployees ? '停止管理員工' : '管理員工狀態'}
                   </button>
-                  <button 
-                    onClick={() => {
-                      setIsSwappingEmployees(!isSwappingEmployees);
-                      // 如果停止交換，重置相關狀態
-                      if (isSwappingEmployees) {
-                        setSelectedSeatsForSwap([]);
-                        setShowSwapConfirmModal(false);
-                      }
-                    }}
-                    className={`px-4 py-2 rounded text-sm transition-colors ${
-                      isSwappingEmployees 
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                        : 'border border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
-                    }`}
-                  >
-                    {isSwappingEmployees ? '停止交換' : '交換員工位置'}
-                  </button>
+                   <button 
+                     onClick={() => {
+                       setIsSwappingEmployees(!isSwappingEmployees);
+                       // 如果停止交換，重置相關狀態
+                       if (isSwappingEmployees) {
+                         setSelectedSeatsForSwap([]);
+                         setShowSwapConfirmModal(false);
+                       }
+                     }}
+                     className={`px-4 py-2 rounded text-sm transition-colors ${
+                       isSwappingEmployees 
+                         ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                         : 'border border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
+                     }`}
+                   >
+                     {isSwappingEmployees ? '停止交換' : '交換員工位置'}
+                   </button>
+                   <button 
+                     onClick={restoreMissingEmployees}
+                     className="px-4 py-2 rounded text-sm transition-colors border border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white"
+                   >
+                     修復員工位置
+                   </button>
                 </>
               )}
               <button 
