@@ -1363,23 +1363,32 @@ const Index = () => {
     
     const [seat1, seat2] = selectedSeatsForSwap;
     
+    console.log('Swapping seats:', { seat1, seat2 });
+    
     try {
-      // 準備更新的數據
+      // 添加時間戳確保更新被識別
+      const timestamp = new Date().toISOString();
+      
+      // 準備更新的數據 - 確保正確處理null值
       const seat1Updates: any = {
-        employee_id: seat2.employee_id,
-        is_empty: seat2.is_empty
+        employee_id: seat2.employee_id || null,
+        is_empty: seat2.employee_id ? false : true,
+        updated_at: timestamp
       };
       
       const seat2Updates: any = {
-        employee_id: seat1.employee_id,
-        is_empty: seat1.is_empty
+        employee_id: seat1.employee_id || null,
+        is_empty: seat1.employee_id ? false : true,
+        updated_at: timestamp
       };
 
       // 如果選擇交換電腦
       if (swapPc) {
-        seat1Updates.pc_id = seat2.pc_id;
-        seat2Updates.pc_id = seat1.pc_id;
+        seat1Updates.pc_id = seat2.pc_id || null;
+        seat2Updates.pc_id = seat1.pc_id || null;
       }
+
+      console.log('Update data:', { seat1Updates, seat2Updates });
 
       // 同時更新兩個座位，避免數據競爭
       const [result1, result2] = await Promise.all([
@@ -1393,9 +1402,21 @@ const Index = () => {
           .eq('id', seat2.id)
       ]);
 
-      if (result1.error) throw result1.error;
-      if (result2.error) throw result2.error;
+      const results = [result1, result2];
+      
+      // 檢查所有更新是否成功
+      results.forEach((result, index) => {
+        if (result.error) {
+          console.error(`Update ${index + 1} failed:`, result.error);
+          throw result.error;
+        }
+      });
 
+      console.log('All updates successful');
+
+      // 等待一小段時間確保數據庫更新完成
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // 重新載入座位數據
       await fetchSeatCoordinates();
       
