@@ -1300,47 +1300,37 @@ const Index = () => {
     const [seat1, seat2] = selectedSeatsForSwap;
     
     try {
-      // 交換員工信息
-      const { error: error1 } = await supabase
-        .from('seat_coordinates')
-        .update({
-          employee_id: seat2.employee_id,
-          is_empty: seat2.is_empty
-        })
-        .eq('id', seat1.id);
-
-      if (error1) throw error1;
-
-      const { error: error2 } = await supabase
-        .from('seat_coordinates')
-        .update({
-          employee_id: seat1.employee_id,
-          is_empty: seat1.is_empty
-        })
-        .eq('id', seat2.id);
-
-      if (error2) throw error2;
+      // 準備更新的數據
+      const seat1Updates: any = {
+        employee_id: seat2.employee_id,
+        is_empty: seat2.is_empty
+      };
+      
+      const seat2Updates: any = {
+        employee_id: seat1.employee_id,
+        is_empty: seat1.is_empty
+      };
 
       // 如果選擇交換電腦
       if (swapPc) {
-        const { error: pcError1 } = await supabase
-          .from('seat_coordinates')
-          .update({
-            pc_id: seat2.pc_id
-          })
-          .eq('id', seat1.id);
-
-        if (pcError1) throw pcError1;
-
-        const { error: pcError2 } = await supabase
-          .from('seat_coordinates')
-          .update({
-            pc_id: seat1.pc_id
-          })
-          .eq('id', seat2.id);
-
-        if (pcError2) throw pcError2;
+        seat1Updates.pc_id = seat2.pc_id;
+        seat2Updates.pc_id = seat1.pc_id;
       }
+
+      // 同時更新兩個座位，避免數據競爭
+      const [result1, result2] = await Promise.all([
+        supabase
+          .from('seat_coordinates')
+          .update(seat1Updates)
+          .eq('id', seat1.id),
+        supabase
+          .from('seat_coordinates')
+          .update(seat2Updates)
+          .eq('id', seat2.id)
+      ]);
+
+      if (result1.error) throw result1.error;
+      if (result2.error) throw result2.error;
 
       // 重新載入座位數據
       await fetchSeatCoordinates();
