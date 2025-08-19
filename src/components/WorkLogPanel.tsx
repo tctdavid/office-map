@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import PcDataDisplay from "./PcDataDisplay";
+import MonthlyWorkLogCalendar from "./MonthlyWorkLogCalendar";
 
 interface WorkLogPanelProps {
   employeeId: string;
@@ -34,6 +35,7 @@ export default function WorkLogPanel({ employeeId, employeeName, pcData }: WorkL
   const [isLoading, setIsLoading] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showMonthView, setShowMonthView] = useState(false);
   const { toast } = useToast();
 
   // 檢查日期是否為過去
@@ -139,37 +141,60 @@ export default function WorkLogPanel({ employeeId, employeeName, pcData }: WorkL
 
   return (
     <>
+      {/* 月視圖日曆 */}
+      {showMonthView && (
+        <MonthlyWorkLogCalendar
+          employeeId={employeeId}
+          employeeName={employeeName}
+          selectedDate={selectedDate}
+          onDateSelect={(date) => {
+            setSelectedDate(date);
+            setShowMonthView(false);
+          }}
+          onClose={() => setShowMonthView(false)}
+        />
+      )}
+
       {/* 日期選擇器 */}
       <div className="mb-4">
         <label className="block text-sm text-gray-300 mb-2">選擇日期</label>
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal bg-slate-700 border-slate-500 text-white hover:bg-slate-600",
-                !selectedDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {selectedDate ? format(selectedDate, "yyyy年MM月dd日") : "選擇日期"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-600" align="start">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => {
-                if (date) {
-                  setSelectedDate(date);
-                }
-                setCalendarOpen(false);
-              }}
-              initialFocus
-              className="pointer-events-auto bg-slate-800 text-white"
-            />
-          </PopoverContent>
-        </Popover>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowMonthView(true)}
+            className={cn(
+              "flex-1 justify-start text-left font-normal bg-slate-700 border-slate-500 text-white hover:bg-slate-600"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {selectedDate ? format(selectedDate, "yyyy年MM月dd日") : "選擇日期"}
+          </Button>
+          
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-slate-700 border-slate-500 text-white hover:bg-slate-600"
+              >
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-600" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                  setCalendarOpen(false);
+                }}
+                initialFocus
+                className="pointer-events-auto bg-slate-800 text-white"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {/* 工作日誌輸入區域 */}
