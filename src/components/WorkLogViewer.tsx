@@ -76,43 +76,16 @@ export default function WorkLogViewer({ employeeId, employeeName, pcData }: Work
       {/* 日期選擇器 */}
       <div className="mb-4">
         <label className="block text-sm text-gray-300 mb-2">選擇日期</label>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowMonthView(true)}
-            className={cn(
-              "flex-1 justify-start text-left font-normal bg-slate-700 border-slate-500 text-white hover:bg-slate-600"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {selectedDate ? format(selectedDate, "yyyy年MM月dd日") : "選擇日期"}
-          </Button>
-          
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-slate-700 border-slate-500 text-white hover:bg-slate-600"
-              >
-                <CalendarIcon className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-600" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                  }
-                  setCalendarOpen(false);
-                }}
-                initialFocus
-                className="pointer-events-auto bg-slate-800 text-white"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowMonthView(true)}
+          className={cn(
+            "w-full justify-start text-left font-normal bg-slate-700 border-slate-500 text-white hover:bg-slate-600"
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {selectedDate ? format(selectedDate, "yyyy年MM月dd日") : "選擇日期"}
+        </Button>
       </div>
 
       {/* 工作日誌顯示區域 */}
