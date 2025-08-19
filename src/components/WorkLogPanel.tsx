@@ -14,6 +14,7 @@ import MonthlyWorkLogCalendar from "./MonthlyWorkLogCalendar";
 interface WorkLogPanelProps {
   employeeId: string;
   employeeName: string;
+  currentUserId: string | null;
   pcData?: {
     id: string;
     name: string;
@@ -29,7 +30,7 @@ interface WorkLogPanelProps {
   };
 }
 
-export default function WorkLogPanel({ employeeId, employeeName, pcData }: WorkLogPanelProps) {
+export default function WorkLogPanel({ employeeId, employeeName, currentUserId, pcData }: WorkLogPanelProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [workLog, setWorkLog] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -146,6 +147,7 @@ export default function WorkLogPanel({ employeeId, employeeName, pcData }: WorkL
         <MonthlyWorkLogCalendar
           employeeId={employeeId}
           employeeName={employeeName}
+          currentUserId={currentUserId}
           selectedDate={selectedDate}
           onDateSelect={(date) => {
             setSelectedDate(date);

@@ -2270,12 +2270,14 @@ const Index = () => {
                 <WorkLogPanel 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
+                  currentUserId={currentEmployee?.id || null}
                   pcData={null}
                 />
               ) : (
                 <WorkLogViewer 
                   employeeId={selectedSeatEmployee.id}
                   employeeName={selectedSeatEmployee.name}
+                  currentUserId={currentEmployee?.id || null}
                   pcData={null}
                 />
               )

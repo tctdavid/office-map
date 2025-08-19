@@ -27,6 +27,7 @@ interface EditingState {
 interface MonthlyWorkLogCalendarProps {
   employeeId: string;
   employeeName: string;
+  currentUserId: string | null;
   onDateSelect: (date: Date) => void;
   onClose: () => void;
   selectedDate: Date;
@@ -35,6 +36,7 @@ interface MonthlyWorkLogCalendarProps {
 export default function MonthlyWorkLogCalendar({ 
   employeeId, 
   employeeName, 
+  currentUserId,
   onDateSelect, 
   onClose,
   selectedDate 
@@ -66,13 +68,14 @@ export default function MonthlyWorkLogCalendar({
 
       // 初始化整個月的數據
       const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+      const canEdit = currentUserId && currentUserId === employeeId;
       daysInMonth.forEach(day => {
         const dateKey = format(day, 'yyyy-MM-dd');
         const dayStart = startOfDay(day);
         logs[dateKey] = {
           workLog: null,
           hasRecord: false,
-          isEditable: !isBefore(dayStart, today)
+          isEditable: !isBefore(dayStart, today) && canEdit
         };
       });
 
@@ -280,7 +283,7 @@ export default function MonthlyWorkLogCalendar({
         {/* 標題欄 */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">
-            {employeeName} - 工作日誌月視圖
+            {employeeName} - 工作日誌-月報表
           </h2>
           <Button
             variant="ghost"
@@ -332,7 +335,6 @@ export default function MonthlyWorkLogCalendar({
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayLog = monthlyLogs[dateKey];
             const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isSelected = isSameDay(day, selectedDate);
             const isTodayDate = isToday(day);
             const workLogSummary = getWorkLogSummary(dateKey);
             const editing = editingState[dateKey];
@@ -344,7 +346,6 @@ export default function MonthlyWorkLogCalendar({
                   "border-r border-b border-border last:border-r-0 p-2 transition-colors relative h-full flex flex-col",
                   !editing && dayLog?.isEditable && "cursor-pointer hover:bg-accent",
                   !isCurrentMonth && "bg-muted/30 text-muted-foreground",
-                  isSelected && "bg-primary/20 border-primary",
                   isTodayDate && "bg-secondary/50",
                   dayLog?.hasRecord && "bg-blue-50 dark:bg-blue-950/20",
                   editing && "bg-accent"
@@ -353,14 +354,13 @@ export default function MonthlyWorkLogCalendar({
               >
                 {/* 日期數字和操作按鈕 */}
                 <div className="flex items-center justify-between mb-1">
-                  <div className={cn(
-                    "text-sm font-medium",
-                    isTodayDate && "text-primary font-bold",
-                    isSelected && "text-primary",
-                    !dayLog?.isEditable && "text-muted-foreground"
-                  )}>
-                    {format(day, 'd')}
-                  </div>
+                   <div className={cn(
+                     "text-sm font-medium",
+                     isTodayDate && "text-primary font-bold",
+                     !dayLog?.isEditable && "text-muted-foreground"
+                   )}>
+                     {format(day, 'd')}
+                   </div>
                   
                   {editing && (
                     <div className="flex gap-1">
@@ -448,10 +448,6 @@ export default function MonthlyWorkLogCalendar({
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-gray-400 rounded-full" />
               <span>過去日期(不可編輯)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-primary/20 border border-primary rounded" />
-              <span>當前選中</span>
             </div>
             <div className="text-muted-foreground ml-4">
               <span>點擊可編輯日期直接輸入 • Ctrl+Enter 保存 • Esc 取消</span>

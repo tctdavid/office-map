@@ -12,6 +12,7 @@ import MonthlyWorkLogCalendar from "./MonthlyWorkLogCalendar";
 interface WorkLogViewerProps {
   employeeId: string;
   employeeName: string;
+  currentUserId: string | null;
   pcData?: {
     id: string;
     name: string;
@@ -27,7 +28,7 @@ interface WorkLogViewerProps {
   };
 }
 
-export default function WorkLogViewer({ employeeId, employeeName, pcData }: WorkLogViewerProps) {
+export default function WorkLogViewer({ employeeId, employeeName, currentUserId, pcData }: WorkLogViewerProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [workLog, setWorkLog] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -64,6 +65,7 @@ export default function WorkLogViewer({ employeeId, employeeName, pcData }: Work
         <MonthlyWorkLogCalendar
           employeeId={employeeId}
           employeeName={employeeName}
+          currentUserId={currentUserId}
           selectedDate={selectedDate}
           onDateSelect={(date) => {
             setSelectedDate(date);
