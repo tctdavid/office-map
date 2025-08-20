@@ -2113,7 +2113,7 @@ const Index = () => {
         </div>
 
         {/* Right Panel - 3 Containers - 250px width */}
-        <div className="w-[250px] flex flex-col gap-2 h-[calc(100vh-40px)]">
+        <div className="w-[250px] flex flex-col gap-2 h-[calc(100vh-120px)]">
           {/* Combined Staff Info + Work Log Container */}
           <div className="flex-[1.8] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4 space-y-4">
             {/* Staff Info Section */}
