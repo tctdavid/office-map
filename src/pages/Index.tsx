@@ -76,6 +76,7 @@ const Index = () => {
 
   // 載入座位座標資料
   const fetchSeatCoordinates = async () => {
+    console.log('開始載入座位資料...');
     const { data, error } = await supabase
       .from('seat_coordinates')
       .select(`
@@ -105,9 +106,17 @@ const Index = () => {
       `)
       .order('created_at', { ascending: false });
     
+    console.log('座位資料載入結果:', { data, error, dataLength: data?.length });
+    
     if (error) {
       console.error('Error fetching seat coordinates:', error);
     } else {
+      console.log('設置座位資料到狀態:', data?.map(seat => ({
+        id: seat.id,
+        container: seat.container,
+        employee: seat.employees?.name || '空座位',
+        is_empty: seat.is_empty
+      })));
       setSeatCoordinates(data || []);
     }
   };
@@ -381,6 +390,7 @@ const Index = () => {
 
   // 處理註冊成功
   const handleRegistrationSuccess = async () => {
+    console.log('handleRegistrationSuccess 被調用了！');
     // 重新載入座位資料和員工資訊以顯示更新
     const { data, error } = await supabase
       .from('seat_coordinates')
@@ -407,7 +417,10 @@ const Index = () => {
       `)
       .order('created_at', { ascending: false });
     
+    console.log('handleRegistrationSuccess 查詢結果:', { data, error, dataLength: data?.length });
+    
     if (!error && data) {
+      console.log('handleRegistrationSuccess 正在覆蓋座位資料！');
       setSeatCoordinates(data);
       
       // 自動選中剛註冊的座位並顯示員工資訊
