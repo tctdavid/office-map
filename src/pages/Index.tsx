@@ -1844,6 +1844,7 @@ const Index = () => {
                   pixel_size: `${s.pixel_x}×${s.pixel_y}`
                 }))
               });
+              
               // 優先使用編輯中的容器狀態，避免資料庫重載影響編輯
               const currentContainer = (editingContainer && editingContainer.id === container.id) 
                 ? editingContainer 
@@ -1855,9 +1856,12 @@ const Index = () => {
     total_seats: seatCoordinates.length,
     employees_assigned: seatCoordinates.filter(s => s.employees && !s.is_empty).length,
     empty_seats: seatCoordinates.filter(s => s.is_empty).length,
+    containers_count: containers.length,
+    containers_list: containers.map(c => c.name),
     seat_list: seatCoordinates.map(s => ({
       id: s.id,
       container: s.container,
+      container_id: s.container_id,
       employee: s.employees?.name || '空座位',
       position: `(${s.x}, ${s.y})`,
       pixel_size: `${s.pixel_x}×${s.pixel_y}`,
