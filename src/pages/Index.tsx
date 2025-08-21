@@ -1817,13 +1817,42 @@ const Index = () => {
 
             {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => {
+              // 調試日誌：檢查容器和座位數據
+              const containerSeats = seatCoordinates.filter(seat => seat.container_id === container.id);
+              console.log(`容器 "${container.name}" (${container.id}):`, {
+                container_position: { x: container.x, y: container.y },
+                container_size: { width: container.width, height: container.height },
+                total_seats: containerSeats.length,
+                seats_with_employees: containerSeats.filter(s => s.employees && !s.is_empty).length,
+                seat_details: containerSeats.map(s => ({
+                  id: s.id,
+                  employee: s.employees?.name || '空座位',
+                  position: `${s.x},${s.y}`,
+                  pixel_size: `${s.pixel_x}×${s.pixel_y}`
+                }))
+              });
               // 優先使用編輯中的容器狀態，避免資料庫重載影響編輯
               const currentContainer = (editingContainer && editingContainer.id === container.id) 
                 ? editingContainer 
                 : container;
               const isSelected = selectedContainer?.id === container.id;
               
-              return (
+  // 調試日誌：檢查整體座位資料載入狀態
+  console.log('所有座位資料:', {
+    total_seats: seatCoordinates.length,
+    employees_assigned: seatCoordinates.filter(s => s.employees && !s.is_empty).length,
+    empty_seats: seatCoordinates.filter(s => s.is_empty).length,
+    seat_list: seatCoordinates.map(s => ({
+      id: s.id,
+      container: s.container,
+      employee: s.employees?.name || '空座位',
+      position: `(${s.x}, ${s.y})`,
+      pixel_size: `${s.pixel_x}×${s.pixel_y}`,
+      is_empty: s.is_empty
+    }))
+  });
+
+  return (
                 <div 
                   key={container.id} 
                   className={`relative border bg-opacity-10 ${
@@ -1889,6 +1918,19 @@ const Index = () => {
                   {seatCoordinates
                     .filter(seat => seat.container_id === container.id)
                     .map((seat) => {
+                      // 調試日誌：檢查每個座位的渲染狀態
+                      console.log(`渲染座位 ${seat.id}:`, {
+                        container: seat.container,
+                        position: { x: seat.x, y: seat.y },
+                        pixel_size: { width: seat.pixel_x, height: seat.pixel_y },
+                        employee: seat.employees ? {
+                          name: seat.employees.name,
+                          photo: seat.employees.photo,
+                          is_active: seat.employees.is_active
+                        } : null,
+                        is_empty: seat.is_empty,
+                        container_dimensions: { width: container.width, height: container.height }
+                      });
                       // 決定座位顏色 - 使用透明色
                       let seatColor = 'rgba(107, 114, 128, 0.6)'; // 透明灰色 (空位)
                       let borderColor = 'rgba(156, 163, 175, 0.4)'; // 預設邊框
