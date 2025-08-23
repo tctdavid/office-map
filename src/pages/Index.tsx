@@ -80,7 +80,7 @@ const Index = () => {
       .from('seat_coordinates')
       .select(`
         *,
-        employees:employee_id (
+        employees!seat_coordinates_employee_id_fkey (
           id,
           name,
           photo,
@@ -90,7 +90,7 @@ const Index = () => {
           email,
           is_active
         ),
-        pcs:pc_id (
+        pcs!seat_coordinates_pc_id_fkey (
           id,
           name,
           cpu,
