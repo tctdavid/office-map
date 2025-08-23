@@ -117,7 +117,24 @@ const Index = () => {
         employee: seat.employees?.name || '空座位',
         is_empty: seat.is_empty
       })));
-      setSeatCoordinates(data || []);
+    setSeatCoordinates(data || []);
+    
+    // 調試日誌：檢查整體座位資料載入狀態
+    console.log('所有座位資料:', {
+      total_seats: data?.length || 0,
+      employees_assigned: data?.filter(s => s.employees && !s.is_empty).length || 0,
+      empty_seats: data?.filter(s => s.is_empty).length || 0,
+      seat_list: data?.map(s => ({
+        id: s.id,
+        container: s.container,
+        container_id: s.container_id,
+        employee: s.employees?.name || '空座位',
+        position: `(${s.x}, ${s.y})`,
+        pixel_size: `${s.pixel_x}×${s.pixel_y}`,
+        is_empty: s.is_empty,
+        employee_data: s.employees
+      })) || []
+    });
     }
   };
 
@@ -1851,25 +1868,7 @@ const Index = () => {
                 : container;
               const isSelected = selectedContainer?.id === container.id;
               
-  // 調試日誌：檢查整體座位資料載入狀態
-  console.log('所有座位資料:', {
-    total_seats: seatCoordinates.length,
-    employees_assigned: seatCoordinates.filter(s => s.employees && !s.is_empty).length,
-    empty_seats: seatCoordinates.filter(s => s.is_empty).length,
-    containers_count: containers.length,
-    containers_list: containers.map(c => c.name),
-    seat_list: seatCoordinates.map(s => ({
-      id: s.id,
-      container: s.container,
-      container_id: s.container_id,
-      employee: s.employees?.name || '空座位',
-      position: `(${s.x}, ${s.y})`,
-      pixel_size: `${s.pixel_x}×${s.pixel_y}`,
-      is_empty: s.is_empty
-    }))
-  });
-
-  return (
+              return (
                 <div 
                   key={container.id} 
                   className={`relative border bg-opacity-10 ${
