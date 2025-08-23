@@ -76,48 +76,43 @@ const Index = () => {
 
   const fetchSeatCoordinates = async () => {
     console.log('開始載入座位資料...');
-    const { data, error } = await supabase
+    
+    // 先獲取所有座位數據
+    const { data: seatData, error: seatError } = await supabase
       .from('seat_coordinates')
-      .select(`
-        *,
-        employees!seat_coordinates_employee_id_fkey (
-          id,
-          name,
-          photo,
-          department,
-          position,
-          extension,
-          email,
-          is_active
-        ),
-        pcs!seat_coordinates_pc_id_fkey (
-          id,
-          name,
-          cpu,
-          memory,
-          storage,
-          graphics,
-          case_photo,
-          monitor_a,
-          monitor_a_photo,
-          monitor_b,
-          monitor_b_photo
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
     
-    console.log('座位資料載入結果:', { data, error, dataLength: data?.length });
+    // 獲取所有員工數據
+    const { data: employeeData, error: employeeError } = await supabase
+      .from('employees')
+      .select('*');
     
-    if (error) {
-      console.error('Error fetching seat coordinates:', error);
+    // 獲取所有PC數據
+    const { data: pcData, error: pcError } = await supabase
+      .from('pcs')
+      .select('*');
+    
+    console.log('座位資料載入結果:', { seatData, seatError, dataLength: seatData?.length });
+    console.log('員工資料載入結果:', { employeeData, employeeError, dataLength: employeeData?.length });
+    
+    if (seatError || employeeError || pcError) {
+      console.error('Error fetching data:', { seatError, employeeError, pcError });
     } else {
-      // 更新座位資料並同步 is_empty 狀態
-      const updatedData = data?.map(seat => ({
-        ...seat,
-        is_empty: !seat.employee_id || !seat.employees
-      })) || [];
+      // 手動組合數據
+      const combinedData = seatData?.map(seat => {
+        const employee = employeeData?.find(emp => emp.id === seat.employee_id);
+        const pc = pcData?.find(p => p.id === seat.pc_id);
+        
+        return {
+          ...seat,
+          employees: employee || null,
+          pcs: pc || null,
+          is_empty: !seat.employee_id || !employee
+        };
+      }) || [];
       
-      console.log('設置座位資料到狀態:', updatedData.map(seat => ({
+      console.log('設置座位資料到狀態:', combinedData.map(seat => ({
         id: seat.id,
         container: seat.container,
         employee: seat.employees?.name || '空座位',
@@ -126,7 +121,7 @@ const Index = () => {
         has_employee_data: !!seat.employees
       })));
       
-      setSeatCoordinates(updatedData);
+      setSeatCoordinates(combinedData);
     }
   };
 
