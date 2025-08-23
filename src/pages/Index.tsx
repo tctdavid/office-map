@@ -74,7 +74,6 @@ const Index = () => {
   const formatHeaderTime = (d: Date) => d.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
   const formatHeaderDate = (d: Date) => d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Taipei' });
 
-  // 載入座位座標資料
   const fetchSeatCoordinates = async () => {
     console.log('開始載入座位資料...');
     const { data, error } = await supabase
@@ -88,7 +87,8 @@ const Index = () => {
           department,
           position,
           extension,
-          email
+          email,
+          is_active
         ),
         pcs:pc_id (
           id,
@@ -111,30 +111,22 @@ const Index = () => {
     if (error) {
       console.error('Error fetching seat coordinates:', error);
     } else {
-      console.log('設置座位資料到狀態:', data?.map(seat => ({
+      // 更新座位資料並同步 is_empty 狀態
+      const updatedData = data?.map(seat => ({
+        ...seat,
+        is_empty: !seat.employee_id || !seat.employees
+      })) || [];
+      
+      console.log('設置座位資料到狀態:', updatedData.map(seat => ({
         id: seat.id,
         container: seat.container,
         employee: seat.employees?.name || '空座位',
-        is_empty: seat.is_empty
+        is_empty: seat.is_empty,
+        employee_id: seat.employee_id,
+        has_employee_data: !!seat.employees
       })));
-    setSeatCoordinates(data || []);
-    
-    // 調試日誌：檢查整體座位資料載入狀態
-    console.log('所有座位資料:', {
-      total_seats: data?.length || 0,
-      employees_assigned: data?.filter(s => s.employees && !s.is_empty).length || 0,
-      empty_seats: data?.filter(s => s.is_empty).length || 0,
-      seat_list: data?.map(s => ({
-        id: s.id,
-        container: s.container,
-        container_id: s.container_id,
-        employee: s.employees?.name || '空座位',
-        position: `(${s.x}, ${s.y})`,
-        pixel_size: `${s.pixel_x}×${s.pixel_y}`,
-        is_empty: s.is_empty,
-        employee_data: s.employees
-      })) || []
-    });
+      
+      setSeatCoordinates(updatedData);
     }
   };
 
