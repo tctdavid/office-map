@@ -1607,16 +1607,19 @@ const Index = () => {
                   >
                     {isSelectingSeatForPc ? '選擇座位中...' : '新增電腦'}
                   </button>
-                  <button 
-                    onClick={() => setIsAdminMigrationPanelOpen(!isAdminMigrationPanelOpen)}
-                    className={`px-4 py-2 rounded text-sm transition-colors ${
-                      isAdminMigrationPanelOpen 
-                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-                        : 'border border-yellow-500 text-yellow-400 hover:bg-yellow-600 hover:text-white'
-                    }`}
-                  >
-                    系統整合管理
-                  </button>
+                  {/* 系統整合管理按鈕 - 暫時隱藏 */}
+                  {false && (
+                    <button 
+                      onClick={() => setIsAdminMigrationPanelOpen(!isAdminMigrationPanelOpen)}
+                      className={`px-4 py-2 rounded text-sm transition-colors ${
+                        isAdminMigrationPanelOpen 
+                          ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
+                          : 'border border-yellow-500 text-yellow-400 hover:bg-yellow-600 hover:text-white'
+                      }`}
+                    >
+                      系統整合管理
+                    </button>
+                  )}
                   <button 
                     onClick={() => {
                       setIsManagingEmployees(!isManagingEmployees);
@@ -1651,12 +1654,15 @@ const Index = () => {
                    >
                      {isSwappingEmployees ? '停止交換' : '交換員工位置'}
                    </button>
-                   <button 
-                     onClick={restoreMissingEmployees}
-                     className="px-4 py-2 rounded text-sm transition-colors border border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white"
-                   >
-                     修復員工位置
-                   </button>
+                   {/* 修復員工位置按鈕 - 暫時隱藏 */}
+                   {false && (
+                     <button 
+                       onClick={restoreMissingEmployees}
+                       className="px-4 py-2 rounded text-sm transition-colors border border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white"
+                     >
+                       修復員工位置
+                     </button>
+                   )}
                 </>
               )}
               <button 
