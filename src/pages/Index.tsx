@@ -1449,13 +1449,87 @@ const Index = () => {
 
       toast({
         title: "交換成功",
-        description: swapPc ? "員工和電腦位置已成功交換" : "員工位置已成功交換",
+        description: swapPc ? "員工位置和電腦已成功交換" : "員工位置已成功交換",
       });
     } catch (error) {
       console.error('Error swapping employees:', error);
       toast({
         title: "交換失敗",
-        description: "無法交換員工位置",
+        description: "無法完成位置交換",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 僅交換電腦
+  const handleSwapPcsOnly = async () => {
+    if (selectedSeatsForSwap.length !== 2) return;
+    
+    const [seat1, seat2] = selectedSeatsForSwap;
+    
+    console.log('Swapping PCs only:', { seat1, seat2 });
+    
+    try {
+      // 添加時間戳確保更新被識別
+      const timestamp = new Date().toISOString();
+      
+      // 準備更新的數據 - 只交換電腦ID，員工ID保持不變
+      const seat1Updates: any = {
+        pc_id: seat2.pc_id || null,
+        updated_at: timestamp
+      };
+      
+      const seat2Updates: any = {
+        pc_id: seat1.pc_id || null,
+        updated_at: timestamp
+      };
+
+      console.log('Update PC data:', { seat1Updates, seat2Updates });
+
+      // 同時更新兩個座位的電腦ID
+      const [result1, result2] = await Promise.all([
+        supabase
+          .from('seat_coordinates')
+          .update(seat1Updates)
+          .eq('id', seat1.id),
+        supabase
+          .from('seat_coordinates')
+          .update(seat2Updates)
+          .eq('id', seat2.id)
+      ]);
+
+      const results = [result1, result2];
+      
+      // 檢查所有更新是否成功
+      results.forEach((result, index) => {
+        if (result.error) {
+          console.error(`PC swap ${index + 1} failed:`, result.error);
+          throw result.error;
+        }
+      });
+
+      console.log('PC swap successful');
+
+      // 等待一小段時間確保數據庫更新完成
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 重新載入座位數據
+      await fetchSeatCoordinates();
+      
+      // 重置狀態
+      setSelectedSeatsForSwap([]);
+      setShowSwapConfirmModal(false);
+      setIsSwappingEmployees(false);
+
+      toast({
+        title: "電腦交換成功",
+        description: "電腦設備已成功交換",
+      });
+    } catch (error) {
+      console.error('Error swapping PCs:', error);
+      toast({
+        title: "電腦交換失敗",
+        description: "無法完成電腦交換",
         variant: "destructive"
       });
     }
@@ -2672,26 +2746,34 @@ const Index = () => {
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3">
               {(selectedSeatsForSwap[0].pcs || selectedSeatsForSwap[1].pcs) ? (
                 <>
-                  <button
-                    onClick={() => handleSwapEmployees(false)}
-                    className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                  >
-                    僅交換員工
-                  </button>
-                  <button
-                    onClick={() => handleSwapEmployees(true)}
-                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-                  >
-                    交換員工和電腦
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSwapEmployees(false)}
+                      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-sm"
+                    >
+                      僅交換員工
+                    </button>
+                    <button
+                      onClick={handleSwapPcsOnly}
+                      className="flex-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors text-sm"
+                    >
+                      僅交換電腦
+                    </button>
+                    <button
+                      onClick={() => handleSwapEmployees(true)}
+                      className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm"
+                    >
+                      交換員工和電腦
+                    </button>
+                  </div>
                 </>
               ) : (
                 <button
                   onClick={() => handleSwapEmployees(false)}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                  className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
                 >
                   確認交換
                 </button>
@@ -2701,7 +2783,7 @@ const Index = () => {
                   setShowSwapConfirmModal(false);
                   setSelectedSeatsForSwap([]);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
               >
                 取消
               </button>
