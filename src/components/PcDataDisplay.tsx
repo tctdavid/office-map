@@ -21,12 +21,9 @@ interface PcDataDisplayProps {
     monitor_b?: string;
     monitor_b_photo?: string;
   };
-  isAdmin?: boolean;
-  onDelete?: () => void;
 }
 
-export default function PcDataDisplay({ pcData, isAdmin = false, onDelete }: PcDataDisplayProps) {
-  console.log('PcDataDisplay - isAdmin:', isAdmin); // Debug log
+export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
   
   const getImageUrl = (imageName?: string) => {
     if (!imageName) return null;
@@ -179,7 +176,12 @@ export default function PcDataDisplay({ pcData, isAdmin = false, onDelete }: PcD
         </DialogTrigger>
         <DialogContent className="bg-slate-800 border-slate-600 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">{pcData.name} - 詳細規格（僅檢視）</DialogTitle>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-lg">👁️</span>
+              </div>
+              {pcData.name} - 詳細規格（僅檢視）
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -312,32 +314,11 @@ export default function PcDataDisplay({ pcData, isAdmin = false, onDelete }: PcD
             </div>
 
             <DialogFooter className="gap-2">
-              {isAdmin ? (
-                <>
-                  <DialogClose asChild>
-                    <Button variant="outline">取消</Button>
-                  </DialogClose>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // 這裡可以添加編輯功能，暫時使用 toast 提示
-                      console.log('Update PC clicked');
-                    }}
-                  >
-                    更新電腦
-                  </Button>
-                  <Button 
-                    variant="destructive"
-                    onClick={() => onDelete?.()}
-                  >
-                    刪除電腦
-                  </Button>
-                </>
-              ) : (
-                <DialogClose asChild>
-                  <Button variant="outline">關閉</Button>
-                </DialogClose>
-              )}
+              <DialogClose asChild>
+                <Button variant="outline" className="w-full">
+                  關閉
+                </Button>
+              </DialogClose>
             </DialogFooter>
           </div>
         </DialogContent>

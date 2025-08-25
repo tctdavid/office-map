@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import AdminPasswordConfirm from "./AdminPasswordConfirm";
 
 interface AddPcModalProps {
   isOpen: boolean;
@@ -50,6 +51,8 @@ interface PcData {
 const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: AddPcModalProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
   
   const [pcData, setPcData] = useState<PcData>({
     name: '',
@@ -75,7 +78,21 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     cpu_fan: ''
   });
 
-  // 重置表單數據
+  // 載入當前員工資料
+  useEffect(() => {
+    const checkCurrentEmployee = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+        setCurrentEmployee(employee);
+      }
+    };
+    checkCurrentEmployee();
+  }, []);
   const resetForm = () => {
     setPcData({
       name: '',
@@ -100,6 +117,59 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
       os: '',
       cpu_fan: ''
     });
+  };
+
+  // 處理刪除電腦
+  const handleDeletePc = async () => {
+    if (!existingPc || !currentEmployee) return;
+    
+    setLoading(true);
+    
+    try {
+      // 刪除 pc_details 記錄
+      const { error: detailsError } = await supabase
+        .from('pc_details')
+        .delete()
+        .eq('pc_id', existingPc.id);
+      
+      if (detailsError) throw detailsError;
+      
+      // 更新相關座位的 pc_id 為 null
+      const { error: seatUpdateError } = await supabase
+        .from('seat_coordinates')
+        .update({ pc_id: null })
+        .eq('pc_id', existingPc.id);
+      
+      if (seatUpdateError) throw seatUpdateError;
+      
+      // 刪除 pcs 記錄
+      const { error: pcError } = await supabase
+        .from('pcs')
+        .delete()
+        .eq('id', existingPc.id);
+      
+      if (pcError) throw pcError;
+      
+      toast({
+        title: "刪除成功",
+        description: "電腦設備已成功刪除",
+      });
+      
+      setShowDeleteConfirm(false);
+      onSuccess?.();
+      onClose();
+      resetForm();
+      
+    } catch (error) {
+      console.error('Error deleting PC:', error);
+      toast({
+        title: "刪除失敗",
+        description: "電腦設備刪除失敗，請重試",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 載入現有電腦數據（如果是編輯模式）
@@ -398,8 +468,8 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
   };
 
   const handleClose = () => {
-    onClose();
     resetForm();
+    onClose();
   };
 
   return (
@@ -738,8 +808,28 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             <Button type="submit" disabled={loading}>
               {loading ? '保存中...' : (existingPc ? '更新電腦' : '新增電腦')}
             </Button>
+            {existingPc && (
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={loading}
+              >
+                刪除電腦
+              </Button>
+            )}
           </div>
         </form>
+        
+        {/* 刪除確認對話框 */}
+        <AdminPasswordConfirm
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeletePc}
+          adminEmail={currentEmployee?.email || ''}
+          title="確認刪除電腦"
+          description="此操作將永久刪除電腦設備資料，請輸入管理員密碼確認。"
+        />
       </DialogContent>
     </Dialog>
   );
