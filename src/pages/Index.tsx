@@ -8,7 +8,7 @@ import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
 import PcDataDisplay from "@/components/PcDataDisplay";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
-import AdminPasswordConfirm from "@/components/AdminPasswordConfirm";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -2795,20 +2795,6 @@ const Index = () => {
         </div>
       )}
 
-      {/* Admin Password Confirmation Dialog */}
-      {currentEmployee && (
-        <AdminPasswordConfirm
-          isOpen={isAdminPasswordConfirmOpen}
-          onClose={() => {
-            setIsAdminPasswordConfirmOpen(false);
-            setPcToDelete(null);
-          }}
-          onConfirm={handleConfirmDeletePc}
-          adminEmail={currentEmployee.email}
-          title="確認刪除電腦"
-          description={`您即將刪除電腦 "${pcToDelete?.name}"，此操作無法復原。請輸入管理員密碼以確認。`}
-        />
-      )}
     </div>
   );
 };
