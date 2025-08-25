@@ -26,6 +26,8 @@ interface PcDataDisplayProps {
 }
 
 export default function PcDataDisplay({ pcData, isAdmin = false, onDelete }: PcDataDisplayProps) {
+  console.log('PcDataDisplay - isAdmin:', isAdmin); // Debug log
+  
   const getImageUrl = (imageName?: string) => {
     if (!imageName) return null;
     if (imageName.startsWith('http')) return imageName;

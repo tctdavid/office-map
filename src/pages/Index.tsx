@@ -171,6 +171,8 @@ const Index = () => {
 
   // 檢查是否為管理員
   const isAdmin = currentEmployee?.role === 'admin';
+  console.log('Index - currentEmployee:', currentEmployee); // Debug log
+  console.log('Index - isAdmin:', isAdmin); // Debug log
 
   // 監控管理員狀態變化，非管理員時重置員工管理功能
   useEffect(() => {
