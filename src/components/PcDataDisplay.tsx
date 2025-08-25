@@ -21,9 +21,11 @@ interface PcDataDisplayProps {
     monitor_b?: string;
     monitor_b_photo?: string;
   };
+  isAdmin?: boolean;
+  onDelete?: () => void;
 }
 
-export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
+export default function PcDataDisplay({ pcData, isAdmin = false, onDelete }: PcDataDisplayProps) {
   const getImageUrl = (imageName?: string) => {
     if (!imageName) return null;
     if (imageName.startsWith('http')) return imageName;
@@ -307,10 +309,33 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
               <Textarea id="notes" value={details?.notes || ''} disabled rows={3} className="bg-slate-700 border-slate-600 text-white" />
             </div>
 
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">關閉</Button>
-              </DialogClose>
+            <DialogFooter className="gap-2">
+              {isAdmin ? (
+                <>
+                  <DialogClose asChild>
+                    <Button variant="outline">取消</Button>
+                  </DialogClose>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // 這裡可以添加編輯功能，暫時使用 toast 提示
+                      console.log('Update PC clicked');
+                    }}
+                  >
+                    更新電腦
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => onDelete?.()}
+                  >
+                    刪除電腦
+                  </Button>
+                </>
+              ) : (
+                <DialogClose asChild>
+                  <Button variant="outline">關閉</Button>
+                </DialogClose>
+              )}
             </DialogFooter>
           </div>
         </DialogContent>

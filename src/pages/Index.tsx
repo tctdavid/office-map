@@ -8,6 +8,7 @@ import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
 import PcDataDisplay from "@/components/PcDataDisplay";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
+import AdminPasswordConfirm from "@/components/AdminPasswordConfirm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
@@ -57,6 +58,10 @@ const Index = () => {
   const [disabledEmployees, setDisabledEmployees] = useState<any[]>([]);
   const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
+  
+  // Admin password confirmation states
+  const [isAdminPasswordConfirmOpen, setIsAdminPasswordConfirmOpen] = useState(false);
+  const [pcToDelete, setPcToDelete] = useState<any>(null);
   
   // 員工位置交換功能狀態
   const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
@@ -486,6 +491,90 @@ const Index = () => {
       title: "電腦新增成功",
       description: "電腦設備已成功新增到座位",
     });
+  };
+
+  // 處理刪除電腦按鈕點擊
+  const handleDeletePcClick = (pcData: any) => {
+    setPcToDelete(pcData);
+    setIsAdminPasswordConfirmOpen(true);
+  };
+
+  // 確認刪除電腦
+  const handleConfirmDeletePc = async () => {
+    if (!pcToDelete || !currentEmployee) return;
+
+    try {
+      // 1. 刪除 pc_details 表的資料
+      const { error: detailsError } = await supabase
+        .from('pc_details')
+        .delete()
+        .eq('pc_id', pcToDelete.id);
+
+      if (detailsError) {
+        console.error('Error deleting PC details:', detailsError);
+      }
+
+      // 2. 刪除儲存的圖片檔案
+      const filesToDelete = [
+        pcToDelete.case_photo,
+        pcToDelete.monitor_a_photo,
+        pcToDelete.monitor_b_photo
+      ].filter(Boolean);
+
+      if (filesToDelete.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from('pcs')
+          .remove(filesToDelete);
+
+        if (storageError) {
+          console.error('Error deleting PC images:', storageError);
+        }
+      }
+
+      // 3. 更新座位，移除 pc_id
+      const { error: seatError } = await supabase
+        .from('seat_coordinates')
+        .update({ pc_id: null })
+        .eq('pc_id', pcToDelete.id);
+
+      if (seatError) {
+        console.error('Error updating seat:', seatError);
+        throw seatError;
+      }
+
+      // 4. 刪除 pcs 表的資料
+      const { error: pcError } = await supabase
+        .from('pcs')
+        .delete()
+        .eq('id', pcToDelete.id);
+
+      if (pcError) {
+        console.error('Error deleting PC:', pcError);
+        throw pcError;
+      }
+
+      // 5. 重新載入資料
+      await fetchSeatCoordinates();
+      await fetchPcs();
+
+      // 6. 清除選中狀態
+      setSelectedSeat(null);
+
+      toast({
+        title: "電腦刪除成功",
+        description: `電腦 "${pcToDelete.name}" 已成功刪除`,
+      });
+
+    } catch (error) {
+      console.error('Error deleting PC:', error);
+      toast({
+        title: "刪除失敗",
+        description: "刪除電腦時發生錯誤，請重試",
+        variant: "destructive"
+      });
+    } finally {
+      setPcToDelete(null);
+    }
   };
 
   const toggleEditMode = () => {
@@ -1679,7 +1768,7 @@ const Index = () => {
                         : 'border border-green-500 text-green-400 hover:bg-green-600 hover:text-white'
                     }`}
                   >
-                    {isSelectingSeatForPc ? '選擇座位中...' : '新增電腦'}
+                    {isSelectingSeatForPc ? '選擇座位中...' : '新增/移除-電腦'}
                   </button>
                   {/* 系統整合管理按鈕 - 暫時隱藏 */}
                   {false && (
@@ -2474,7 +2563,11 @@ const Index = () => {
             {selectedSeat?.pcs ? (
               <>
                 <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">電腦設備</h3>
-                <PcDataDisplay pcData={selectedSeat.pcs} />
+                <PcDataDisplay 
+                  pcData={selectedSeat.pcs} 
+                  isAdmin={isAdmin}
+                  onDelete={() => handleDeletePcClick(selectedSeat.pcs)}
+                />
               </>
             ) : isEditMode ? (
               <div className="space-y-2">
@@ -2790,6 +2883,21 @@ const Index = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Admin Password Confirmation Dialog */}
+      {currentEmployee && (
+        <AdminPasswordConfirm
+          isOpen={isAdminPasswordConfirmOpen}
+          onClose={() => {
+            setIsAdminPasswordConfirmOpen(false);
+            setPcToDelete(null);
+          }}
+          onConfirm={handleConfirmDeletePc}
+          adminEmail={currentEmployee.email}
+          title="確認刪除電腦"
+          description={`您即將刪除電腦 "${pcToDelete?.name}"，此操作無法復原。請輸入管理員密碼以確認。`}
+        />
       )}
     </div>
   );
