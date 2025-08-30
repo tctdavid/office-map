@@ -408,6 +408,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_seat_coordinates_container_id"
+            columns: ["container_id"]
+            isOneToOne: false
+            referencedRelation: "containers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seat_coordinates_employee_id"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seat_coordinates_equipment_id"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seat_coordinates_pc_id"
+            columns: ["pc_id"]
+            isOneToOne: false
+            referencedRelation: "pcs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "seat_coordinates_container_id_fkey"
             columns: ["container_id"]
             isOneToOne: false
