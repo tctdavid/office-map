@@ -2246,11 +2246,56 @@ const Index = () => {
                              )}
                               
                              {/* 電腦圖示顯示 */}
-                             {seat.pcs && (
-                               <div className="absolute bottom-1 right-1">
-                                 <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                                   <span className="text-white text-xs">💻</span>
-                                 </div>
+                              {seat.pcs && (
+                                <div className="absolute bottom-1 right-1">
+                                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <span className="text-white text-xs">💻</span>
+                                  </div>
+                                </div>
+                              )}
+                             
+                             {/* 設備圖示顯示 */}
+                             {seat.equipment && (
+                               <div className="absolute bottom-1 left-1">
+                                 {seat.equipment.photo ? (
+                                   <div 
+                                     className="w-8 h-8 rounded overflow-hidden border border-white/50 shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleEquipmentClick(seat.equipment);
+                                     }}
+                                     title={`設備: ${seat.equipment.product}`}
+                                   >
+                                     <img
+                                       src={seat.equipment.photo.startsWith('http') 
+                                         ? seat.equipment.photo 
+                                         : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${seat.equipment.photo}`
+                                       }
+                                       alt={seat.equipment.product}
+                                       className="w-full h-full object-cover"
+                                       onError={(e) => {
+                                         console.error('設備圖片載入失敗:', seat.equipment.product, seat.equipment.photo);
+                                         // 如果圖片載入失敗，顯示預設圖示
+                                         e.currentTarget.style.display = 'none';
+                                         const parent = e.currentTarget.parentElement;
+                                         if (parent) {
+                                           parent.innerHTML = '<div class="w-full h-full bg-purple-500 rounded flex items-center justify-center"><span class="text-white text-xs">⚙️</span></div>';
+                                         }
+                                       }}
+                                     />
+                                   </div>
+                                 ) : (
+                                   <div 
+                                     className="w-8 h-8 bg-purple-500 rounded flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleEquipmentClick(seat.equipment);
+                                     }}
+                                     title={`設備: ${seat.equipment.product}`}
+                                   >
+                                     <span className="text-white text-xs">⚙️</span>
+                                   </div>
+                                 )}
                                </div>
                              )}
                             
