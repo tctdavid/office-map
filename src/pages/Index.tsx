@@ -590,6 +590,19 @@ const Index = () => {
     setIsViewingEquipment(true);
   };
 
+  const handleEquipmentEdit = () => {
+    if (selectedEquipment) {
+      // 找到包含此設備的座位
+      const seatWithEquipment = seatCoordinates.find(seat => seat.equipment_id === selectedEquipment.id);
+      if (seatWithEquipment) {
+        setSelectedSeatForEquipment({ ...seatWithEquipment, equipment: selectedEquipment });
+        setIsViewingEquipment(false);
+        setSelectedEquipment(null);
+        setIsEquipmentModalOpen(true);
+      }
+    }
+  };
+
   const toggleEditMode = () => {
     if (!isEditMode) {
       // 進入編輯模式 - 備份當前數據
@@ -1790,9 +1803,12 @@ const Index = () => {
                   </button>
                   <button 
                     onClick={() => setIsSelectingSeatForEquipment(true)}
+                    disabled={isViewingEquipment || isEquipmentModalOpen}
                     className={`px-4 py-2 rounded text-sm transition-colors ${
                       isSelectingSeatForEquipment 
                         ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                        : (isViewingEquipment || isEquipmentModalOpen)
+                        ? 'border border-gray-400 text-gray-400 cursor-not-allowed'
                         : 'border border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
                     }`}
                   >
@@ -2796,6 +2812,8 @@ const Index = () => {
             setIsViewingEquipment(false);
             setSelectedEquipment(null);
           }}
+          onEdit={isAdmin ? handleEquipmentEdit : undefined}
+          isAdmin={isAdmin}
         />
       )}
 

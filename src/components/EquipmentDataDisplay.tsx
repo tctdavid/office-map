@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, MapPin, Hash, Wifi, Phone, FileText } from "lucide-react";
+import { Calendar, User, MapPin, Hash, Wifi, Phone, FileText, Edit } from "lucide-react";
 
 interface Equipment {
   id: string;
@@ -20,11 +20,15 @@ interface Equipment {
 interface EquipmentDataDisplayProps {
   equipment: Equipment;
   onClose: () => void;
+  onEdit?: () => void;
+  isAdmin?: boolean;
 }
 
 const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
   equipment,
   onClose,
+  onEdit,
+  isAdmin = false,
 }) => {
   const getImageUrl = (photo: string | undefined) => {
     if (!photo) return null;
@@ -147,7 +151,15 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
             )}
 
             {/* Action Buttons */}
-            <div className="flex justify-end pt-4 border-t">
+            <div className="flex justify-between pt-4 border-t">
+              <div>
+                {isAdmin && onEdit && (
+                  <Button onClick={onEdit} variant="outline" className="flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    編輯設備
+                  </Button>
+                )}
+              </div>
               <Button onClick={onClose} variant="outline">
                 關閉
               </Button>
