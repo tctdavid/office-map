@@ -87,11 +87,25 @@ const Index = () => {
 
   const fetchSeatCoordinates = async () => {
     console.log('開始載入座位資料...');
+    
+    // First, let's try a simple query to see if we can get basic seat data
+    const { data: basicData, error: basicError } = await supabase
+      .from('seat_coordinates')
+      .select('*');
+    
+    console.log('基本座位資料:', { basicData, basicError, count: basicData?.length });
+    
+    if (basicError) {
+      console.error('基本查詢錯誤:', basicError);
+      return;
+    }
+    
+    // Now try with associations using implicit foreign key relationships
     const { data, error } = await supabase
       .from('seat_coordinates')
       .select(`
         *,
-        employees (
+        employees!employee_id (
           id,
           name,
           photo,
@@ -101,7 +115,7 @@ const Index = () => {
           email,
           is_active
         ),
-        pcs (
+        pcs!pc_id (
           id,
           name,
           cpu,
@@ -114,7 +128,7 @@ const Index = () => {
           monitor_b,
           monitor_b_photo
         ),
-        equipment (
+        equipment!equipment_id (
           id,
           product,
           supplier,
@@ -129,7 +143,8 @@ const Index = () => {
       `)
       .order('created_at', { ascending: false });
     
-    console.log('座位資料載入結果:', { data, error, dataLength: data?.length });
+    console.log('完整座位資料載入結果:', { data, error, dataLength: data?.length });
+    console.log('座位詳細資料樣本:', data?.slice(0, 2));
     
     if (error) {
       console.error('Error fetching seat coordinates:', error);
