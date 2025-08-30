@@ -435,27 +435,6 @@ export type Database = {
             referencedRelation: "pcs"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "seat_coordinates_container_id_fkey"
-            columns: ["container_id"]
-            isOneToOne: false
-            referencedRelation: "containers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_coordinates_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seat_coordinates_pc_id_fkey"
-            columns: ["pc_id"]
-            isOneToOne: false
-            referencedRelation: "pcs"
-            referencedColumns: ["id"]
-          },
         ]
       }
       seats: {
