@@ -7,6 +7,8 @@ import TimeClockModal from "@/components/TimeClockModal";
 import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
 import PcDataDisplay from "@/components/PcDataDisplay";
+import EquipmentDataDisplay from "@/components/EquipmentDataDisplay";
+import EquipmentModal from "@/components/EquipmentModal";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +61,14 @@ const Index = () => {
   const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
   
+  // Equipment management states
+  const [equipments, setEquipments] = useState<any[]>([]);
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
+  const [isSelectingSeatForEquipment, setIsSelectingSeatForEquipment] = useState(false);
+  const [selectedSeatForEquipment, setSelectedSeatForEquipment] = useState<any>(null);
+  const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
+  const [isViewingEquipment, setIsViewingEquipment] = useState(false);
+  
   // Admin password confirmation states
   const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
   const [selectedSeatsForSwap, setSelectedSeatsForSwap] = useState<any[]>([]);
@@ -103,6 +113,18 @@ const Index = () => {
           monitor_a_photo,
           monitor_b,
           monitor_b_photo
+        ),
+        equipment (
+          id,
+          product,
+          supplier,
+          ip,
+          sn,
+          contact_person,
+          mac_adds,
+          purchase_date,
+          photo,
+          notes
         )
       `)
       .order('created_at', { ascending: false });
@@ -115,7 +137,7 @@ const Index = () => {
       // 更新座位資料並同步 is_empty 狀態
       const updatedData = data?.map(seat => ({
         ...seat,
-        is_empty: !seat.employee_id || !seat.employees
+        is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id
       })) || [];
       
       console.log('設置座位資料到狀態:', updatedData.map(seat => ({
@@ -142,6 +164,20 @@ const Index = () => {
       console.error('Error fetching PCs:', error);
     } else {
       setPcs(data || []);
+    }
+  };
+
+  // 載入設備資料
+  const fetchEquipments = async () => {
+    const { data, error } = await supabase
+      .from('equipment')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching equipment:', error);
+    } else {
+      setEquipments(data || []);
     }
   };
 
@@ -236,6 +272,7 @@ const Index = () => {
     fetchContainers();
     fetchSeatCoordinates();
     fetchPcs();
+    fetchEquipments();
 
     return () => {
       clearTimer();
@@ -487,6 +524,55 @@ const Index = () => {
       title: "電腦新增成功",
       description: "電腦設備已成功新增到座位",
     });
+  };
+
+  // 設備相關處理函數
+  const handleSeatClickForEquipment = (seat: any) => {
+    if (!isSelectingSeatForEquipment) return;
+    
+    setSelectedSeatForEquipment(seat);
+    setIsSelectingSeatForEquipment(false);
+    setIsEquipmentModalOpen(true);
+  };
+
+  const handleAddEquipmentSuccess = async () => {
+    await fetchSeatCoordinates();
+    await fetchEquipments();
+    setSelectedSeatForEquipment(null);
+    toast({
+      title: "設備新增成功",
+      description: "設備已成功新增到座位",
+    });
+  };
+
+  const handleEquipmentSave = async (equipment: any) => {
+    if (selectedSeatForEquipment && equipment.id) {
+      try {
+        const { error } = await supabase
+          .from('seat_coordinates')
+          .update({ equipment_id: equipment.id })
+          .eq('id', selectedSeatForEquipment.id);
+
+        if (error) {
+          console.error('Error updating seat with equipment:', error);
+          toast({
+            title: "錯誤",
+            description: "無法將設備分配到座位",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        await handleAddEquipmentSuccess();
+      } catch (error) {
+        console.error('Error in handleEquipmentSave:', error);
+      }
+    }
+  };
+
+  const handleEquipmentClick = (equipment: any) => {
+    setSelectedEquipment(equipment);
+    setIsViewingEquipment(true);
   };
 
   const toggleEditMode = () => {
@@ -1590,6 +1676,11 @@ const Index = () => {
       handleSeatClickForPc(seat);
       return;
     }
+
+    if (isSelectingSeatForEquipment) {
+      handleSeatClickForEquipment(seat);
+      return;
+    }
     
     // 如果在編輯模式下，需要檢查是否在選中的容器中
     if (isEditMode && selectedContainer && seat.container_id !== selectedContainer.id) {
@@ -1681,6 +1772,16 @@ const Index = () => {
                     }`}
                   >
                     {isSelectingSeatForPc ? '選擇座位中...' : '新增/移除-電腦'}
+                  </button>
+                  <button 
+                    onClick={() => setIsSelectingSeatForEquipment(true)}
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
+                      isSelectingSeatForEquipment 
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                        : 'border border-purple-500 text-purple-400 hover:bg-purple-600 hover:text-white'
+                    }`}
+                  >
+                    {isSelectingSeatForEquipment ? '選擇座位中...' : '管理設備'}
                   </button>
                   {/* 系統整合管理按鈕 - 暫時隱藏 */}
                   {false && (
@@ -2029,6 +2130,8 @@ const Index = () => {
                         borderColor = 'rgba(59, 130, 246, 0.8)'; // 藍色邊框
                       } else if (seat.pc_id) {
                         seatColor = 'rgba(16, 185, 129, 0.6)'; // 透明綠色 (有PC)
+                      } else if (seat.equipment_id) {
+                        seatColor = 'rgba(147, 51, 234, 0.6)'; // 透明紫色 (有設備)
                         borderColor = 'rgba(16, 185, 129, 0.8)'; // 綠色邊框
                       }
                       
@@ -2611,6 +2714,30 @@ const Index = () => {
         existingPc={selectedSeatForPc?.pcs}
         onSuccess={handleAddPcSuccess}
       />
+
+      {/* Equipment Modal */}
+      <EquipmentModal 
+        isOpen={isEquipmentModalOpen}
+        onClose={() => {
+          setIsEquipmentModalOpen(false);
+          setSelectedSeatForEquipment(null);
+          setIsSelectingSeatForEquipment(false);
+        }}
+        equipment={selectedSeatForEquipment?.equipment}
+        onSave={handleEquipmentSave}
+        currentEmployee={currentEmployee}
+      />
+
+      {/* Equipment Data Display */}
+      {isViewingEquipment && selectedEquipment && (
+        <EquipmentDataDisplay 
+          equipment={selectedEquipment}
+          onClose={() => {
+            setIsViewingEquipment(false);
+            setSelectedEquipment(null);
+          }}
+        />
+      )}
 
       {/* Time Clock Modal */}
       {currentEmployee && (

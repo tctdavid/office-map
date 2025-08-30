@@ -157,6 +157,51 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          contact_person: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          mac_adds: string | null
+          notes: string | null
+          photo: string | null
+          product: string
+          purchase_date: string | null
+          sn: string | null
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_person?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          mac_adds?: string | null
+          notes?: string | null
+          photo?: string | null
+          product: string
+          purchase_date?: string | null
+          sn?: string | null
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_person?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          mac_adds?: string | null
+          notes?: string | null
+          photo?: string | null
+          product?: string
+          purchase_date?: string | null
+          sn?: string | null
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       floor_containers: {
         Row: {
           color: string | null
@@ -318,6 +363,7 @@ export type Database = {
           container_id: string | null
           created_at: string | null
           employee_id: string | null
+          equipment_id: string | null
           id: string
           is_empty: boolean | null
           pc_id: string | null
@@ -333,6 +379,7 @@ export type Database = {
           container_id?: string | null
           created_at?: string | null
           employee_id?: string | null
+          equipment_id?: string | null
           id: string
           is_empty?: boolean | null
           pc_id?: string | null
@@ -348,6 +395,7 @@ export type Database = {
           container_id?: string | null
           created_at?: string | null
           employee_id?: string | null
+          equipment_id?: string | null
           id?: string
           is_empty?: boolean | null
           pc_id?: string | null
