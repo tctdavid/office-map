@@ -100,12 +100,12 @@ const Index = () => {
       return;
     }
     
-    // Now try with associations using implicit foreign key relationships
+    // Now try with associations using the existing foreign key constraint names
     const { data, error } = await supabase
       .from('seat_coordinates')
       .select(`
         *,
-        employees!employee_id (
+        employees!fk_seat_coordinates_employee_id (
           id,
           name,
           photo,
@@ -115,7 +115,7 @@ const Index = () => {
           email,
           is_active
         ),
-        pcs!pc_id (
+        pcs!fk_seat_coordinates_pc_id (
           id,
           name,
           cpu,
@@ -128,7 +128,7 @@ const Index = () => {
           monitor_b,
           monitor_b_photo
         ),
-        equipment!equipment_id (
+        equipment!fk_seat_coordinates_equipment_id (
           id,
           product,
           supplier,
