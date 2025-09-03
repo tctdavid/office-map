@@ -2270,50 +2270,49 @@ const Index = () => {
                                 </div>
                               )}
                              
-                             {/* 設備圖示顯示 */}
-                             {seat.equipment && (
-                               <div className="absolute bottom-1 left-1">
-                                 {seat.equipment.photo ? (
-                                   <div 
-                                     className="w-8 h-8 rounded overflow-hidden border border-white/50 shadow-lg cursor-pointer hover:scale-110 transition-transform"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleEquipmentClick(seat.equipment);
-                                     }}
-                                     title={`設備: ${seat.equipment.product}`}
-                                   >
-                                     <img
-                                       src={seat.equipment.photo.startsWith('http') 
-                                         ? seat.equipment.photo 
-                                         : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${seat.equipment.photo}`
-                                       }
-                                       alt={seat.equipment.product}
-                                       className="w-full h-full object-cover"
-                                       onError={(e) => {
-                                         console.error('設備圖片載入失敗:', seat.equipment.product, seat.equipment.photo);
-                                         // 如果圖片載入失敗，顯示預設圖示
-                                         e.currentTarget.style.display = 'none';
-                                         const parent = e.currentTarget.parentElement;
-                                         if (parent) {
-                                           parent.innerHTML = '<div class="w-full h-full bg-purple-500 rounded flex items-center justify-center"><span class="text-white text-xs">⚙️</span></div>';
-                                         }
-                                       }}
-                                     />
-                                   </div>
-                                 ) : (
-                                   <div 
-                                     className="w-8 h-8 bg-purple-500 rounded flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleEquipmentClick(seat.equipment);
-                                     }}
-                                     title={`設備: ${seat.equipment.product}`}
-                                   >
-                                     <span className="text-white text-xs">⚙️</span>
-                                   </div>
-                                 )}
-                               </div>
-                             )}
+                              {/* 設備圖示顯示 - 充滿整個座位 */}
+                              {seat.equipment && (
+                                <div className="absolute inset-0">
+                                  {seat.equipment.photo ? (
+                                    <div 
+                                      className="w-full h-full rounded-lg overflow-hidden border-2 border-white/30 shadow-lg cursor-pointer hover:border-white/50 transition-all"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEquipmentClick(seat.equipment);
+                                      }}
+                                      title={`設備: ${seat.equipment.product}`}
+                                    >
+                                      <img
+                                        src={seat.equipment.photo.startsWith('http') 
+                                          ? seat.equipment.photo 
+                                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${seat.equipment.photo}`
+                                        }
+                                        alt={seat.equipment.product}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          console.error('設備圖片載入失敗:', seat.equipment.product, seat.equipment.photo);
+                                          // 如果圖片載入失敗，顯示預設圖示
+                                          const parent = e.currentTarget.parentElement;
+                                          if (parent) {
+                                            parent.innerHTML = '<div class="w-full h-full bg-purple-500/80 rounded-lg flex items-center justify-center"><span class="text-white text-2xl">⚙️</span></div>';
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="w-full h-full bg-purple-500/80 rounded-lg flex items-center justify-center shadow-lg cursor-pointer hover:bg-purple-500/90 transition-all"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEquipmentClick(seat.equipment);
+                                      }}
+                                      title={`設備: ${seat.equipment.product}`}
+                                    >
+                                      <span className="text-white text-2xl">⚙️</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             
                             {/* 拖拽中的座位顯示十字線 */}
                             {isCurrentSeatDragging && (
