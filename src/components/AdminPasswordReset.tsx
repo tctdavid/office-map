@@ -223,18 +223,6 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
             </div>
           </div>
 
-          {/* 管理員確認提示 */}
-          <div className="border-t pt-4">
-            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                <strong>管理員確認：</strong> {currentAdminEmail}
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                由於您已通過系統認證登入，無需再次輸入密碼確認
-              </p>
-            </div>
-          </div>
-
           {/* 操作按鈕 */}
           <div className="flex gap-2 pt-2">
             <Button variant="outline" onClick={handleClose} className="flex-1">
