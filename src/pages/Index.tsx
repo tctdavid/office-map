@@ -10,6 +10,7 @@ import PcDataDisplay from "@/components/PcDataDisplay";
 import EquipmentDataDisplay from "@/components/EquipmentDataDisplay";
 import EquipmentModal from "@/components/EquipmentModal";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
+import AdminPasswordReset from "@/components/AdminPasswordReset";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -73,6 +74,7 @@ const Index = () => {
   const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
   const [selectedSeatsForSwap, setSelectedSeatsForSwap] = useState<any[]>([]);
   const [showSwapConfirmModal, setShowSwapConfirmModal] = useState(false);
+  const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
   
   const { toast } = useToast();
   
@@ -1869,9 +1871,16 @@ const Index = () => {
                      >
                        修復員工位置
                      </button>
-                   )}
-                </>
-              )}
+                    )}
+                   {/* 密碼重設按鈕 */}
+                   <button 
+                     onClick={() => setIsPasswordResetModalOpen(true)}
+                     className="px-4 py-2 rounded text-sm transition-colors border border-red-500 text-red-400 hover:bg-red-600 hover:text-white"
+                   >
+                     重設員工密碼
+                   </button>
+                 </>
+               )}
               <button 
                 onClick={handleProfileEditClick}
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 transition-colors"
@@ -2997,6 +3006,15 @@ const Index = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 管理員密碼重設對話框 */}
+      {isAdmin && (
+        <AdminPasswordReset
+          isOpen={isPasswordResetModalOpen}
+          onClose={() => setIsPasswordResetModalOpen(false)}
+          currentAdminEmail={currentEmployee?.email || ''}
+        />
       )}
 
     </div>

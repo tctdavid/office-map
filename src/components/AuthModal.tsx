@@ -18,7 +18,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
@@ -54,26 +53,7 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
     setIsLoading(true);
 
     try {
-      if (isForgotPassword) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/`
-        });
-
-        if (error) {
-          toast({
-            title: "重設密碼失敗",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "重設密碼信件已發送",
-            description: "請查看您的電子郵件以重設密碼",
-          });
-          setIsForgotPassword(false);
-          setEmail("");
-        }
-      } else if (isSignUp) {
+      if (isSignUp) {
         const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email,
@@ -196,6 +176,15 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           <p className="text-gray-600 text-center mb-8">
             {isSignUp ? "請填寫以下資訊以建立帳號" : "請登入您的帳號以繼續使用系統"}
           </p>
+          
+          {/* 密碼重設提示 */}
+          {!isSignUp && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm text-center">
+                💡 如需重設密碼，請聯繫系統管理員
+              </p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -216,31 +205,29 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             </div>
 
             {/* Password Field */}
-            {!isForgotPassword && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🔒 密碼
-                </label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="請輸入您的密碼"
-                    required
-                    className="w-full pr-10 bg-transparent border-gray-300 text-gray-800 placeholder:text-gray-400"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">請輸入您的登入密碼</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔒 密碼
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="請輸入您的密碼"
+                  required
+                  className="w-full pr-10 bg-transparent border-gray-300 text-gray-800 placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-            )}
+              <p className="text-xs text-gray-500 mt-1">請輸入您的登入密碼</p>
+            </div>
 
             {/* Submit Button */}
             <Button
@@ -249,24 +236,11 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg transition-colors"
             >
               {isLoading ? 
-                (isForgotPassword ? "發送中..." : isSignUp ? "註冊中..." : "登入中...") : 
-                (isForgotPassword ? "發送重設密碼信件" : isSignUp ? "立即註冊" : "立即登入")
+                (isSignUp ? "註冊中..." : "登入中...") : 
+                (isSignUp ? "立即註冊" : "立即登入")
               }
             </Button>
           </form>
-
-          {/* Forgot Password Link */}
-          {!isSignUp && !isForgotPassword && (
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setIsForgotPassword(true)}
-                className="text-blue-500 hover:text-blue-600 text-sm"
-              >
-                忘記密碼？點此重設
-              </button>
-            </div>
-          )}
 
           {/* Toggle between login and signup */}
           <div className="mt-6 text-center">
@@ -274,7 +248,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp);
-                setIsForgotPassword(false);
                 setEmail("");
                 setPassword("");
                 setShowPassword(false);
@@ -284,22 +257,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               {isSignUp ? "已有帳號？點此登入" : "沒有帳號？點此註冊"}
             </button>
           </div>
-
-          {/* Back to login from forgot password */}
-          {isForgotPassword && (
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setEmail("");
-                }}
-                className="text-gray-500 hover:text-gray-700 text-sm"
-              >
-                ← 返回登入
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
