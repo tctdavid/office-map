@@ -100,13 +100,15 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
     setIsLoading(true);
 
     try {
-      // 驗證管理員密碼
+      // 首先檢查管理員是否真的能從 employees 表中找到
       const { data: adminData, error: adminError } = await supabase
         .from('employees')
-        .select('password_hash')
+        .select('password_hash, email, role')
         .eq('email', currentAdminEmail)
         .eq('role', 'admin')
         .single();
+
+      console.log('管理員查詢結果:', { adminData, adminError, currentAdminEmail });
 
       if (adminError || !adminData) {
         toast({
@@ -117,15 +119,38 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
         return;
       }
 
-      // 比較管理員密碼
-      const isAdminPasswordValid = await bcrypt.compare(adminPassword, adminData.password_hash);
-      if (!isAdminPasswordValid) {
-        toast({
-          title: "管理員密碼錯誤",
-          description: "管理員密碼驗證失敗",
-          variant: "destructive"
+      // 檢查 password_hash 是否存在且不為空
+      if (!adminData.password_hash || adminData.password_hash.trim() === '') {
+        // 如果 password_hash 為空，說明管理員是通過 Supabase Auth 登入的
+        // 我們需要使用 Supabase Auth 來驗證密碼
+        console.log('檢測到空的 password_hash，使用 Supabase Auth 驗證');
+        
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: currentAdminEmail,
+          password: adminPassword
         });
-        return;
+
+        if (authError) {
+          console.log('Supabase Auth 驗證失敗:', authError);
+          toast({
+            title: "管理員密碼錯誤",
+            description: "管理員密碼驗證失敗",
+            variant: "destructive"
+          });
+          return;
+        }
+      } else {
+        // 如果有 password_hash，使用 bcrypt 比較
+        console.log('使用 bcrypt 驗證密碼');
+        const isAdminPasswordValid = await bcrypt.compare(adminPassword, adminData.password_hash);
+        if (!isAdminPasswordValid) {
+          toast({
+            title: "管理員密碼錯誤",
+            description: "管理員密碼驗證失敗",
+            variant: "destructive"
+          });
+          return;
+        }
       }
 
       // 加密新密碼
