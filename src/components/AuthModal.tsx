@@ -177,15 +177,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
             {isSignUp ? "請填寫以下資訊以建立帳號" : "請登入您的帳號以繼續使用系統"}
           </p>
           
-          {/* 密碼重設提示 */}
-          {!isSignUp && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm text-center">
-                💡 如需重設密碼，請聯繫系統管理員
-              </p>
-            </div>
-          )}
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
@@ -257,6 +248,15 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               {isSignUp ? "已有帳號？點此登入" : "沒有帳號？點此註冊"}
             </button>
           </div>
+
+          {/* 密碼重設提示 */}
+          {!isSignUp && (
+            <div className="mt-4 text-center">
+              <p className="text-gray-500 text-xs">
+                如需重設密碼，請聯繫系統管理員
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
