@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import bcrypt from 'bcryptjs';
+
 import { Eye, EyeOff, KeyRound } from "lucide-react";
 
 interface AdminPasswordResetProps {
@@ -19,10 +19,8 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -88,72 +86,41 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
       return;
     }
 
-    if (!adminPassword) {
-      toast({
-        title: "請輸入管理員密碼",
-        description: "需要輸入您的管理員密碼以確認身份",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      // 首先檢查管理員是否真的能從 employees 表中找到
-      const { data: adminData, error: adminError } = await supabase
-        .from('employees')
-        .select('password_hash, email, role')
-        .eq('email', currentAdminEmail)
-        .eq('role', 'admin')
-        .maybeSingle();
+      console.log('開始密碼重設流程');
 
-      console.log('管理員查詢結果:', { adminData, adminError, currentAdminEmail });
+      // 呼叫 Edge Function 來重設密碼
+      const { data, error } = await supabase.functions.invoke('reset-employee-password', {
+        body: {
+          employeeId: selectedEmployeeId,
+          newPassword: newPassword,
+          adminEmail: currentAdminEmail
+        }
+      });
 
-      if (adminError) {
-        console.error('查詢管理員資料失敗:', adminError);
-        toast({
-          title: "系統錯誤",
-          description: "無法查詢管理員資料",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (!adminData) {
-        toast({
-          title: "管理員不存在",
-          description: "找不到對應的管理員帳號",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // 由於系統使用 Supabase Auth 登入，我們暫時跳過密碼驗證
-      // 因為管理員已經通過 Supabase Auth 登入，我們認為身份已驗證
-      console.log('管理員已通過 Supabase Auth 登入，跳過密碼二次驗證');
-
-      // 加密新密碼
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-
-      // 更新員工密碼
-      const { error: updateError } = await supabase
-        .from('employees')
-        .update({ 
-          password_hash: hashedPassword,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedEmployeeId);
-
-      if (updateError) {
+      if (error) {
+        console.error('Edge Function 呼叫失敗:', error);
         toast({
           title: "密碼重設失敗",
-          description: updateError.message,
+          description: "系統錯誤，請稍後再試",
           variant: "destructive"
         });
         return;
       }
+
+      if (!data.success) {
+        console.error('密碼重設失敗:', data.error);
+        toast({
+          title: "密碼重設失敗",
+          description: data.error || "未知錯誤",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('密碼重設成功:', data.message);
 
       // 獲取員工資訊用於顯示
       const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
@@ -163,15 +130,7 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
         description: `已成功重設 ${selectedEmployee?.name} 的密碼`,
       });
 
-      // 重置表單
-      setSelectedEmployeeId("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setAdminPassword("");
-      setShowPassword(false);
-      setShowConfirmPassword(false);
-      setShowAdminPassword(false);
-      onClose();
+      handleClose();
 
     } catch (error) {
       console.error('Password reset error:', error);
@@ -189,10 +148,8 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
     setSelectedEmployeeId("");
     setNewPassword("");
     setConfirmPassword("");
-    setAdminPassword("");
-    setShowPassword(false);
+    setShowNewPassword(false);
     setShowConfirmPassword(false);
-    setShowAdminPassword(false);
     onClose();
   };
 
@@ -229,7 +186,7 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
             <label className="block text-sm font-medium mb-2">新密碼</label>
             <div className="relative">
               <Input
-                type={showPassword ? "text" : "password"}
+                type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="請輸入新密碼（至少6個字元）"
@@ -237,10 +194,10 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowNewPassword(!showNewPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
@@ -266,30 +223,16 @@ const AdminPasswordReset = ({ isOpen, onClose, currentAdminEmail }: AdminPasswor
             </div>
           </div>
 
-          {/* 管理員密碼確認 */}
+          {/* 管理員確認提示 */}
           <div className="border-t pt-4">
-            <label className="block text-sm font-medium mb-2 text-destructive">
-              管理員密碼確認 *
-            </label>
-            <div className="relative">
-              <Input
-                type={showAdminPassword ? "text" : "password"}
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="請輸入您的管理員密碼以確認操作"
-                className="pr-10 border-destructive/30"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAdminPassword(!showAdminPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showAdminPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                <strong>管理員確認：</strong> {currentAdminEmail}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                由於您已通過系統認證登入，無需再次輸入密碼確認
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              當前管理員：{currentAdminEmail}
-            </p>
           </div>
 
           {/* 操作按鈕 */}
