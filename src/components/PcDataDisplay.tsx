@@ -286,7 +286,7 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
                 </div>
                 <div>
                   <Label htmlFor="case" className="text-white">機殼</Label>
-                  <Input id="case" value={details?.case || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
+                  <Input id="case" value={details?.pc_case || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
                 </div>
                 <div>
                   <Label htmlFor="psu" className="text-white">電源供應器</Label>

@@ -256,7 +256,6 @@ export type Database = {
       pc_details: {
         Row: {
           brand: string | null
-          case: string | null
           cpu_fan: string | null
           created_at: string | null
           id: string
@@ -264,6 +263,7 @@ export type Database = {
           main_board: string | null
           notes: string | null
           os: string | null
+          pc_case: string | null
           pc_id: string | null
           psu: string | null
           purchase_date: string | null
@@ -272,7 +272,6 @@ export type Database = {
         }
         Insert: {
           brand?: string | null
-          case?: string | null
           cpu_fan?: string | null
           created_at?: string | null
           id?: string
@@ -280,6 +279,7 @@ export type Database = {
           main_board?: string | null
           notes?: string | null
           os?: string | null
+          pc_case?: string | null
           pc_id?: string | null
           psu?: string | null
           purchase_date?: string | null
@@ -288,7 +288,6 @@ export type Database = {
         }
         Update: {
           brand?: string | null
-          case?: string | null
           cpu_fan?: string | null
           created_at?: string | null
           id?: string
@@ -296,6 +295,7 @@ export type Database = {
           main_board?: string | null
           notes?: string | null
           os?: string | null
+          pc_case?: string | null
           pc_id?: string | null
           psu?: string | null
           purchase_date?: string | null

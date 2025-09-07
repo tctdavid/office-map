@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS pc_details (
     main_board text,
     cpu_fan text,
     psu text,
-    case text,
+    pc_case text,
     os text,
     mac_add text,
     notes text,

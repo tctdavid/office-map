@@ -41,7 +41,7 @@ interface PcData {
   purchase_date: string;
   warranty_expiry: string;
   notes: string;
-  case: string;
+  pc_case: string;
   psu: string;
   main_board: string;
   os: string;
@@ -71,7 +71,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
     purchase_date: '',
     warranty_expiry: '',
     notes: '',
-    case: '',
+    pc_case: '',
     psu: '',
     main_board: '',
     os: '',
@@ -111,7 +111,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
       purchase_date: '',
       warranty_expiry: '',
       notes: '',
-      case: '',
+      pc_case: '',
       psu: '',
       main_board: '',
       os: '',
@@ -211,7 +211,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             purchase_date: details.purchase_date || '',
             warranty_expiry: details.warranty_expiry || '',
             notes: details.notes || '',
-            case: details.case || '',
+            pc_case: details.pc_case || '',
             psu: details.psu || '',
             main_board: details.main_board || '',
             os: details.os || '',
@@ -300,7 +300,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
               purchase_date: pcData.purchase_date || null,
               warranty_expiry: pcData.warranty_expiry || null,
               notes: pcData.notes,
-              case: pcData.case,
+              pc_case: pcData.pc_case,
               psu: pcData.psu,
               main_board: pcData.main_board,
               os: pcData.os,
@@ -320,7 +320,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
               purchase_date: pcData.purchase_date || null,
               warranty_expiry: pcData.warranty_expiry || null,
               notes: pcData.notes,
-              case: pcData.case,
+              pc_case: pcData.pc_case,
               psu: pcData.psu,
               main_board: pcData.main_board,
               os: pcData.os,
@@ -367,7 +367,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
             purchase_date: pcData.purchase_date || null,
             warranty_expiry: pcData.warranty_expiry || null,
             notes: pcData.notes,
-            case: pcData.case,
+            pc_case: pcData.pc_case,
             psu: pcData.psu,
             main_board: pcData.main_board,
             os: pcData.os,
@@ -735,8 +735,8 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
                 <Input
                   id="case"
                   placeholder="例：Corsair 4000D"
-                  value={pcData.case}
-                  onChange={(e) => setPcData({ ...pcData, case: e.target.value })}
+                  value={pcData.pc_case}
+                  onChange={(e) => setPcData({ ...pcData, pc_case: e.target.value })}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
