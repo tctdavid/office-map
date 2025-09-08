@@ -293,19 +293,50 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
         let photoFileName = '';
         if (formData.tempPhotoFile) {
           try {
+            // 驗證檔案類型
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(formData.tempPhotoFile.type)) {
+              throw new Error('不支援的檔案格式，請選擇 JPG、PNG、WebP 或 GIF 圖片');
+            }
+            
+            // 驗證檔案大小 (5MB)
+            if (formData.tempPhotoFile.size > 5 * 1024 * 1024) {
+              throw new Error('檔案大小不能超過 5MB');
+            }
+            
             const timestamp = Date.now();
-            const fileExt = formData.tempPhotoFile.name.split('.').pop();
+            const fileExt = formData.tempPhotoFile.name.split('.').pop()?.toLowerCase();
             const fileName = `avatars/${formData.email}_${timestamp}.${fileExt}`;
             
+            // 使用更安全的上傳方式，不依賴認證狀態
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from('staff')
-              .upload(fileName, formData.tempPhotoFile, { upsert: true });
+              .upload(fileName, formData.tempPhotoFile, { 
+                upsert: true,
+                cacheControl: '3600'
+              });
             
-            if (!uploadError) {
+            if (uploadError) {
+              console.error('Upload error details:', uploadError);
+              toast({
+                title: "照片上傳失敗",
+                description: `上傳錯誤: ${uploadError.message}`,
+                variant: "destructive"
+              });
+            } else {
               photoFileName = fileName;
+              toast({
+                title: "照片上傳成功",
+                description: "個人照片已成功上傳",
+              });
             }
-          } catch (uploadError) {
+          } catch (uploadError: any) {
             console.warn('Photo upload failed during registration:', uploadError);
+            toast({
+              title: "照片上傳失敗",
+              description: uploadError.message || "照片上傳失敗，但註冊流程將繼續",
+              variant: "destructive"
+            });
             // 不阻止註冊流程，只是照片上傳失敗
           }
         }
