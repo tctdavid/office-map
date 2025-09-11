@@ -107,7 +107,7 @@ const Index = () => {
       .from('seat_coordinates')
       .select(`
         *,
-        employees!fk_seat_coordinates_employee_id (
+        employee:employees!fk_seat_coordinates_employee_id (
           id,
           name,
           photo,
@@ -117,7 +117,7 @@ const Index = () => {
           email,
           is_active
         ),
-        pcs!fk_seat_coordinates_pc_id (
+        pc:pcs!fk_seat_coordinates_pc_id (
           id,
           name,
           cpu,
@@ -130,7 +130,7 @@ const Index = () => {
           monitor_b,
           monitor_b_photo
         ),
-        equipment!fk_seat_coordinates_equipment_id (
+        equipment:equipment!fk_seat_coordinates_equipment_id (
           id,
           product,
           supplier,
@@ -148,6 +148,15 @@ const Index = () => {
     console.log('完整座位資料載入結果:', { data, error, dataLength: data?.length });
     console.log('座位詳細資料樣本:', data?.slice(0, 2));
     
+    // 檢查設備資料
+    const seatsWithEquipment = data?.filter(seat => seat.equipment_id);
+    console.log('有設備的座位:', seatsWithEquipment?.map(seat => ({
+      id: seat.id,
+      equipment_id: seat.equipment_id,
+      equipment_data: seat.equipment,
+      product: seat.equipment?.product
+    })));
+    
     if (error) {
       console.error('Error fetching seat coordinates:', error);
     } else {
@@ -160,10 +169,10 @@ const Index = () => {
       console.log('設置座位資料到狀態:', updatedData.map(seat => ({
         id: seat.id,
         container: seat.container,
-        employee: seat.employees?.name || '空座位',
+        employee: seat.employee?.name || '空座位',
         is_empty: seat.is_empty,
         employee_id: seat.employee_id,
-        has_employee_data: !!seat.employees
+        has_employee_data: !!seat.employee
       })));
       
       setSeatCoordinates(updatedData);
@@ -460,7 +469,7 @@ const Index = () => {
       .from('seat_coordinates')
       .select(`
         *,
-        employees:employee_id (
+        employee:employees!fk_seat_coordinates_employee_id (
           id,
           name,
           photo,
@@ -469,7 +478,7 @@ const Index = () => {
           extension,
           email
         ),
-        pcs:pc_id (
+        pc:pcs!fk_seat_coordinates_pc_id (
           id,
           name,
           cpu,
@@ -489,9 +498,9 @@ const Index = () => {
       
       // 自動選中剛註冊的座位並顯示員工資訊
       const registeredSeat = data.find(seat => seat.id === selectedSeatForRegistration?.id);
-      if (registeredSeat && registeredSeat.employees) {
+      if (registeredSeat && registeredSeat.employee) {
         setSelectedSeat(registeredSeat);
-        setSelectedSeatEmployee(registeredSeat.employees);
+        setSelectedSeatEmployee(registeredSeat.employee);
       }
     }
 
@@ -1684,10 +1693,10 @@ const Index = () => {
     
     // 如果正在管理員工
     if (isManagingEmployees) {
-      if (seat.employees && seat.employees.is_active !== false) {
+      if (seat.employee && seat.employee.is_active !== false) {
         // 停用員工
-        handleDisableEmployee(seat.employees.id, seat.id);
-      } else if (!seat.employees || seat.is_empty) {
+        handleDisableEmployee(seat.employee.id, seat.id);
+      } else if (!seat.employee || seat.is_empty) {
         // 顯示已停用員工列表
         setSelectedEmptySeat(seat);
         setShowDisabledEmployeesModal(true);
@@ -1728,9 +1737,9 @@ const Index = () => {
     
     // 設定員工資訊 - 只有在沒有登入用戶時才更新右側面板的員工資訊
     if (!user) {
-      if (seat.employees) {
-        setSelectedSeatEmployee(seat.employees);
-        console.log('Selected employee:', seat.employees);
+      if (seat.employee) {
+        setSelectedSeatEmployee(seat.employee);
+        console.log('Selected employee:', seat.employee);
       } else {
         setSelectedSeatEmployee(null);
         console.log('No employee on this seat');
@@ -1747,7 +1756,7 @@ const Index = () => {
         description: "移動滑鼠至新位置後點擊釋放座位",
       });
     } else {
-      const seatInfo = seat.employees ? `座位 ${seat.id} - ${seat.employees.name}` : `座位 ${seat.id}`;
+      const seatInfo = seat.employee ? `座位 ${seat.id} - ${seat.employee.name}` : `座位 ${seat.id}`;
       toast({
         title: "座位已選中",
         description: isEditMode ? `已選中${seatInfo}，再次點擊可進入拖拽模式` : `已選中${seatInfo}`,
@@ -1952,6 +1961,10 @@ const Index = () => {
                 <span className="text-sm">空位</span>
               </div>
               <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-purple-500 rounded"></div>
+                <span className="text-sm">有設備</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-red-500 rounded"></div>
                 <span className="text-sm">已選中</span>
               </div>
@@ -2067,10 +2080,10 @@ const Index = () => {
                 container_position: { x: container.x, y: container.y },
                 container_size: { width: container.width, height: container.height },
                 total_seats: containerSeats.length,
-                seats_with_employees: containerSeats.filter(s => s.employees && !s.is_empty).length,
+                seats_with_employees: containerSeats.filter(s => s.employee && !s.is_empty).length,
                 seat_details: containerSeats.map(s => ({
                   id: s.id,
-                  employee: s.employees?.name || '空座位',
+                  employee: s.employee?.name || '空座位',
                   position: `${s.x},${s.y}`,
                   pixel_size: `${s.pixel_x}×${s.pixel_y}`
                 }))
@@ -2153,10 +2166,10 @@ const Index = () => {
                         container: seat.container,
                         position: { x: seat.x, y: seat.y },
                         pixel_size: { width: seat.pixel_x, height: seat.pixel_y },
-                        employee: seat.employees ? {
-                          name: seat.employees.name,
-                          photo: seat.employees.photo,
-                          is_active: seat.employees.is_active
+                        employee: seat.employee ? {
+                          name: seat.employee.name,
+                          photo: seat.employee.photo,
+                          is_active: seat.employee.is_active
                         } : null,
                         is_empty: seat.is_empty,
                         container_dimensions: { width: container.width, height: container.height }
@@ -2172,7 +2185,7 @@ const Index = () => {
                         seatColor = 'rgba(16, 185, 129, 0.6)'; // 透明綠色 (有PC)
                       } else if (seat.equipment_id) {
                         seatColor = 'rgba(147, 51, 234, 0.6)'; // 透明紫色 (有設備)
-                        borderColor = 'rgba(16, 185, 129, 0.8)'; // 綠色邊框
+                        borderColor = 'rgba(147, 51, 234, 0.8)'; // 紫色邊框
                       }
                       
                       // 在註冊座位選擇模式時，如果是選中的座位顯示紅色
@@ -2214,27 +2227,27 @@ const Index = () => {
                                 // 允許所有模式下點擊座位查看資訊
                                 handleSeatClick(e, seat);
                               }}
-                            title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employees ? `員工: ${seat.employees.name}` : '空座位'}`}
+                            title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employee ? `員工: ${seat.employee.name}` : '空座位'}`}
                           >
-                            {/* 員工資訊顯示 */}
-                            {seat.employees && (
-                              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-                                {seat.employees.photo ? (
+                             {/* 員工資訊顯示 */}
+                             {seat.employee && (
+                               <div className="absolute top-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+                                 {seat.employee.photo ? (
                                   // 有頭像時顯示圓形頭像
                                   <div className="relative group">
                                     <div className="w-[60px] h-[60px] rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                                      <img
-                                        src={seat.employees.photo.startsWith('http') 
-                                          ? seat.employees.photo 
-                                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employees.photo}`
-                                        }
-                                        alt={seat.employees.name}
-                                        className="employee-avatar w-full h-full object-cover transition-all duration-300"
-                                      onLoad={() => {
-                                        console.log('頭像載入成功:', seat.employees.name, seat.employees.photo);
-                                      }}
-                                      onError={(e) => {
-                                        console.error('頭像載入失敗:', seat.employees.name, seat.employees.photo);
+                                       <img
+                                         src={seat.employee.photo.startsWith('http') 
+                                           ? seat.employee.photo 
+                                           : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employee.photo}`
+                                         }
+                                         alt={seat.employee.name}
+                                         className="employee-avatar w-full h-full object-cover transition-all duration-300"
+                                       onLoad={() => {
+                                         console.log('頭像載入成功:', seat.employee.name, seat.employee.photo);
+                                       }}
+                                       onError={(e) => {
+                                         console.error('頭像載入失敗:', seat.employee.name, seat.employee.photo);
                                         console.error('嘗試載入的URL:', e.currentTarget.src);
                                         // 如果圖片載入失敗，隱藏圖片並顯示預設圓形圖示
                                         e.currentTarget.style.display = 'none';
@@ -2248,10 +2261,10 @@ const Index = () => {
                                       }}
                                        />
                                      </div>
-                                     {/* 懸停時顯示名字 */}
-                                     <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-                                      {seat.employees.name}
-                                    </div>
+                                      {/* 懸停時顯示名字 */}
+                                      <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                       {seat.employee.name}
+                                     </div>
                                   </div>
                                 ) : (
                                   // 沒有頭像時顯示圓形預設圖示
@@ -2261,23 +2274,23 @@ const Index = () => {
                                         <div className="text-2xl">👤</div>
                                       </div>
                                     </div>
-                                    {/* 懸停時顯示名字 */}
-                                    <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-                                      {seat.employees.name}
-                                   </div>
+                                     {/* 懸停時顯示名字 */}
+                                     <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                                       {seat.employee.name}
+                                    </div>
                                  </div>
                                )}
                               </div>
                              )}
                               
-                             {/* 電腦圖示顯示 */}
-                              {seat.pcs && (
-                                <div className="absolute bottom-1 right-1">
-                                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                                    <span className="text-white text-xs">💻</span>
-                                  </div>
-                                </div>
-                              )}
+                               {/* 電腦圖示顯示 */}
+                               {seat.pc && (
+                                 <div className="absolute bottom-1 right-1">
+                                   <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                     <span className="text-white text-xs">💻</span>
+                                   </div>
+                                 </div>
+                               )}
                              
                               {/* 設備圖示顯示 - 充滿整個座位 */}
                               {seat.equipment && (
@@ -2795,7 +2808,7 @@ const Index = () => {
           setIsSelectingSeatForPc(false);
         }}
         selectedSeat={selectedSeatForPc}
-        existingPc={selectedSeatForPc?.pcs}
+        existingPc={selectedSeatForPc?.pc}
         onSuccess={handleAddPcSuccess}
       />
 
