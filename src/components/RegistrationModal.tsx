@@ -352,7 +352,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
             photo: photoFileName || null,
             role: 'employee' as const,
             is_active: true,
-            password_hash: '' // 不再需要這個欄位，但保留以符合 schema
+            
           };
           
           const { data: newEmployee, error: insertError } = await supabase

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import bcrypt from "bcryptjs";
+
 
 interface AdminPasswordConfirmProps {
   isOpen: boolean;
@@ -43,27 +43,13 @@ export default function AdminPasswordConfirm({
     setLoading(true);
     
     try {
-      // 驗證管理員密碼
-      const { data: employee, error } = await supabase
-        .from('employees')
-        .select('password_hash, role')
-        .eq('email', adminEmail)
-        .eq('role', 'admin')
-        .single();
+      // 使用 Supabase Auth 進行管理員密碼驗證
+      const { error } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: password
+      });
 
-      if (error || !employee) {
-        toast({
-          title: "驗證失敗",
-          description: "無效的管理員帳號",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // 驗證密碼
-      const isValidPassword = await bcrypt.compare(password, employee.password_hash);
-      
-      if (!isValidPassword) {
+      if (error) {
         toast({
           title: "密碼錯誤",
           description: "請輸入正確的管理員密碼",
@@ -72,7 +58,24 @@ export default function AdminPasswordConfirm({
         return;
       }
 
-      // 密碼正確，執行確認動作
+      // 驗證管理員角色
+      const { data: employee, error: roleError } = await supabase
+        .from('employees')
+        .select('role')
+        .eq('email', adminEmail)
+        .eq('role', 'admin')
+        .single();
+
+      if (roleError || !employee) {
+        toast({
+          title: "權限不足",
+          description: "您沒有管理員權限",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // 驗證成功，執行確認動作
       onConfirm();
       onClose();
       setPassword("");
