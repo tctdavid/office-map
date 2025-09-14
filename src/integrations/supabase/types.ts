@@ -503,12 +503,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rls_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          estimated_rows: number
+          index_count: number
+          policy_count: number
+          table_name: string
+        }[]
+      }
       create_auth_for_existing_employees: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_employee_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_employee_owner: {
+        Args: { employee_uuid: string }
         Returns: boolean
       }
     }
