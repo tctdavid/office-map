@@ -2928,17 +2928,21 @@ const Index = () => {
               {/* 第一個座位信息 */}
               <div className="bg-slate-700 rounded-lg p-4">
                 <h4 className="text-white font-medium mb-2">座位 1: {selectedSeatsForSwap[0].id}</h4>
-                {selectedSeatsForSwap[0].employees ? (
+                {selectedSeatsForSwap[0].employee ? (
                   <div>
-                    <p className="text-gray-300">員工: {selectedSeatsForSwap[0].employees.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[0].employees.department} - {selectedSeatsForSwap[0].employees.position}</p>
+                    <p className="text-gray-300">員工: {selectedSeatsForSwap[0].employee.name}</p>
+                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[0].employee.department} - {selectedSeatsForSwap[0].employee.position}</p>
                   </div>
+                ) : selectedSeatsForSwap[0].employee_id ? (
+                  <p className="text-yellow-400">員工: ID {selectedSeatsForSwap[0].employee_id} (資料載入中)</p>
                 ) : (
                   <p className="text-gray-400">空座位</p>
                 )}
-                {selectedSeatsForSwap[0].pcs && (
-                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[0].pcs.name}</p>
-                )}
+                {selectedSeatsForSwap[0].pc ? (
+                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[0].pc.name}</p>
+                ) : selectedSeatsForSwap[0].pc_id ? (
+                  <p className="text-yellow-400 text-sm mt-1">電腦: ID {selectedSeatsForSwap[0].pc_id} (資料載入中)</p>
+                ) : null}
               </div>
 
               {/* 交換箭頭 */}
@@ -2953,22 +2957,26 @@ const Index = () => {
               {/* 第二個座位信息 */}
               <div className="bg-slate-700 rounded-lg p-4">
                 <h4 className="text-white font-medium mb-2">座位 2: {selectedSeatsForSwap[1].id}</h4>
-                {selectedSeatsForSwap[1].employees ? (
+                {selectedSeatsForSwap[1].employee ? (
                   <div>
-                    <p className="text-gray-300">員工: {selectedSeatsForSwap[1].employees.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[1].employees.department} - {selectedSeatsForSwap[1].employees.position}</p>
+                    <p className="text-gray-300">員工: {selectedSeatsForSwap[1].employee.name}</p>
+                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[1].employee.department} - {selectedSeatsForSwap[1].employee.position}</p>
                   </div>
+                ) : selectedSeatsForSwap[1].employee_id ? (
+                  <p className="text-yellow-400">員工: ID {selectedSeatsForSwap[1].employee_id} (資料載入中)</p>
                 ) : (
                   <p className="text-gray-400">空座位</p>
                 )}
-                {selectedSeatsForSwap[1].pcs && (
-                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[1].pcs.name}</p>
-                )}
+                {selectedSeatsForSwap[1].pc ? (
+                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[1].pc.name}</p>
+                ) : selectedSeatsForSwap[1].pc_id ? (
+                  <p className="text-yellow-400 text-sm mt-1">電腦: ID {selectedSeatsForSwap[1].pc_id} (資料載入中)</p>
+                ) : null}
               </div>
             </div>
 
             {/* 是否交換電腦的選項 */}
-            {(selectedSeatsForSwap[0].pcs || selectedSeatsForSwap[1].pcs) && (
+            {(selectedSeatsForSwap[0].pc_id || selectedSeatsForSwap[1].pc_id) && (
               <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
                 <p className="text-yellow-400 text-sm mb-2">⚠️ 檢測到電腦設備</p>
                 <p className="text-gray-300 text-sm">是否同時交換電腦設備？</p>
@@ -2976,7 +2984,7 @@ const Index = () => {
             )}
 
             <div className="flex flex-col gap-3">
-              {(selectedSeatsForSwap[0].pcs || selectedSeatsForSwap[1].pcs) ? (
+              {(selectedSeatsForSwap[0].pc_id || selectedSeatsForSwap[1].pc_id) ? (
                 <>
                   <div className="flex gap-2">
                     <button
