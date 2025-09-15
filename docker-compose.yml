@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   # Supabase Studio
   studio:
     container_name: supabase-studio
-    image: supabase/studio:20241204-144709c
+    image: supabase/studio:latest
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/profile', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]

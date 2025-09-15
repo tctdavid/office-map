@@ -6,7 +6,7 @@ import type { Database } from './types';
 
 // 自託管 Supabase URL 和金鑰
 // 請根據您的實際設定修改這些值
-const SUPABASE_URL = "http://localhost:8000";  // Kong API Gateway 地址
+const SUPABASE_URL = "http://192.168.52.112:8000";  // Kong API Gateway 地址
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
 // 生產環境請使用正確的 URL 和金鑰

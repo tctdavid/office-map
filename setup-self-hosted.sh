@@ -393,6 +393,76 @@ setup_database_scripts() {
     fi
 }
 
+# 檢查並拉取 Docker 映像
+check_docker_images() {
+    log "INFO" "📦 檢查 Docker 映像..."
+    
+    local images=(
+        "supabase/studio:latest"
+        "kong:2.8.1"
+        "supabase/gotrue:v2.157.2"
+        "postgrest/postgrest:v12.2.0"
+        "supabase/realtime:v2.28.32"
+        "supabase/storage-api:v1.4.1"
+        "darthsim/imgproxy:v3.8.0"
+        "supabase/postgres-meta:v0.83.2"
+        "supabase/edge-runtime:v1.58.2"
+        "supabase/logflare:1.4.0"
+        "supabase/postgres:15.1.1.78"
+        "timberio/vector:0.28.1-alpine"
+    )
+    
+    local missing_images=()
+    
+    for image in "${images[@]}"; do
+        if ! docker image inspect "$image" >/dev/null 2>&1; then
+            missing_images+=("$image")
+            log "DEBUG" "映像不存在: $image"
+        else
+            log "DEBUG" "映像已存在: $image"
+        fi
+    done
+    
+    if [[ ${#missing_images[@]} -gt 0 ]]; then
+        log "INFO" "需要拉取 ${#missing_images[@]} 個映像..."
+        
+        for image in "${missing_images[@]}"; do
+            log "INFO" "拉取映像: $image"
+            if ! docker pull "$image"; then
+                log "ERROR" "無法拉取映像: $image"
+                log "INFO" "檢查網路連接或映像版本是否正確"
+                exit 1
+            fi
+        done
+        
+        log "INFO" "✅ Docker 映像拉取完成"
+    else
+        log "INFO" "✅ 所有必要的 Docker 映像已存在"
+    fi
+}
+
+# 檢查網路連通性
+check_network_connectivity() {
+    log "INFO" "🌐 檢查網路連通性..."
+    
+    # 檢查到 Docker Hub 的連接
+    if ! curl -f -s --max-time 10 https://registry-1.docker.io/v2/ >/dev/null 2>&1; then
+        log "WARN" "無法連接到 Docker Hub，映像拉取可能會失敗"
+        
+        if [[ $FORCE_MODE != true ]] && [[ $SILENT_MODE != true ]]; then
+            read -p "是否繼續？(y/N): " continue_setup
+            if [[ ! $continue_setup =~ ^[Yy]$ ]]; then
+                log "INFO" "設定已取消"
+                exit 0
+            fi
+        fi
+    else
+        log "DEBUG" "Docker Hub 連接正常"
+    fi
+    
+    log "INFO" "✅ 網路連通性檢查完成"
+}
+
 # 啟動服務
 start_services() {
     if [[ $SKIP_START == true ]]; then
@@ -408,11 +478,20 @@ start_services() {
         exit 1
     fi
     
+    # 檢查網路連通性
+    check_network_connectivity
+    
+    # 檢查並拉取 Docker 映像
+    check_docker_images
+    
     # 使用 .env.local 作為環境變數檔案
-    if docker compose --env-file "$ENV_FILE" up -d; then
+    log "INFO" "正在啟動容器..."
+    if docker compose --env-file "$ENV_FILE" up -d 2>&1 | tee -a "$LOG_FILE"; then
         log "INFO" "✅ 服務啟動完成"
     else
         log "ERROR" "服務啟動失敗"
+        log "INFO" "執行清理..."
+        docker compose --env-file "$ENV_FILE" down 2>/dev/null
         exit 1
     fi
 }
