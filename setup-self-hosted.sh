@@ -543,23 +543,38 @@ check_image_exists() {
     local image_name="$1"
     local tag="$2"
     local prefix="${REGISTRY_PREFIX:-}"
-    
-    # 檢查 GHCR 和 Docker Hub
-    local registries=("ghcr.io" "docker.io")
-    
-    for registry in "${registries[@]}"; do
-        local full_image="${prefix}${registry}/${image_name}:${tag}"
-        if [[ "$registry" == "docker.io" ]]; then
-            full_image="${prefix}${image_name}:${tag}"
+
+    # 若設定了 REGISTRY_PREFIX，優先只檢查該前綴（通常為全域代理/鏡像）
+    if [[ -n "$prefix" ]]; then
+        local full_image="${prefix}${image_name}:${tag}"
+        log "DEBUG" "檢查映像: $full_image"
+        if docker manifest inspect "$full_image" >/dev/null 2>&1; then
+            log "DEBUG" "映像存在: $full_image"
+            return 0
         fi
-        
+        # 若前綴檢查失敗，回退到預設倉庫
+    fi
+
+    # 未設定前綴時，針對 Supabase 映像優先使用 GHCR，其他使用 Docker Hub
+    if [[ "$image_name" =~ ^supabase/ ]]; then
+        local candidates=(
+            "ghcr.io/${image_name}:${tag}"
+            "docker.io/${image_name}:${tag}"
+        )
+    else
+        local candidates=(
+            "docker.io/${image_name}:${tag}"
+        )
+    fi
+
+    for full_image in "${candidates[@]}"; do
         log "DEBUG" "檢查映像: $full_image"
         if docker manifest inspect "$full_image" >/dev/null 2>&1; then
             log "DEBUG" "映像存在: $full_image"
             return 0
         fi
     done
-    
+
     log "DEBUG" "映像不存在: ${image_name}:${tag}"
     return 1
 }
@@ -995,5 +1010,7 @@ main() {
     log "INFO" "🎊 設定完成！"
 }
 
-# 執行主函數
-main "$@"
+# 僅當直接執行此檔案時才呼叫 main（避免被 source 時觸發完整安裝）
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

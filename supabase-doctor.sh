@@ -3,9 +3,8 @@
 # Supabase 自託管診斷工具
 # 用於檢查系統狀態、映像可用性和服務健康
 
-# 引入主腳本的函數
+# 引入主腳本函數（避免在 doctor 模式觸發完整安裝，故不自動 source）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/setup-self-hosted.sh" 2>/dev/null || true
 
 # 診斷報告
 run_doctor() {
