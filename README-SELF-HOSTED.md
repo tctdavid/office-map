@@ -1,6 +1,6 @@
 # 自託管 Supabase 設定完成 🎉
 
-本項目現已包含完整的自託管 Supabase 配置，讓您可以在自己的服務器上運行完整的後端服務。
+> 受限網路環境建議：在 `.env.local` 設定 `REGISTRY_PREFIX`（例如 `docker.m.daocloud.io/`），或將 `OFFLINE_MODE=true` 並先在可連網環境 `docker pull` 後用 `docker save`/`docker load` 匯入。
 
 ## 🚀 快速開始
 

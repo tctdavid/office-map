@@ -397,19 +397,42 @@ setup_database_scripts() {
 check_docker_images() {
     log "INFO" "📦 檢查 Docker 映像..."
     
+    # 載入環境變數以取得映像標籤與鏡像前綴
+    if [[ -f "$ENV_FILE" ]]; then
+        set -a
+        source "$ENV_FILE"
+        set +a
+    fi
+
+    local prefix="${REGISTRY_PREFIX:-}"
+
+    # 預設標籤（若 .env.local 未指定）
+    local STUDIO_TAG_DEF="${STUDIO_TAG:-latest}"
+    local KONG_TAG_DEF="${KONG_TAG:-3.7}"
+    local GOTRUE_TAG_DEF="${GOTRUE_TAG:-latest}"
+    local POSTGREST_TAG_DEF="${POSTGREST_TAG:-v12.2.0}"
+    local REALTIME_TAG_DEF="${REALTIME_TAG:-v2.28.32}"
+    local STORAGE_TAG_DEF="${STORAGE_TAG:-v1.4.1}"
+    local IMGPROXY_TAG_DEF="${IMGPROXY_TAG:-v3.8.0}"
+    local POSTGRES_META_TAG_DEF="${POSTGRES_META_TAG:-v0.83.2}"
+    local EDGE_RUNTIME_TAG_DEF="${EDGE_RUNTIME_TAG:-v1.58.2}"
+    local LOGFLARE_TAG_DEF="${LOGFLARE_TAG:-1.4.0}"
+    local POSTGRES_TAG_DEF="${POSTGRES_TAG:-15.1.1.78}"
+    local VECTOR_TAG_DEF="${VECTOR_TAG:-0.28.1-alpine}"
+
     local images=(
-        "supabase/studio:latest"
-        "kong:3.7"
-        "supabase/gotrue:latest"
-        "postgrest/postgrest:latest"
-        "supabase/realtime:latest"
-        "supabase/storage-api:latest"
-        "darthsim/imgproxy:latest"
-        "supabase/postgres-meta:latest"
-        "supabase/edge-runtime:latest"
-        "supabase/logflare:latest"
-        "supabase/postgres:15.6.1.104"
-        "timberio/vector:latest"
+        "${prefix}supabase/studio:${STUDIO_TAG_DEF}"
+        "${prefix}kong:${KONG_TAG_DEF}"
+        "${prefix}supabase/gotrue:${GOTRUE_TAG_DEF}"
+        "${prefix}postgrest/postgrest:${POSTGREST_TAG_DEF}"
+        "${prefix}supabase/realtime:${REALTIME_TAG_DEF}"
+        "${prefix}supabase/storage-api:${STORAGE_TAG_DEF}"
+        "${prefix}darthsim/imgproxy:${IMGPROXY_TAG_DEF}"
+        "${prefix}supabase/postgres-meta:${POSTGRES_META_TAG_DEF}"
+        "${prefix}supabase/edge-runtime:${EDGE_RUNTIME_TAG_DEF}"
+        "${prefix}supabase/logflare:${LOGFLARE_TAG_DEF}"
+        "${prefix}supabase/postgres:${POSTGRES_TAG_DEF}"
+        "${prefix}timberio/vector:${VECTOR_TAG_DEF}"
     )
     
     local missing_images=()
@@ -467,14 +490,24 @@ check_docker_images() {
 # 檢查網路連通性
 check_network_connectivity() {
     log "INFO" "🌐 檢查網路連通性..."
+
+    if [[ "${OFFLINE_MODE}" == "true" || "${SKIP_PULL}" == "true" ]]; then
+        log "INFO" "離線模式/跳過拉取：略過網路檢查"
+        return 0
+    fi
     
     # 檢查到 Docker Hub 的連接
     if ! curl -f -s --max-time 10 https://registry-1.docker.io/v2/ >/dev/null 2>&1; then
         log "WARN" "無法連接到 Docker Hub，將嘗試使用本地映像或跳過拉取"
         
-        # 嘗試檢查本地是否有映像
+        # 嘗試檢查本地是否有映像（從 docker-compose 服務列表）
         local has_local_images=false
-        for image in "supabase/studio:latest" "kong:3.7" "supabase/gotrue:latest"; do
+        local sample_images=(
+            "${REGISTRY_PREFIX}supabase/studio:${STUDIO_TAG:-latest}"
+            "${REGISTRY_PREFIX}kong:${KONG_TAG:-3.7}"
+            "${REGISTRY_PREFIX}supabase/gotrue:${GOTRUE_TAG:-latest}"
+        )
+        for image in "${sample_images[@]}"; do
             if docker image inspect "$image" >/dev/null 2>&1; then
                 has_local_images=true
                 break
@@ -515,11 +548,13 @@ start_services() {
         exit 1
     fi
     
-    # 檢查網路連通性
-    check_network_connectivity
-    
-    # 檢查並拉取 Docker 映像
-    check_docker_images
+    # 檢查網路連通性與拉取映像（若未啟用離線/跳過拉取）
+    if [[ "${OFFLINE_MODE}" != "true" && "${SKIP_PULL}" != "true" ]]; then
+        check_network_connectivity
+        check_docker_images
+    else
+        log "INFO" "離線模式/跳過拉取：略過映像拉取"
+    fi
     
     # 使用 .env.local 作為環境變數檔案
     log "INFO" "正在啟動容器..."
