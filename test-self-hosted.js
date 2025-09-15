@@ -60,7 +60,7 @@ const testEndpoint = (url, name) => {
 // 測試 Docker 容器狀態
 const testDockerContainers = () => {
   return new Promise((resolve) => {
-    exec('docker-compose ps --format json', (error, stdout, stderr) => {
+    exec('docker compose ps --format json', (error, stdout, stderr) => {
       if (error) {
         log('red', `❌ Docker Compose 檢查失敗: ${error.message}`);
         resolve(false);
@@ -94,7 +94,7 @@ const testDockerContainers = () => {
 // 測試資料庫連接
 const testDatabase = () => {
   return new Promise((resolve) => {
-    exec('docker-compose exec -T db pg_isready -U postgres', (error) => {
+    exec('docker compose exec -T db pg_isready -U postgres', (error) => {
       if (error) {
         log('red', '❌ PostgreSQL 資料庫: 無法連接');
         resolve(false);
@@ -159,7 +159,7 @@ async function runTests() {
   
   if (!dockerStatus) {
     log('red', '\n❌ 部分容器未正常運作，請檢查 Docker Compose 設定');
-    log('yellow', '💡 嘗試執行: docker-compose logs [service-name] 查看錯誤日誌');
+    log('yellow', '💡 嘗試執行: docker compose logs [service-name] 查看錯誤日誌');
   }
   
   // 測試各個服務端點
@@ -200,9 +200,9 @@ async function runTests() {
     log('yellow', `\n⚠️  部分測試失敗 (${passedTests}/${totalTests})`);
     log('yellow', '💡 請檢查失敗的服務並查看相關日誌');
     log('blue', '\n🔧 除錯指令:');
-    log('blue', '  • 查看所有日誌: docker-compose logs');
-    log('blue', '  • 查看特定服務: docker-compose logs [service-name]');
-    log('blue', '  • 重啟服務: docker-compose restart [service-name]');
+    log('blue', '  • 查看所有日誌: docker compose logs');
+    log('blue', '  • 查看特定服務: docker compose logs [service-name]');
+    log('blue', '  • 重啟服務: docker compose restart [service-name]');
   }
   
   process.exit(passedTests === totalTests ? 0 : 1);

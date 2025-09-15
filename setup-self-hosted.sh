@@ -16,7 +16,7 @@ check_dependencies() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         echo "❌ Docker Compose 未安裝，請先安裝 Docker Compose"
         exit 1
     fi
@@ -100,7 +100,7 @@ start_services() {
     echo "🚀 啟動 Supabase 服務..."
     
     # 使用 .env.local 作為環境變數檔案
-    docker-compose --env-file .env.local up -d
+    docker compose --env-file .env.local up -d
     
     echo "✅ 服務啟動完成"
 }
@@ -112,7 +112,7 @@ wait_for_services() {
     # 等待資料庫就緒
     echo "等待資料庫啟動..."
     timeout=300
-    while ! docker-compose exec -T db pg_isready -U postgres > /dev/null 2>&1; do
+    while ! docker compose exec -T db pg_isready -U postgres > /dev/null 2>&1; do
         sleep 2
         timeout=$((timeout - 2))
         if [ $timeout -le 0 ]; then
@@ -159,9 +159,9 @@ show_info() {
     echo "  4. 更新前端應用的 Supabase 設定"
     echo ""
     echo "🔧 有用的指令："
-    echo "  • 查看日誌: docker-compose logs -f [service-name]"
-    echo "  • 停止服務: docker-compose down"
-    echo "  • 重啟服務: docker-compose restart"
+    echo "  • 查看日誌: docker compose logs -f [service-name]"
+    echo "  • 停止服務: docker compose down"
+    echo "  • 重啟服務: docker compose restart"
     echo ""
 }
 

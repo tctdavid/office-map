@@ -77,37 +77,37 @@ node test-self-hosted.js
 ### Docker 管理
 ```bash
 # 啟動所有服務
-docker-compose up -d
+docker compose up -d
 
 # 停止所有服務
-docker-compose down
+docker compose down
 
 # 查看服務狀態
-docker-compose ps
+docker compose ps
 
 # 查看日誌
-docker-compose logs -f [service-name]
+docker compose logs -f [service-name]
 
 # 重啟特定服務
-docker-compose restart [service-name]
+docker compose restart [service-name]
 ```
 
 ### 資料庫管理
 ```bash
 # 連接到資料庫
-docker-compose exec db psql -U postgres
+docker compose exec db psql -U postgres
 
 # 執行 SQL 腳本
-docker-compose exec db psql -U postgres -f /path/to/script.sql
+docker compose exec db psql -U postgres -f /path/to/script.sql
 
 # 備份資料庫
-docker-compose exec db pg_dump -U postgres > backup.sql
+docker compose exec db pg_dump -U postgres > backup.sql
 ```
 
 ### 除錯和監控
 ```bash
 # 檢查容器健康狀態
-docker-compose ps --format table
+docker compose ps --format table
 
 # 查看資源使用情況
 docker stats
@@ -125,23 +125,23 @@ docker system prune
    # 檢查端口是否被占用
    netstat -tulpn | grep :8000
    
-   # 查看容器日誌
-   docker-compose logs kong
+    # 查看容器日誌
+    docker compose logs kong
    ```
 
 2. **資料庫連接失敗**
    ```bash
-   # 檢查資料庫狀態
-   docker-compose exec db pg_isready -U postgres
-   
-   # 重設資料庫密碼
-   docker-compose exec db psql -U postgres -c "ALTER USER postgres PASSWORD 'new_password';"
+    # 檢查資料庫狀態
+    docker compose exec db pg_isready -U postgres
+    
+    # 重設資料庫密碼
+    docker compose exec db psql -U postgres -c "ALTER USER postgres PASSWORD 'new_password';"
    ```
 
 3. **檔案上傳失敗**
    ```bash
-   # 檢查儲存服務
-   docker-compose logs storage
+    # 檢查儲存服務
+    docker compose logs storage
    
    # 檢查儲存權限
    ls -la volumes/storage/
@@ -197,8 +197,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/path/to/office-map
-ExecStart=/usr/local/bin/docker-compose up -d
-ExecStop=/usr/local/bin/docker-compose down
+ExecStart=/usr/local/bin/docker compose up -d
+ExecStop=/usr/local/bin/docker compose down
 TimeoutStartSec=0
 
 [Install]
