@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# 自託管 Supabase 設定腳本 (改進版)
+# 自託管 Supabase 設定腳本 (改進版 v2.0)
 # 此腳本會初始化並啟動自託管 Supabase 環境
-# 支援重複執行和智能檢查
+# 支援重複執行、智能檢查、映像標籤解析和診斷功能
 
 set -e
 
@@ -11,9 +11,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.env.local"
 BACKUP_DIR="${SCRIPT_DIR}/backups"
 LOG_FILE="${SCRIPT_DIR}/setup.log"
+VERSIONS_FILE="${SCRIPT_DIR}/versions-compatibility.json"
 FORCE_MODE=false
 SILENT_MODE=false
 DEBUG_MODE=false
+RESOLVE_TAGS=true
+COMMAND=""
 
 # 顏色定義
 RED='\033[0;31m'
@@ -42,6 +45,10 @@ log() {
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
+            doctor)
+                COMMAND="doctor"
+                shift
+                ;;
             --force)
                 FORCE_MODE=true
                 shift
@@ -54,14 +61,27 @@ parse_arguments() {
                 DEBUG_MODE=true
                 shift
                 ;;
+            --no-resolve)
+                RESOLVE_TAGS=false
+                shift
+                ;;
+            --resolve-tags)
+                RESOLVE_TAGS=true
+                shift
+                ;;
             --help)
                 show_help
                 exit 0
                 ;;
             *)
-                log "ERROR" "未知參數: $1"
-                show_help
-                exit 1
+                if [[ -z "$COMMAND" ]]; then
+                    log "ERROR" "未知參數: $1"
+                    show_help
+                    exit 1
+                else
+                    # 如果已設定命令，忽略其他參數
+                    shift
+                fi
                 ;;
         esac
     done
@@ -70,21 +90,29 @@ parse_arguments() {
 # 顯示說明
 show_help() {
     cat << EOF
-自託管 Supabase 設定腳本
+自託管 Supabase 設定腳本 v2.0
 
 使用方法:
-  $0 [選項]
+  $0 [指令] [選項]
+
+指令:
+  (無)        執行完整設定流程
+  doctor      診斷系統狀態和映像可用性
 
 選項:
-  --force     強制重新設定（跳過所有確認）
-  --silent    靜默模式（最少輸出）
-  --debug     除錯模式（詳細輸出）
-  --help      顯示此說明
+  --force        強制重新設定（跳過所有確認）
+  --silent       靜默模式（最少輸出）
+  --debug        除錯模式（詳細輸出）
+  --resolve-tags 自動解析映像標籤（預設）
+  --no-resolve   跳過映像標籤解析
+  --help         顯示此說明
 
 範例:
-  $0                    # 互動式設定
-  $0 --force           # 強制重新設定
-  $0 --silent --force  # 靜默強制設定
+  $0                     # 互動式設定（包含標籤解析）
+  $0 --force            # 強制重新設定
+  $0 --no-resolve       # 跳過標籤解析的設定
+  $0 doctor             # 診斷系統狀態
+  $0 doctor --debug     # 詳細診斷
 EOF
 }
 
@@ -393,11 +421,182 @@ setup_database_scripts() {
     fi
 }
 
+# 映像標籤解析和驗證
+resolve_image_tags() {
+    if [[ $RESOLVE_TAGS != true ]]; then
+        log "INFO" "跳過映像標籤解析"
+        return 0
+    fi
+
+    log "INFO" "🔍 解析映像標籤..."
+    
+    # 檢查版本相容性檔案
+    if [[ ! -f "$VERSIONS_FILE" ]]; then
+        log "WARN" "版本相容性檔案不存在: $VERSIONS_FILE"
+        log "INFO" "將使用環境檔案中的預設標籤"
+        return 0
+    fi
+    
+    # 載入現有環境變數
+    if [[ -f "$ENV_FILE" ]]; then
+        set -a
+        source "$ENV_FILE"
+        set +a
+    fi
+    
+    local resolved_file="${ENV_FILE}.resolved"
+    cp "$ENV_FILE" "$resolved_file"
+    
+    # 解析每個服務的標籤
+    local services=(
+        "studio:STUDIO_TAG:supabase/studio"
+        "kong:KONG_TAG:kong" 
+        "gotrue:GOTRUE_TAG:supabase/gotrue"
+        "postgrest:POSTGREST_TAG:postgrest/postgrest"
+        "realtime:REALTIME_TAG:supabase/realtime"
+        "storage:STORAGE_TAG:supabase/storage-api"
+        "imgproxy:IMGPROXY_TAG:darthsim/imgproxy"
+        "postgres_meta:POSTGRES_META_TAG:supabase/postgres-meta"
+        "edge_runtime:EDGE_RUNTIME_TAG:supabase/edge-runtime"
+        "logflare:LOGFLARE_TAG:supabase/logflare"
+        "postgres:POSTGRES_TAG:supabase/postgres"
+        "vector:VECTOR_TAG:timberio/vector"
+    )
+    
+    local resolved_count=0
+    local failed_services=()
+    
+    for service_def in "${services[@]}"; do
+        local service_name=$(echo "$service_def" | cut -d':' -f1)
+        local tag_var=$(echo "$service_def" | cut -d':' -f2)
+        local image_name=$(echo "$service_def" | cut -d':' -f3)
+        
+        # 取得目前標籤
+        local current_tag=""
+        eval "current_tag=\$${tag_var}"
+        
+        # 如果標籤不是 latest，檢查是否存在
+        if [[ "$current_tag" != "latest" ]] && [[ -n "$current_tag" ]]; then
+            if check_image_exists "$image_name" "$current_tag"; then
+                log "DEBUG" "保留現有標籤 ${service_name}: ${current_tag}"
+                continue
+            fi
+        fi
+        
+        # 解析可用標籤
+        local resolved_tag=$(resolve_service_tag "$service_name" "$image_name")
+        if [[ -n "$resolved_tag" ]]; then
+            # 更新 .env.resolved 檔案
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s/^${tag_var}=.*/${tag_var}=${resolved_tag}/" "$resolved_file"
+            else
+                sed -i "s/^${tag_var}=.*/${tag_var}=${resolved_tag}/" "$resolved_file"
+            fi
+            log "INFO" "✅ ${service_name}: ${current_tag:-latest} → ${resolved_tag}"
+            ((resolved_count++))
+        else
+            failed_services+=("$service_name")
+            log "WARN" "⚠️  無法解析 ${service_name} 的可用標籤"
+        fi
+    done
+    
+    if [[ $resolved_count -gt 0 ]]; then
+        log "INFO" "📝 已解析 $resolved_count 個服務的標籤"
+        
+        # 顯示差異
+        if command -v diff &> /dev/null; then
+            log "INFO" "標籤變更:"
+            diff -u "$ENV_FILE" "$resolved_file" | grep "^[+-][^+-]" || log "INFO" "無標籤變更"
+        fi
+        
+        # 備份原檔案並應用變更
+        if [[ $FORCE_MODE == true ]] || [[ $SILENT_MODE != true ]]; then
+            if [[ $SILENT_MODE != true ]]; then
+                echo ""
+                read -p "是否應用解析的標籤？(Y/n): " apply_tags
+                if [[ $apply_tags =~ ^[Nn]$ ]]; then
+                    log "INFO" "跳過標籤應用"
+                    rm -f "$resolved_file"
+                    return 0
+                fi
+            fi
+            
+            cp "$ENV_FILE" "${ENV_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+            mv "$resolved_file" "$ENV_FILE"
+            log "INFO" "✅ 已應用解析的標籤"
+        else
+            mv "$resolved_file" "$ENV_FILE"
+            log "INFO" "✅ 已自動應用解析的標籤"
+        fi
+    else
+        rm -f "$resolved_file"
+    fi
+    
+    if [[ ${#failed_services[@]} -gt 0 ]]; then
+        log "WARN" "無法解析以下服務標籤: ${failed_services[*]}"
+        log "INFO" "這些服務將使用環境檔案中的預設標籤"
+    fi
+}
+
+# 檢查映像是否存在
+check_image_exists() {
+    local image_name="$1"
+    local tag="$2"
+    local prefix="${REGISTRY_PREFIX:-}"
+    
+    # 檢查 GHCR 和 Docker Hub
+    local registries=("ghcr.io" "docker.io")
+    
+    for registry in "${registries[@]}"; do
+        local full_image="${prefix}${registry}/${image_name}:${tag}"
+        if [[ "$registry" == "docker.io" ]]; then
+            full_image="${prefix}${image_name}:${tag}"
+        fi
+        
+        log "DEBUG" "檢查映像: $full_image"
+        if docker manifest inspect "$full_image" >/dev/null 2>&1; then
+            log "DEBUG" "映像存在: $full_image"
+            return 0
+        fi
+    done
+    
+    log "DEBUG" "映像不存在: ${image_name}:${tag}"
+    return 1
+}
+
+# 解析服務標籤
+resolve_service_tag() {
+    local service_name="$1"
+    local image_name="$2"
+    local prefix="${REGISTRY_PREFIX:-}"
+    
+    # 從版本檔案中取得可用標籤
+    if ! command -v jq &> /dev/null; then
+        log "WARN" "jq 未安裝，無法解析版本檔案"
+        return 1
+    fi
+    
+    local available_tags=$(jq -r ".services.${service_name}.tags.stable[]" "$VERSIONS_FILE" 2>/dev/null)
+    if [[ -z "$available_tags" ]]; then
+        available_tags=$(jq -r ".services.${service_name}.tags.latest[]" "$VERSIONS_FILE" 2>/dev/null)
+    fi
+    
+    # 檢查每個標籤
+    for tag in $available_tags; do
+        if check_image_exists "$image_name" "$tag"; then
+            echo "$tag"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
 # 檢查並拉取 Docker 映像
 check_docker_images() {
     log "INFO" "📦 檢查 Docker 映像..."
     
-    # 載入環境變數以取得映像標籤與鏡像前綴
+    # 載入環境變數
     if [[ -f "$ENV_FILE" ]]; then
         set -a
         source "$ENV_FILE"
@@ -405,35 +604,53 @@ check_docker_images() {
     fi
 
     local prefix="${REGISTRY_PREFIX:-}"
-
+    
     # 預設標籤（若 .env.local 未指定）
-    local STUDIO_TAG_DEF="${STUDIO_TAG:-latest}"
+    local STUDIO_TAG_DEF="${STUDIO_TAG:-20241010}"
     local KONG_TAG_DEF="${KONG_TAG:-3.7}"
-    local GOTRUE_TAG_DEF="${GOTRUE_TAG:-latest}"
-    local POSTGREST_TAG_DEF="${POSTGREST_TAG:-v12.2.0}"
-    local REALTIME_TAG_DEF="${REALTIME_TAG:-v2.28.32}"
-    local STORAGE_TAG_DEF="${STORAGE_TAG:-v1.4.1}"
+    local GOTRUE_TAG_DEF="${GOTRUE_TAG:-v2.158.1}"
+    local POSTGREST_TAG_DEF="${POSTGREST_TAG:-v12.2.3}"
+    local REALTIME_TAG_DEF="${REALTIME_TAG:-v2.30.23}"
+    local STORAGE_TAG_DEF="${STORAGE_TAG:-v1.5.3}"
     local IMGPROXY_TAG_DEF="${IMGPROXY_TAG:-v3.8.0}"
-    local POSTGRES_META_TAG_DEF="${POSTGRES_META_TAG:-v0.83.2}"
+    local POSTGRES_META_TAG_DEF="${POSTGRES_META_TAG:-v0.84.2}"
     local EDGE_RUNTIME_TAG_DEF="${EDGE_RUNTIME_TAG:-v1.58.2}"
     local LOGFLARE_TAG_DEF="${LOGFLARE_TAG:-1.4.0}"
     local POSTGRES_TAG_DEF="${POSTGRES_TAG:-15.1.1.78}"
     local VECTOR_TAG_DEF="${VECTOR_TAG:-0.28.1-alpine}"
 
-    local images=(
-        "${prefix}supabase/studio:${STUDIO_TAG_DEF}"
-        "${prefix}kong:${KONG_TAG_DEF}"
-        "${prefix}supabase/gotrue:${GOTRUE_TAG_DEF}"
-        "${prefix}postgrest/postgrest:${POSTGREST_TAG_DEF}"
-        "${prefix}supabase/realtime:${REALTIME_TAG_DEF}"
-        "${prefix}supabase/storage-api:${STORAGE_TAG_DEF}"
-        "${prefix}darthsim/imgproxy:${IMGPROXY_TAG_DEF}"
-        "${prefix}supabase/postgres-meta:${POSTGRES_META_TAG_DEF}"
-        "${prefix}supabase/edge-runtime:${EDGE_RUNTIME_TAG_DEF}"
-        "${prefix}supabase/logflare:${LOGFLARE_TAG_DEF}"
-        "${prefix}supabase/postgres:${POSTGRES_TAG_DEF}"
-        "${prefix}timberio/vector:${VECTOR_TAG_DEF}"
+    # 建立映像清單，優先使用 GHCR
+    local images=()
+    local services=(
+        "supabase/studio:${STUDIO_TAG_DEF}"
+        "kong:${KONG_TAG_DEF}"
+        "supabase/gotrue:${GOTRUE_TAG_DEF}"
+        "postgrest/postgrest:${POSTGREST_TAG_DEF}"
+        "supabase/realtime:${REALTIME_TAG_DEF}"
+        "supabase/storage-api:${STORAGE_TAG_DEF}"
+        "darthsim/imgproxy:${IMGPROXY_TAG_DEF}"
+        "supabase/postgres-meta:${POSTGRES_META_TAG_DEF}"
+        "supabase/edge-runtime:${EDGE_RUNTIME_TAG_DEF}"
+        "supabase/logflare:${LOGFLARE_TAG_DEF}"
+        "supabase/postgres:${POSTGRES_TAG_DEF}"
+        "timberio/vector:${VECTOR_TAG_DEF}"
     )
+    
+    for service in "${services[@]}"; do
+        local image_name=$(echo "$service" | cut -d':' -f1)
+        local tag=$(echo "$service" | cut -d':' -f2)
+        
+        # 決定使用的映像 URL
+        if [[ "$image_name" =~ ^supabase/ ]]; then
+            if [[ -n "$prefix" ]]; then
+                images+=("${prefix}${image_name}:${tag}")
+            else
+                images+=("ghcr.io/${image_name}:${tag}")
+            fi
+        else
+            images+=("${prefix}${image_name}:${tag}")
+        fi
+    done
     
     local missing_images=()
     
@@ -449,37 +666,42 @@ check_docker_images() {
     if [[ ${#missing_images[@]} -gt 0 ]]; then
         log "INFO" "需要拉取 ${#missing_images[@]} 個映像..."
         
+        # 批次檢查映像可用性
+        local pullable_images=()
+        local failed_images=()
+        
         for image in "${missing_images[@]}"; do
-            log "INFO" "拉取映像: $image"
-            if ! docker pull "$image"; then
-                log "WARN" "無法拉取映像: $image"
-                
-                # 嘗試使用不同的標籤
-                local base_image=$(echo "$image" | cut -d':' -f1)
-                local fallback_images=("$base_image:latest" "$base_image:stable")
-                
-                local pulled_fallback=false
-                for fallback in "${fallback_images[@]}"; do
-                    if [[ "$fallback" != "$image" ]]; then
-                        log "INFO" "嘗試拉取替代映像: $fallback"
-                        if docker pull "$fallback" 2>/dev/null; then
-                            log "INFO" "成功拉取替代映像: $fallback"
-                            # 標記為原本的映像名稱
-                            docker tag "$fallback" "$image" 2>/dev/null || true
-                            pulled_fallback=true
-                            break
-                        fi
-                    fi
-                done
-                
-                if [[ $pulled_fallback != true ]]; then
-                    log "ERROR" "無法拉取映像及其替代版本: $image"
-                    log "INFO" "請檢查網路連接、DNS 設定或映像版本是否正確"
-                    log "INFO" "您可以嘗試手動執行: docker pull $image"
-                    exit 1
-                fi
+            log "INFO" "檢查映像可用性: $image"
+            if docker manifest inspect "$image" >/dev/null 2>&1; then
+                pullable_images+=("$image")
+                log "DEBUG" "映像可用: $image"
+            else
+                failed_images+=("$image")
+                log "WARN" "映像不可用: $image"
             fi
         done
+        
+        # 拉取可用映像
+        for image in "${pullable_images[@]}"; do
+            log "INFO" "拉取映像: $image"
+            if ! docker pull "$image"; then
+                log "ERROR" "無法拉取映像: $image"
+                exit 1
+            fi
+        done
+        
+        # 處理失敗的映像
+        if [[ ${#failed_images[@]} -gt 0 ]]; then
+            log "ERROR" "以下映像無法拉取:"
+            for image in "${failed_images[@]}"; do
+                log "ERROR" "  - $image"
+            done
+            log "INFO" "建議:"
+            log "INFO" "  1. 檢查網路連接和 DNS 設定"
+            log "INFO" "  2. 運行 '$0 doctor' 進行診斷"
+            log "INFO" "  3. 嘗試設定 REGISTRY_PREFIX 使用鏡像倉庫"
+            exit 1
+        fi
         
         log "INFO" "✅ Docker 映像拉取完成"
     else
@@ -718,6 +940,18 @@ cleanup() {
     # 可以在這裡添加清理邏輯
 }
 
+# 診斷模式
+run_diagnostics() {
+    # 載入診斷工具
+    if [[ -f "${SCRIPT_DIR}/supabase-doctor.sh" ]]; then
+        source "${SCRIPT_DIR}/supabase-doctor.sh"
+        run_doctor
+    else
+        log "ERROR" "診斷工具不存在: ${SCRIPT_DIR}/supabase-doctor.sh"
+        exit 1
+    fi
+}
+
 # 主執行流程
 main() {
     # 設定錯誤處理
@@ -733,12 +967,24 @@ main() {
     # 解析命令列參數
     parse_arguments "$@"
     
+    # 根據命令執行相應操作
+    if [[ "$COMMAND" == "doctor" ]]; then
+        run_diagnostics
+        exit 0
+    fi
+    
     # 執行設定步驟
     check_dependencies
     check_ports
     check_service_status
     backup_config
     setup_env
+    
+    # 解析映像標籤（新增步驟）
+    if [[ $RESOLVE_TAGS == true ]]; then
+        resolve_image_tags
+    fi
+    
     create_directories
     check_database_status
     setup_database_scripts

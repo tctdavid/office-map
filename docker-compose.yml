@@ -2,7 +2,7 @@ services:
   # Supabase Studio
   studio:
     container_name: supabase-studio
-    image: ${REGISTRY_PREFIX}supabase/studio:${STUDIO_TAG}
+    image: ${STUDIO_IMAGE:-${REGISTRY_PREFIX}supabase/studio}:${STUDIO_TAG:-20241010}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/profile', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
@@ -31,7 +31,7 @@ services:
   # Kong API Gateway
   kong:
     container_name: supabase-kong
-    image: ${REGISTRY_PREFIX}kong:${KONG_TAG}
+    image: ${KONG_IMAGE:-${REGISTRY_PREFIX}kong}:${KONG_TAG:-3.7}
     restart: unless-stopped
     depends_on:
       db:
@@ -54,7 +54,7 @@ services:
   # Auth
   auth:
     container_name: supabase-auth
-    image: ${REGISTRY_PREFIX}supabase/gotrue:${GOTRUE_TAG}
+    image: ${GOTRUE_IMAGE:-${REGISTRY_PREFIX}supabase/gotrue}:${GOTRUE_TAG:-v2.158.1}
     depends_on:
       db:
         condition: service_healthy
@@ -95,7 +95,7 @@ services:
   # REST API
   rest:
     container_name: supabase-rest
-    image: ${REGISTRY_PREFIX}postgrest/postgrest:${POSTGREST_TAG}
+    image: ${POSTGREST_IMAGE:-${REGISTRY_PREFIX}postgrest/postgrest}:${POSTGREST_TAG:-v12.2.3}
     depends_on:
       db:
         condition: service_healthy
@@ -113,7 +113,7 @@ services:
   # Realtime
   realtime:
     container_name: supabase-realtime
-    image: ${REGISTRY_PREFIX}supabase/realtime:${REALTIME_TAG}
+    image: ${REALTIME_IMAGE:-${REGISTRY_PREFIX}supabase/realtime}:${REALTIME_TAG:-v2.30.23}
     depends_on:
       db:
         condition: service_healthy
@@ -145,7 +145,7 @@ services:
   # Storage
   storage:
     container_name: supabase-storage
-    image: ${REGISTRY_PREFIX}supabase/storage-api:${STORAGE_TAG}
+    image: ${STORAGE_IMAGE:-${REGISTRY_PREFIX}supabase/storage-api}:${STORAGE_TAG:-v1.5.3}
     depends_on:
       db:
         condition: service_healthy
@@ -177,7 +177,7 @@ services:
   # Image optimization
   imgproxy:
     container_name: supabase-imgproxy
-    image: ${REGISTRY_PREFIX}darthsim/imgproxy:${IMGPROXY_TAG}
+    image: ${IMGPROXY_IMAGE:-${REGISTRY_PREFIX}darthsim/imgproxy}:${IMGPROXY_TAG:-v3.8.0}
     healthcheck:
       test: ["CMD", "imgproxy", "health"]
       timeout: 5s
@@ -194,7 +194,7 @@ services:
   # Meta (Database management)
   meta:
     container_name: supabase-meta
-    image: ${REGISTRY_PREFIX}supabase/postgres-meta:${POSTGRES_META_TAG}
+    image: ${POSTGRES_META_IMAGE:-${REGISTRY_PREFIX}supabase/postgres-meta}:${POSTGRES_META_TAG:-v0.84.2}
     depends_on:
       db:
         condition: service_healthy
@@ -210,7 +210,7 @@ services:
   # Functions (Edge Functions)
   functions:
     container_name: supabase-edge-functions
-    image: ${REGISTRY_PREFIX}supabase/edge-runtime:${EDGE_RUNTIME_TAG}
+    image: ${EDGE_RUNTIME_IMAGE:-${REGISTRY_PREFIX}supabase/edge-runtime}:${EDGE_RUNTIME_TAG:-v1.58.2}
     restart: unless-stopped
     depends_on:
       analytics:
@@ -232,7 +232,7 @@ services:
   # Analytics
   analytics:
     container_name: supabase-analytics
-    image: ${REGISTRY_PREFIX}supabase/logflare:${LOGFLARE_TAG}
+    image: ${LOGFLARE_IMAGE:-${REGISTRY_PREFIX}supabase/logflare}:${LOGFLARE_TAG:-1.4.0}
     healthcheck:
       test: ["CMD", "curl", "http://localhost:4000/health"]
       timeout: 5s
@@ -259,7 +259,7 @@ services:
   # Database
   db:
     container_name: supabase-db
-    image: ${REGISTRY_PREFIX}supabase/postgres:${POSTGRES_TAG}
+    image: ${POSTGRES_IMAGE:-${REGISTRY_PREFIX}supabase/postgres}:${POSTGRES_TAG:-15.1.1.78}
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
       timeout: 5s
@@ -300,7 +300,7 @@ services:
   # Vector embeddings
   vector:
     container_name: supabase-vector
-    image: ${REGISTRY_PREFIX}timberio/vector:${VECTOR_TAG}
+    image: ${VECTOR_IMAGE:-${REGISTRY_PREFIX}timberio/vector}:${VECTOR_TAG:-0.28.1-alpine}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9001/health"]
       timeout: 5s

@@ -1,0 +1,106 @@
+{
+  "version": "2024-09-15",
+  "description": "Supabase 自託管映像版本相容性矩陣",
+  "registries": {
+    "primary": "ghcr.io",
+    "fallback": "docker.io"
+  },
+  "services": {
+    "studio": {
+      "name": "supabase/studio",
+      "tags": {
+        "latest": ["20241010", "20241001", "20240930"],
+        "stable": ["20241010", "20241001"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "kong": {
+      "name": "kong",
+      "tags": {
+        "latest": ["3.7", "3.6", "3.5"],
+        "stable": ["3.7", "3.6"]
+      },
+      "registries": ["docker.io"]
+    },
+    "gotrue": {
+      "name": "supabase/gotrue",
+      "tags": {
+        "latest": ["v2.158.1", "v2.158.0", "v2.157.1"],
+        "stable": ["v2.158.1", "v2.157.1"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "postgrest": {
+      "name": "postgrest/postgrest",
+      "tags": {
+        "latest": ["v12.2.3", "v12.2.2", "v12.2.1", "v12.2.0"],
+        "stable": ["v12.2.3", "v12.2.0"]
+      },
+      "registries": ["docker.io"]
+    },
+    "realtime": {
+      "name": "supabase/realtime",
+      "tags": {
+        "latest": ["v2.30.23", "v2.30.22", "v2.28.32"],
+        "stable": ["v2.30.23", "v2.28.32"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "storage": {
+      "name": "supabase/storage-api",
+      "tags": {
+        "latest": ["v1.5.3", "v1.5.2", "v1.4.1"],
+        "stable": ["v1.5.3", "v1.4.1"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "imgproxy": {
+      "name": "darthsim/imgproxy",
+      "tags": {
+        "latest": ["v3.8.0", "v3.7.0"],
+        "stable": ["v3.8.0"]
+      },
+      "registries": ["docker.io"]
+    },
+    "postgres_meta": {
+      "name": "supabase/postgres-meta",
+      "tags": {
+        "latest": ["v0.84.2", "v0.84.1", "v0.83.2"],
+        "stable": ["v0.84.2", "v0.83.2"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "edge_runtime": {
+      "name": "supabase/edge-runtime",
+      "tags": {
+        "latest": ["v1.58.2", "v1.58.1", "v1.57.0"],
+        "stable": ["v1.58.2"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "logflare": {
+      "name": "supabase/logflare",
+      "tags": {
+        "latest": ["1.4.0", "1.3.1"],
+        "stable": ["1.4.0"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "postgres": {
+      "name": "supabase/postgres",
+      "tags": {
+        "latest": ["15.1.1.78", "15.1.0.117"],
+        "stable": ["15.1.1.78"]
+      },
+      "registries": ["ghcr.io", "docker.io"]
+    },
+    "vector": {
+      "name": "timberio/vector",
+      "tags": {
+        "latest": ["0.28.1-alpine", "0.28.0-alpine"],
+        "stable": ["0.28.1-alpine"]
+      },
+      "registries": ["docker.io"]
+    }
+  }
+}
