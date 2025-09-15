@@ -31,7 +31,7 @@ services:
   # Kong API Gateway
   kong:
     container_name: supabase-kong
-    image: kong:2.8.1
+    image: kong:3.7
     restart: unless-stopped
     depends_on:
       db:
@@ -54,7 +54,7 @@ services:
   # Auth
   auth:
     container_name: supabase-auth
-    image: supabase/gotrue:v2.157.2
+    image: supabase/gotrue:latest
     depends_on:
       db:
         condition: service_healthy

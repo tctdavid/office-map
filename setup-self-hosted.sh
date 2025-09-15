@@ -399,17 +399,17 @@ check_docker_images() {
     
     local images=(
         "supabase/studio:latest"
-        "kong:2.8.1"
-        "supabase/gotrue:v2.157.2"
-        "postgrest/postgrest:v12.2.0"
-        "supabase/realtime:v2.28.32"
-        "supabase/storage-api:v1.4.1"
-        "darthsim/imgproxy:v3.8.0"
-        "supabase/postgres-meta:v0.83.2"
-        "supabase/edge-runtime:v1.58.2"
-        "supabase/logflare:1.4.0"
-        "supabase/postgres:15.1.1.78"
-        "timberio/vector:0.28.1-alpine"
+        "kong:3.7"
+        "supabase/gotrue:latest"
+        "postgrest/postgrest:latest"
+        "supabase/realtime:latest"
+        "supabase/storage-api:latest"
+        "darthsim/imgproxy:latest"
+        "supabase/postgres-meta:latest"
+        "supabase/edge-runtime:latest"
+        "supabase/logflare:latest"
+        "supabase/postgres:15.6.1.104"
+        "timberio/vector:latest"
     )
     
     local missing_images=()
@@ -429,9 +429,32 @@ check_docker_images() {
         for image in "${missing_images[@]}"; do
             log "INFO" "拉取映像: $image"
             if ! docker pull "$image"; then
-                log "ERROR" "無法拉取映像: $image"
-                log "INFO" "檢查網路連接或映像版本是否正確"
-                exit 1
+                log "WARN" "無法拉取映像: $image"
+                
+                # 嘗試使用不同的標籤
+                local base_image=$(echo "$image" | cut -d':' -f1)
+                local fallback_images=("$base_image:latest" "$base_image:stable")
+                
+                local pulled_fallback=false
+                for fallback in "${fallback_images[@]}"; do
+                    if [[ "$fallback" != "$image" ]]; then
+                        log "INFO" "嘗試拉取替代映像: $fallback"
+                        if docker pull "$fallback" 2>/dev/null; then
+                            log "INFO" "成功拉取替代映像: $fallback"
+                            # 標記為原本的映像名稱
+                            docker tag "$fallback" "$image" 2>/dev/null || true
+                            pulled_fallback=true
+                            break
+                        fi
+                    fi
+                done
+                
+                if [[ $pulled_fallback != true ]]; then
+                    log "ERROR" "無法拉取映像及其替代版本: $image"
+                    log "INFO" "請檢查網路連接、DNS 設定或映像版本是否正確"
+                    log "INFO" "您可以嘗試手動執行: docker pull $image"
+                    exit 1
+                fi
             fi
         done
         
@@ -447,14 +470,28 @@ check_network_connectivity() {
     
     # 檢查到 Docker Hub 的連接
     if ! curl -f -s --max-time 10 https://registry-1.docker.io/v2/ >/dev/null 2>&1; then
-        log "WARN" "無法連接到 Docker Hub，映像拉取可能會失敗"
+        log "WARN" "無法連接到 Docker Hub，將嘗試使用本地映像或跳過拉取"
         
-        if [[ $FORCE_MODE != true ]] && [[ $SILENT_MODE != true ]]; then
-            read -p "是否繼續？(y/N): " continue_setup
-            if [[ ! $continue_setup =~ ^[Yy]$ ]]; then
-                log "INFO" "設定已取消"
-                exit 0
+        # 嘗試檢查本地是否有映像
+        local has_local_images=false
+        for image in "supabase/studio:latest" "kong:3.7" "supabase/gotrue:latest"; do
+            if docker image inspect "$image" >/dev/null 2>&1; then
+                has_local_images=true
+                break
             fi
+        done
+        
+        if [[ $has_local_images == false ]]; then
+            log "ERROR" "網路無法連接且本地無可用映像"
+            if [[ $FORCE_MODE != true ]] && [[ $SILENT_MODE != true ]]; then
+                read -p "是否繼續？(可能會失敗) (y/N): " continue_setup
+                if [[ ! $continue_setup =~ ^[Yy]$ ]]; then
+                    log "INFO" "設定已取消"
+                    exit 0
+                fi
+            fi
+        else
+            log "INFO" "發現本地映像，將跳過網路拉取"
         fi
     else
         log "DEBUG" "Docker Hub 連接正常"
