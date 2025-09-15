@@ -38,7 +38,6 @@ node test-self-hosted.js
 | `.env.docker` | 環境變數範本 |
 | `.env.local` | 實際環境變數 (由腳本生成) |
 | `setup-self-hosted.sh` | 自動化設定腳本 |
-| `nginx-self-hosted.conf` | 生產環境 Nginx 配置 |
 | `volumes/` | Docker 數據卷和配置檔案 |
 | `src/integrations/supabase/client-self-hosted.ts` | 自託管版本的 Supabase 客戶端 |
 
@@ -165,25 +164,7 @@ docker system prune
 
 ## 🚀 生產環境部署
 
-### 1. Nginx 反向代理
-
-```bash
-# 複製 Nginx 配置
-sudo cp nginx-self-hosted.conf /etc/nginx/sites-available/office-map
-sudo ln -s /etc/nginx/sites-available/office-map /etc/nginx/sites-enabled/
-
-# 重載 Nginx
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 2. SSL 憑證設定
-
-```bash
-# 使用 Let's Encrypt (Certbot)
-sudo certbot --nginx -d your-domain.com
-```
-
-### 3. 系統服務設定
+### 1. 系統服務設定
 
 ```bash
 # 建立 systemd 服務

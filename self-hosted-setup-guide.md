@@ -53,47 +53,7 @@ storage:
     - ./volumes/storage:/var/lib/storage
 ```
 
-### 3. 反向代理設定 (如果使用 Nginx)
-如果你使用 Nginx 作為反向代理，需要特別設定儲存路徑：
-
-```nginx
-# /etc/nginx/sites-available/supabase
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    # API routes
-    location /rest/v1/ {
-        proxy_pass http://localhost:54321/rest/v1/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Storage routes - 重要！
-    location /storage/v1/ {
-        proxy_pass http://localhost:54324/storage/v1/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        # 允許大檔案上傳
-        client_max_body_size 50M;
-    }
-
-    # Auth routes
-    location /auth/v1/ {
-        proxy_pass http://localhost:54321/auth/v1/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-### 4. 前端設定檢查
+### 3. 前端設定檢查
 確保前端的 Supabase 客戶端指向正確的自託管 URL：
 
 **檢查 `src/integrations/supabase/client.ts`：**
@@ -102,13 +62,13 @@ const SUPABASE_URL = "http://your-self-hosted-domain.com"; // 或 https://
 const SUPABASE_PUBLISHABLE_KEY = "your-anon-key";
 ```
 
-### 5. 防火牆和埠口設定
+### 4. 防火牆和埠口設定
 確保以下埠口在防火牆中開放：
-- 54321 (API/Auth)
-- 54324 (Storage)
-- 54323 (Database - 如果需要直接存取)
+- 8000 (Kong API Gateway)
+- 3000 (Supabase Studio)
+- 5432 (PostgreSQL - 如果需要直接存取)
 
-### 6. 測試儲存功能
+### 5. 測試儲存功能
 執行 SQL 腳本後，你可以使用以下測試：
 
 1. **執行儲存修復腳本：**
@@ -122,22 +82,23 @@ const SUPABASE_PUBLISHABLE_KEY = "your-anon-key";
    - 檢查 Network 選項卡是否有 CORS 錯誤
    - 檢查 Console 選項卡是否有 JavaScript 錯誤
 
-### 7. 常見錯誤訊息和解決方案
+### 6. 常見錯誤訊息和解決方案
 
 **錯誤：`CORS policy: No 'Access-Control-Allow-Origin' header`**
-- 解決：檢查 Docker 環境變數 `CORS_ORIGIN` 設定
-- 或在 Nginx 中添加 CORS headers
+- 解決：檢查 `volumes/api/kong.yml` 中的 CORS 設定
+- 檢查 Docker 環境變數 `CORS_ORIGIN` 設定
 
 **錯誤：`413 Request Entity Too Large`**
-- 解決：增加 Nginx 的 `client_max_body_size`
+- 解決：檢查 Kong 的檔案大小限制設定
 - 檢查 Supabase 的 `FILE_SIZE_LIMIT` 設定
 
 **錯誤：`Failed to fetch`**
-- 解決：檢查儲存服務是否正在運行 (port 54324)
+- 解決：檢查儲存服務是否正在運行 (透過 Kong Gateway)
 - 檢查防火牆設定
 
-### 8. 偵錯步驟
+### 7. 偵錯步驟
 1. 檢查 Supabase 服務狀態：`docker-compose ps`
 2. 查看儲存服務日誌：`docker-compose logs storage`
-3. 測試儲存 API：`curl http://localhost:54324/storage/v1/bucket`
-4. 檢查資料庫連線和政策設定
+3. 查看 Kong Gateway 日誌：`docker-compose logs kong`
+4. 測試 API：`curl http://localhost:8000/storage/v1/bucket`
+5. 檢查資料庫連線和政策設定
