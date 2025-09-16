@@ -994,17 +994,91 @@ run_official_install() {
     fi
 
     log "INFO" "📁 複製 docker 構成檔至本機目錄..."
-    cp -rf "$SRCDIR/supabase/docker"/* "$WORKDIR"/
+    if [[ -d "$SRCDIR/docker" ]]; then
+        cp -rf "$SRCDIR/docker"/* "$WORKDIR"/
+    elif [[ -d "$SRCDIR/supabase/docker" ]]; then
+        cp -rf "$SRCDIR/supabase/docker"/* "$WORKDIR"/
+    else
+        log "ERROR" "找不到 docker 配置目錄"
+        exit 1
+    fi
 
-    if [[ ! -f "$WORKDIR/.env" ]]; then
+    # 設定環境變數
+    log "INFO" "⚙️  配置環境變數..."
+    if [[ -f "$SRCDIR/docker/.env.example" ]]; then
+        cp "$SRCDIR/docker/.env.example" "$WORKDIR/.env"
+    elif [[ -f "$SRCDIR/supabase/docker/.env.example" ]]; then
         cp "$SRCDIR/supabase/docker/.env.example" "$WORKDIR/.env"
-        log "INFO" "📝 已建立 $WORKDIR/.env（可依需要調整）"
+    else
+        log "WARN" "找不到 .env.example 範本"
+        # 創建基本 .env 文件
+        cat > "$WORKDIR/.env" << 'EOF'
+POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
+JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+DASHBOARD_USERNAME=supabase
+DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
+EOF
+    fi
+
+    # 生成並設置 JWT Secret
+    log "INFO" "🔐 生成 JWT 密鑰..."
+    local JWT_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+    
+    # 更新 JWT_SECRET
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" "$WORKDIR/.env"
+    else
+        sed -i "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" "$WORKDIR/.env"
+    fi
+
+    # 複製專案的 SQL 腳本
+    if [[ -d "${SCRIPT_DIR}/sql-scripts" ]]; then
+        log "INFO" "📚 複製專案 SQL 腳本..."
+        mkdir -p "$WORKDIR/volumes/db/init"
+        
+        local scripts=(
+            "stage-1-basic-setup.sql:02-stage-1-basic-setup.sql"
+            "stage-2-employees-table.sql:03-stage-2-employees-table.sql"
+            "stage-3-main-tables.sql:04-stage-3-main-tables.sql"
+            "stage-4-relational-tables.sql:05-stage-4-relational-tables.sql"
+            "stage-5-seating-tables.sql:06-stage-5-seating-tables.sql"
+            "stage-6-advanced-permissions.sql:07-stage-6-advanced-permissions.sql"
+            "stage-7-final-setup.sql:08-stage-7-final-setup.sql"
+            "fix-self-hosted-storage.sql:09-fix-storage.sql"
+            "foreign-keys-setup.sql:10-foreign-keys-setup.sql"
+        )
+        
+        for script_mapping in "${scripts[@]}"; do
+            local source_script=$(echo "$script_mapping" | cut -d':' -f1)
+            local target_script=$(echo "$script_mapping" | cut -d':' -f2)
+            
+            if [[ -f "${SCRIPT_DIR}/sql-scripts/$source_script" ]]; then
+                cp "${SCRIPT_DIR}/sql-scripts/$source_script" "$WORKDIR/volumes/db/init/$target_script"
+                log "DEBUG" "複製 SQL 腳本: $source_script -> $target_script"
+            fi
+        done
+        
+        # 複製 JWT 設定腳本
+        if [[ -f "${SCRIPT_DIR}/volumes/db/jwt.sql" ]]; then
+            cp "${SCRIPT_DIR}/volumes/db/jwt.sql" "$WORKDIR/volumes/db/init/01-jwt.sql"
+        fi
+        
+        # 複製 logs 設定腳本
+        if [[ -f "${SCRIPT_DIR}/volumes/db/logs.sql" ]]; then
+            cp "${SCRIPT_DIR}/volumes/db/logs.sql" "$WORKDIR/volumes/db/init/01-logs.sql"
+        fi
     fi
 
     pushd "$WORKDIR" >/dev/null
+    
+    # 確保目錄權限正確
+    chmod -R 755 volumes/ 2>/dev/null || true
+    
     log "INFO" "🐳 拉取官方映像...（compose pull）"
     if ! docker compose pull; then
-        log "ERROR" "compose pull 失敗，請檢查網路或代理設定（建議確認可連線 ghcr.io 與 github.com）"
+        log "ERROR" "compose pull 失敗，請檢查網路或代理設定（建議確認可連線 ghcr.io）"
         popd >/dev/null
         exit 1
     fi
@@ -1015,11 +1089,92 @@ run_official_install() {
         popd >/dev/null
         exit 1
     fi
+    
+    # 等待服務啟動
+    log "INFO" "⏳ 等待服務啟動..."
+    sleep 15
+    
+    # 健康檢查
+    local max_attempts=30
+    local attempt=1
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        if docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+            log "INFO" "✅ 資料庫已就緒"
+            break
+        fi
+        
+        log "DEBUG" "等待資料庫啟動... ($attempt/$max_attempts)"
+        sleep 2
+        ((attempt++))
+    done
+    
+    if [[ $attempt -gt $max_attempts ]]; then
+        log "WARN" "資料庫啟動超時，請手動檢查"
+    fi
+    
+    # 檢查 API Gateway
+    if curl -s "http://localhost:8000/health" >/dev/null 2>&1; then
+        log "INFO" "✅ API Gateway 已就緒"
+    else
+        log "WARN" "API Gateway 可能尚未就緒，請稍後檢查"
+    fi
+    
     popd >/dev/null
 
-    log "INFO" "✅ 官方流程完成。目錄：$WORKDIR"
-    log "INFO" "   - 修改配置：編輯 $WORKDIR/.env 後可重啟服務"
-    log "INFO" "   - 停止服務：在 $WORKDIR 執行 'docker compose down'"
+    # 產生前端連接配置
+    log "INFO" "📝 生成前端連接配置..."
+    
+    # 從 .env 檔案讀取金鑰
+    local ANON_KEY=$(grep "ANON_KEY=" "$WORKDIR/.env" | cut -d'=' -f2)
+    local SERVICE_ROLE_KEY=$(grep "SERVICE_ROLE_KEY=" "$WORKDIR/.env" | cut -d'=' -f2)
+    
+    cat > "$WORKDIR/frontend-config.md" << EOF
+# 前端連接配置
+
+將以下配置加入您的前端專案：
+
+## 環境變數
+\`\`\`
+SUPABASE_URL=http://localhost:8000
+SUPABASE_ANON_KEY=$ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+\`\`\`
+
+## 或在程式碼中直接使用
+\`\`\`javascript
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'http://localhost:8000'
+const supabaseKey = '$ANON_KEY'
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+\`\`\`
+
+## Dashboard 存取
+- URL: http://localhost:3000
+- 使用者名稱: supabase
+- 密碼: 請檢查 $WORKDIR/.env 中的 DASHBOARD_PASSWORD
+
+## 重要提醒
+- 這些金鑰僅供開發使用
+- 生產環境請更換為安全的金鑰
+- JWT Secret: $JWT_SECRET (已自動生成)
+EOF
+
+    log "INFO" "✅ 官方流程完成！"
+    log "INFO" ""
+    log "INFO" "📁 安裝目錄：$WORKDIR"
+    log "INFO" "🌐 Supabase Studio: http://localhost:3000"
+    log "INFO" "🔌 API Gateway: http://localhost:8000"
+    log "INFO" "📖 前端配置：$WORKDIR/frontend-config.md"
+    log "INFO" ""
+    log "INFO" "🛠️  常用指令："
+    log "INFO" "   - 查看服務狀態：cd $WORKDIR && docker compose ps"
+    log "INFO" "   - 查看日誌：cd $WORKDIR && docker compose logs -f"
+    log "INFO" "   - 停止服務：cd $WORKDIR && docker compose down"
+    log "INFO" "   - 重新啟動：cd $WORKDIR && docker compose restart"
+    log "INFO" ""
 }
 
 # 主執行流程
