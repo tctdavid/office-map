@@ -49,6 +49,10 @@ parse_arguments() {
                 COMMAND="doctor"
                 shift
                 ;;
+            official)
+                COMMAND="official"
+                shift
+                ;;
             --force)
                 FORCE_MODE=true
                 shift
