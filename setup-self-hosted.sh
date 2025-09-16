@@ -96,8 +96,9 @@ show_help() {
   $0 [指令] [選項]
 
 指令:
-  (無)        執行完整設定流程
-  doctor      診斷系統狀態和映像可用性
+  (無)        執行本專案的自託管設定流程
+  doctor      診斷系統狀態和映像可用性（GHCR 優先）
+  official    使用「官方 Self-Hosting with Docker」流程（clone 官方 repo 並使用其 compose）
 
 選項:
   --force        強制重新設定（跳過所有確認）
@@ -108,11 +109,12 @@ show_help() {
   --help         顯示此說明
 
 範例:
-  $0                     # 互動式設定（包含標籤解析）
-  $0 --force            # 強制重新設定
-  $0 --no-resolve       # 跳過標籤解析的設定
-  $0 doctor             # 診斷系統狀態
-  $0 doctor --debug     # 詳細診斷
+  $0                      # 互動式設定（包含標籤解析）
+  $0 official            # 依官方文件安裝（clone + compose pull/up）
+  $0 --force             # 強制重新設定
+  $0 --no-resolve        # 跳過標籤解析的設定
+  $0 doctor              # 診斷系統狀態
+  $0 doctor --debug      # 詳細診斷
 EOF
 }
 
@@ -555,16 +557,14 @@ check_image_exists() {
         # 若前綴檢查失敗，回退到預設倉庫
     fi
 
-    # 未設定前綴時，針對 Supabase 映像優先使用 GHCR，其他使用 Docker Hub
+    # 未設定前綴時，僅對 Supabase 映像檢查 GHCR（不再嘗試 Docker Hub）
     if [[ "$image_name" =~ ^supabase/ ]]; then
         local candidates=(
             "ghcr.io/${image_name}:${tag}"
-            "docker.io/${image_name}:${tag}"
         )
     else
-        local candidates=(
-            "docker.io/${image_name}:${tag}"
-        )
+        # 非 Supabase 映像若未提供前綴則略過遠端檢查，以避免觸發 Docker Hub
+        local candidates=()
     fi
 
     for full_image in "${candidates[@]}"; do
@@ -733,16 +733,16 @@ check_network_connectivity() {
         return 0
     fi
     
-    # 檢查到 Docker Hub 的連接
-    if ! curl -f -s --max-time 10 https://registry-1.docker.io/v2/ >/dev/null 2>&1; then
-        log "WARN" "無法連接到 Docker Hub，將嘗試使用本地映像或跳過拉取"
+    # 檢查到 GHCR 的連接（官方來源）
+    if ! curl -f -s --max-time 10 https://ghcr.io/v2/ >/dev/null 2>&1; then
+        log "WARN" "無法連接到 GHCR（ghcr.io），將嘗試使用本地映像或跳過拉取"
         
         # 嘗試檢查本地是否有映像（從 docker-compose 服務列表）
         local has_local_images=false
         local sample_images=(
-            "${REGISTRY_PREFIX}supabase/studio:${STUDIO_TAG:-latest}"
-            "${REGISTRY_PREFIX}kong:${KONG_TAG:-3.7}"
-            "${REGISTRY_PREFIX}supabase/gotrue:${GOTRUE_TAG:-latest}"
+            "ghcr.io/supabase/studio:${STUDIO_TAG:-latest}"
+            "ghcr.io/supabase/gotrue:${GOTRUE_TAG:-latest}"
+            "ghcr.io/supabase/postgres:${POSTGRES_TAG:-latest}"
         )
         for image in "${sample_images[@]}"; do
             if docker image inspect "$image" >/dev/null 2>&1; then
@@ -764,7 +764,7 @@ check_network_connectivity() {
             log "INFO" "發現本地映像，將跳過網路拉取"
         fi
     else
-        log "DEBUG" "Docker Hub 連接正常"
+        log "DEBUG" "GHCR 連接正常"
     fi
     
     log "INFO" "✅ 網路連通性檢查完成"
@@ -967,6 +967,57 @@ run_diagnostics() {
     fi
 }
 
+# 官方 Self-Hosting with Docker 安裝流程（依官方文件）
+run_official_install() {
+    log "INFO" "📦 啟用官方 Self-Hosting with Docker 流程（僅使用 GHCR）..."
+
+    # 依賴檢查：需有 git、curl
+    if ! command -v git &> /dev/null; then
+        log "ERROR" "git 未安裝，請先安裝 git"
+        exit 1
+    fi
+
+    local WORKDIR="${SCRIPT_DIR}/supabase-official"
+    local SRCDIR="${WORKDIR}/_src"
+
+    mkdir -p "$WORKDIR"
+    rm -rf "$SRCDIR"
+
+    log "INFO" "⬇️  下載官方 supabase 倉庫（淺克隆）..."
+    if ! git clone --depth 1 https://github.com/supabase/supabase "$SRCDIR"; then
+        log "ERROR" "無法 clone 官方 supabase 倉庫"
+        exit 1
+    fi
+
+    log "INFO" "📁 複製 docker 構成檔至本機目錄..."
+    cp -rf "$SRCDIR/supabase/docker"/* "$WORKDIR"/
+
+    if [[ ! -f "$WORKDIR/.env" ]]; then
+        cp "$SRCDIR/supabase/docker/.env.example" "$WORKDIR/.env"
+        log "INFO" "📝 已建立 $WORKDIR/.env（可依需要調整）"
+    fi
+
+    pushd "$WORKDIR" >/dev/null
+    log "INFO" "🐳 拉取官方映像...（compose pull）"
+    if ! docker compose pull; then
+        log "ERROR" "compose pull 失敗，請檢查網路或代理設定（建議確認可連線 ghcr.io 與 github.com）"
+        popd >/dev/null
+        exit 1
+    fi
+
+    log "INFO" "🚀 啟動服務（compose up -d）..."
+    if ! docker compose up -d; then
+        log "ERROR" "compose up 失敗，請使用 'docker compose logs -f' 檢視詳細"
+        popd >/dev/null
+        exit 1
+    fi
+    popd >/dev/null
+
+    log "INFO" "✅ 官方流程完成。目錄：$WORKDIR"
+    log "INFO" "   - 修改配置：編輯 $WORKDIR/.env 後可重啟服務"
+    log "INFO" "   - 停止服務：在 $WORKDIR 執行 'docker compose down'"
+}
+
 # 主執行流程
 main() {
     # 設定錯誤處理
@@ -985,6 +1036,10 @@ main() {
     # 根據命令執行相應操作
     if [[ "$COMMAND" == "doctor" ]]; then
         run_diagnostics
+        exit 0
+    fi
+    if [[ "$COMMAND" == "official" ]]; then
+        run_official_install
         exit 0
     fi
     

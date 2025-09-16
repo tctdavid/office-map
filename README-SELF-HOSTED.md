@@ -12,10 +12,13 @@
 # 給予執行權限
 chmod +x setup-self-hosted.sh
 
-# 執行自動化設定（包含映像標籤解析）
+# A) 官方流程（推薦）：依官方 Self-Hosting with Docker
+./setup-self-hosted.sh official
+
+# B) 本專案流程（可客製化標籤解析與初始化腳本）
 ./setup-self-hosted.sh
 
-# 或跳過標籤解析的快速設定
+# 跳過標籤解析的快速設定
 ./setup-self-hosted.sh --no-resolve
 
 # 強制重新設定
@@ -67,7 +70,7 @@ node test-self-hosted.js
 
 腳本現在會：
 1. 檢查 `versions-compatibility.json` 中的相容版本
-2. 驗證映像在 GHCR 和 Docker Hub 的可用性  
+2. 僅驗證 GHCR（ghcr.io）的可用性  
 3. 自動選擇最佳可用標籤
 4. 生成 `.env.local.resolved` 供審查
 
@@ -176,8 +179,9 @@ echo "OFFLINE_MODE=true" >> .env.local
 
 **中國大陸環境**:
 ```bash
-# 使用 DaoCloud 鏡像
-echo "REGISTRY_PREFIX=docker.m.daocloud.io/" >> .env.local
+# 若需鏡像，可設定 REGISTRY_PREFIX 指向可用的 GHCR 代理
+# 例如（視企業鏡像服務而定）
+export REGISTRY_PREFIX="https://your-ghcr-mirror/"
 ```
 
 ### 服務啟動問題

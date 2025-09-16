@@ -93,7 +93,6 @@ doctor_check_network() {
     
     # DNS 解析檢查
     local registries=(
-        "registry-1.docker.io"
         "ghcr.io"
         "github.com"
     )
@@ -108,7 +107,6 @@ doctor_check_network() {
     
     # HTTP 連接檢查
     local endpoints=(
-        "https://registry-1.docker.io/v2/"
         "https://ghcr.io/v2/"
         "https://api.github.com"
     )
@@ -154,10 +152,10 @@ doctor_check_images() {
     
     # 檢查核心映像
     local critical_images=(
-        "${prefix}supabase/postgres:${POSTGRES_TAG:-15.1.1.78}"
-        "${prefix}kong:${KONG_TAG:-3.7}"
-        "${prefix}supabase/gotrue:${GOTRUE_TAG:-v2.158.1}"
-        "${prefix}postgrest/postgrest:${POSTGREST_TAG:-v12.2.3}"
+        "ghcr.io/supabase/postgres:${POSTGRES_TAG:-15.1.1.78}"
+        "ghcr.io/supabase/gotrue:${GOTRUE_TAG:-v2.158.1}"
+        "ghcr.io/supabase/studio:${STUDIO_TAG:-20241010}"
+        "ghcr.io/supabase/realtime:${REALTIME_TAG:-v2.30.23}"
     )
     
     log "INFO" "檢查核心映像..."
