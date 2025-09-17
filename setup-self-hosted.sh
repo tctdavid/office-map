@@ -971,210 +971,293 @@ run_diagnostics() {
     fi
 }
 
-# 官方 Self-Hosting with Docker 安裝流程（依官方文件）
 run_official_install() {
-    log "INFO" "📦 啟用官方 Self-Hosting with Docker 流程（僅使用 GHCR）..."
+    local subcommand="$1"
+    
+    case "$subcommand" in
+        "migrate")
+            run_official_migrate
+            ;;
+        "reinit")
+            run_official_reinit
+            ;;
+        *)
+            run_official_main "$subcommand"
+            ;;
+    esac
+}
 
-    # 依賴檢查：需有 git、curl
-    if ! command -v git &> /dev/null; then
-        log "ERROR" "git 未安裝，請先安裝 git"
-        exit 1
+run_official_main() {
+    log "INFO" "開始 Supabase 官方 Docker Compose 安裝..."
+    
+    local repo_dir="supabase-official"
+    local supabase_repo="https://github.com/supabase/supabase.git"
+    
+    # 建立或清空目標目錄
+    if [ -d "$repo_dir" ]; then
+        log "INFO" "移除現有的 $repo_dir 目錄..."
+        rm -rf "$repo_dir"
     fi
-
-    local WORKDIR="${SCRIPT_DIR}/supabase-official"
-    local SRCDIR="${WORKDIR}/_src"
-
-    mkdir -p "$WORKDIR"
-    rm -rf "$SRCDIR"
-
-    log "INFO" "⬇️  下載官方 supabase 倉庫（淺克隆）..."
-    if ! git clone --depth 1 https://github.com/supabase/supabase "$SRCDIR"; then
-        log "ERROR" "無法 clone 官方 supabase 倉庫"
-        exit 1
+    
+    # 克隆 Supabase 儲存庫
+    log "INFO" "克隆 Supabase 官方儲存庫..."
+    if ! git clone --depth 1 --filter=blob:none --sparse "$supabase_repo" "$repo_dir"; then
+        log "ERROR" "克隆 Supabase 儲存庫失敗"
+        return 1
     fi
-
-    log "INFO" "📁 複製 docker 構成檔至本機目錄..."
-    if [[ -d "$SRCDIR/docker" ]]; then
-        cp -rf "$SRCDIR/docker"/* "$WORKDIR"/
-    elif [[ -d "$SRCDIR/supabase/docker" ]]; then
-        cp -rf "$SRCDIR/supabase/docker"/* "$WORKDIR"/
-    else
-        log "ERROR" "找不到 docker 配置目錄"
-        exit 1
+    
+    # 設定 sparse-checkout 只下載 docker 目錄
+    cd "$repo_dir" || return 1
+    git sparse-checkout set docker
+    cd .. || return 1
+    
+    # 檢查 docker 目錄是否存在
+    if [ ! -d "$repo_dir/docker" ]; then
+        log "ERROR" "找不到 $repo_dir/docker 目錄"
+        return 1
     fi
-
+    
+    # 複製 Docker Compose 配置到主目錄
+    log "INFO" "複製 Docker 配置檔案..."
+    if ! cp -r "$repo_dir/docker"/* .; then
+        log "ERROR" "複製 Docker 配置檔案失敗"
+        return 1
+    fi
+    
     # 設定環境變數
-    log "INFO" "⚙️  配置環境變數..."
-    if [[ -f "$SRCDIR/docker/.env.example" ]]; then
-        cp "$SRCDIR/docker/.env.example" "$WORKDIR/.env"
-    elif [[ -f "$SRCDIR/supabase/docker/.env.example" ]]; then
-        cp "$SRCDIR/supabase/docker/.env.example" "$WORKDIR/.env"
-    else
-        log "WARN" "找不到 .env.example 範本"
-        # 創建基本 .env 文件
-        cat > "$WORKDIR/.env" << 'EOF'
+    log "INFO" "設定環境變數..."
+    if [ ! -f ".env" ]; then
+        # 生成 JWT secret
+        local jwt_secret
+        if command -v openssl >/dev/null; then
+            jwt_secret=$(openssl rand -base64 32)
+        else
+            jwt_secret="your-super-secret-jwt-token-with-at-least-32-characters-long"
+        fi
+        
+        # 創建 .env 檔案
+        cat > .env << EOF
+# Supabase 官方 Docker Compose 設定
 POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
-JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
-ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+JWT_SECRET=$jwt_secret
+ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbmVmZG9zY2V3a2VsbnhoZHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDEyNzE2MDAsImV4cCI6MjAxNjg0NzYwMH0.kL8r7_MCMR8gfzxIVp9Sb8Np5EfEOY4VTxvDhSuHQwE
+SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbmVmZG9zY2V3a2VsbnhoZHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMTI3MTYwMCwiZXhwIjoyMDE2ODQ3NjAwfQ.3n_8rIqe7vvV3uUHmYlI7ckCcSr4sN8_UH5EQYVHgpM
 DASHBOARD_USERNAME=supabase
 DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
+SITE_URL=http://localhost:3000
+ADDITIONAL_REDIRECT_URLS=
+JWT_EXPIRY=3600
+DISABLE_SIGNUP=false
+ENABLE_EMAIL_CONFIRMATIONS=false
+ENABLE_EMAIL_AUTOCONFIRM=false
 EOF
-    fi
-
-    # 生成並設置 JWT Secret
-    log "INFO" "🔐 生成 JWT 密鑰..."
-    local JWT_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
-    
-    # 更新 JWT_SECRET
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" "$WORKDIR/.env"
+        log "INFO" "已創建 .env 檔案"
     else
-        sed -i "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" "$WORKDIR/.env"
+        log "INFO" ".env 檔案已存在，跳過創建"
     fi
-
-    # 複製專案的 SQL 腳本
-    if [[ -d "${SCRIPT_DIR}/sql-scripts" ]]; then
-        log "INFO" "📚 複製專案 SQL 腳本..."
-        mkdir -p "$WORKDIR/volumes/db/init"
-        
-        local scripts=(
-            "stage-1-basic-setup.sql:02-stage-1-basic-setup.sql"
-            "stage-2-employees-table.sql:03-stage-2-employees-table.sql"
-            "stage-3-main-tables.sql:04-stage-3-main-tables.sql"
-            "stage-4-relational-tables.sql:05-stage-4-relational-tables.sql"
-            "stage-5-seating-tables.sql:06-stage-5-seating-tables.sql"
-            "stage-6-advanced-permissions.sql:07-stage-6-advanced-permissions.sql"
-            "stage-7-final-setup.sql:08-stage-7-final-setup.sql"
-            "fix-self-hosted-storage.sql:09-fix-storage.sql"
-            "foreign-keys-setup.sql:10-foreign-keys-setup.sql"
-        )
-        
-        for script_mapping in "${scripts[@]}"; do
-            local source_script=$(echo "$script_mapping" | cut -d':' -f1)
-            local target_script=$(echo "$script_mapping" | cut -d':' -f2)
-            
-            if [[ -f "${SCRIPT_DIR}/sql-scripts/$source_script" ]]; then
-                cp "${SCRIPT_DIR}/sql-scripts/$source_script" "$WORKDIR/volumes/db/init/$target_script"
-                log "DEBUG" "複製 SQL 腳本: $source_script -> $target_script"
-            fi
-        done
-        
-        # 複製 JWT 設定腳本
-        if [[ -f "${SCRIPT_DIR}/volumes/db/jwt.sql" ]]; then
-            cp "${SCRIPT_DIR}/volumes/db/jwt.sql" "$WORKDIR/volumes/db/init/01-jwt.sql"
-        fi
-        
-        # 複製 logs 設定腳本
-        if [[ -f "${SCRIPT_DIR}/volumes/db/logs.sql" ]]; then
-            cp "${SCRIPT_DIR}/volumes/db/logs.sql" "$WORKDIR/volumes/db/init/01-logs.sql"
-        fi
+    
+    # 登入到 GitHub Container Registry（如果需要）
+    log "INFO" "登入到 GitHub Container Registry..."
+    if command -v docker >/dev/null; then
+        echo "ghp_sample_token" | docker login ghcr.io -u username --password-stdin 2>/dev/null || true
     fi
-
-    pushd "$WORKDIR" >/dev/null
     
-    # 確保目錄權限正確
-    chmod -R 755 volumes/ 2>/dev/null || true
-    
-    log "INFO" "🐳 拉取官方映像...（compose pull）"
+    # 拉取並啟動服務
+    log "INFO" "拉取 Docker 映像並啟動服務..."
     if ! docker compose pull; then
-        log "ERROR" "compose pull 失敗，請檢查網路或代理設定（建議確認可連線 ghcr.io）"
-        popd >/dev/null
-        exit 1
-    fi
-
-    log "INFO" "🚀 啟動服務（compose up -d）..."
-    if ! docker compose up -d; then
-        log "ERROR" "compose up 失敗，請使用 'docker compose logs -f' 檢視詳細"
-        popd >/dev/null
-        exit 1
+        log "WARN" "部分映像拉取失敗，但繼續啟動..."
     fi
     
-    # 等待服務啟動
-    log "INFO" "⏳ 等待服務啟動..."
-    sleep 15
+    if ! docker compose up -d; then
+        log "ERROR" "啟動 Supabase 服務失敗"
+        return 1
+    fi
+    
+    # 等待服務就緒
+    log "INFO" "等待服務啟動..."
+    sleep 30
     
     # 健康檢查
-    local max_attempts=30
-    local attempt=1
-    
-    while [[ $attempt -le $max_attempts ]]; do
-        if docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
-            log "INFO" "✅ 資料庫已就緒"
+    log "INFO" "執行健康檢查..."
+    local retries=10
+    local count=0
+    while [ $count -lt $retries ]; do
+        if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+            log "INFO" "Supabase API 就緒"
             break
         fi
-        
-        log "DEBUG" "等待資料庫啟動... ($attempt/$max_attempts)"
-        sleep 2
-        ((attempt++))
+        count=$((count + 1))
+        log "INFO" "等待 API 就緒... ($count/$retries)"
+        sleep 5
     done
     
-    if [[ $attempt -gt $max_attempts ]]; then
-        log "WARN" "資料庫啟動超時，請手動檢查"
+    if [ $count -eq $retries ]; then
+        log "WARN" "API 健康檢查超時，但服務可能仍在啟動中"
     fi
     
-    # 檢查 API Gateway
-    if curl -s "http://localhost:8000/health" >/dev/null 2>&1; then
-        log "INFO" "✅ API Gateway 已就緒"
+    # 檢查是否已有初始化的資料庫
+    local db_initialized=false
+    if docker compose exec -T db psql -U postgres -d postgres -c "SELECT 1 FROM information_schema.tables WHERE table_name = 'employees';" 2>/dev/null | grep -q "1 row"; then
+        db_initialized=true
+        log "INFO" "檢測到現有資料庫資料"
+    fi
+    
+    # 根據資料庫狀態決定操作
+    if [ "$db_initialized" = true ]; then
+        log "INFO" "資料庫已初始化，如需重新初始化請執行："
+        log "INFO" "  ./setup-self-hosted.sh official reinit"
+        log "INFO" "如需應用最新 SQL 更新請執行："
+        log "INFO" "  ./setup-self-hosted.sh official migrate"
     else
-        log "WARN" "API Gateway 可能尚未就緒，請稍後檢查"
+        # 應用專案的 SQL 腳本
+        apply_project_sql_scripts
     fi
     
-    popd >/dev/null
+    # 生成前端連接配置
+    generate_frontend_config
+    
+    # 顯示成功訊息
+    show_completion_message
+}
 
-    # 產生前端連接配置
-    log "INFO" "📝 生成前端連接配置..."
+run_official_migrate() {
+    log "INFO" "應用最新 SQL 更新到現有資料庫..."
     
-    # 從 .env 檔案讀取金鑰
-    local ANON_KEY=$(grep "ANON_KEY=" "$WORKDIR/.env" | cut -d'=' -f2)
-    local SERVICE_ROLE_KEY=$(grep "SERVICE_ROLE_KEY=" "$WORKDIR/.env" | cut -d'=' -f2)
+    if [ ! -d "supabase-official" ]; then
+        log "ERROR" "找不到 supabase-official 目錄，請先執行 ./setup-self-hosted.sh official"
+        return 1
+    fi
     
-    cat > "$WORKDIR/frontend-config.md" << EOF
+    cd supabase-official || return 1
+    
+    # 檢查服務是否運行
+    if ! docker compose ps | grep -q "Up"; then
+        log "INFO" "啟動 Supabase 服務..."
+        docker compose up -d
+        sleep 20
+    fi
+    
+    # 應用 SQL 更新
+    apply_project_sql_scripts
+    
+    log "INFO" "✅ SQL 更新完成！"
+    cd .. || return 1
+}
+
+run_official_reinit() {
+    log "INFO" "重新初始化資料庫（這將清除所有現有資料）..."
+    
+    if [ ! -d "supabase-official" ]; then
+        log "ERROR" "找不到 supabase-official 目錄，請先執行 ./setup-self-hosted.sh official"
+        return 1
+    fi
+    
+    cd supabase-official || return 1
+    
+    # 停止服務
+    log "INFO" "停止現有服務..."
+    docker compose down
+    
+    # 移除資料庫 volume
+    log "INFO" "清除資料庫資料..."
+    if [ -d "volumes/db/data" ]; then
+        rm -rf volumes/db/data
+    fi
+    
+    # 重新啟動服務
+    log "INFO" "重新啟動服務..."
+    docker compose up -d
+    
+    # 等待服務就緒
+    sleep 30
+    
+    # 應用 SQL 腳本
+    apply_project_sql_scripts
+    
+    log "INFO" "✅ 資料庫重新初始化完成！"
+    cd .. || return 1
+}
+
+apply_project_sql_scripts() {
+    log "INFO" "應用專案 SQL 腳本..."
+    
+    # 應用主要資料庫設定
+    local sql_script="../database-setup-corrected.sql"
+    if [ -f "$sql_script" ]; then
+        log "INFO" "應用主要資料庫設定..."
+        if docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /dev/stdin < "$sql_script"; then
+            log "INFO" "✅ 主要 SQL 腳本應用成功"
+        else
+            log "ERROR" "❌ 主要 SQL 腳本應用失敗"
+            return 1
+        fi
+    else
+        log "WARN" "未發現主要 SQL 腳本 ($sql_script)"
+    fi
+    
+    # 應用儲存權限修復
+    local storage_fix="../sql-scripts/fix-self-hosted-storage.sql"
+    if [ -f "$storage_fix" ]; then
+        log "INFO" "應用儲存權限修復..."
+        if docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /dev/stdin < "$storage_fix"; then
+            log "INFO" "✅ 儲存權限修復完成"
+        else
+            log "WARN" "⚠️ 儲存權限修復時發生錯誤"
+        fi
+    else
+        log "WARN" "未發現儲存權限修復腳本 ($storage_fix)"
+    fi
+}
+
+generate_frontend_config() {
+    log "INFO" "生成前端連接配置..."
+    cat > frontend-config.md << EOF
 # 前端連接配置
 
-將以下配置加入您的前端專案：
+您的自託管 Supabase 已成功安裝！
 
-## 環境變數
+## 連接資訊
+- **Supabase URL**: http://localhost:8000
+- **Anon Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbmVmZG9zY2V3a2VsbnhoZHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDEyNzE2MDAsImV4cCI6MjAxNjg0NzYwMH0.kL8r7_MCMR8gfzxIVp9Sb8Np5EfEOY4VTxvDhSuHQwE
+- **Service Role**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbmVmZG9zY2V3a2VsbnhoZHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMTI3MTYwMCwiZXhwIjoyMDE2ODQ3NjAwfQ.3n_8rIqe7vvV3uUHmYlI7ckCcSr4sN8_UH5EQYVHgpM
+
+## 訪問地址
+- **Supabase Studio**: http://localhost:8000
+- **API Base URL**: http://localhost:8000/rest/v1/
+- **Auth URL**: http://localhost:8000/auth/v1/
+
+## 前端配置
+更新您的前端環境變數或配置檔案：
+
+\`\`\`env
+VITE_SUPABASE_URL=http://localhost:8000
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnbmVmZG9zY2V3a2VsbnhoZHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDEyNzE2MDAsImV4cCI6MjAxNjg0NzYwMH0.kL8r7_MCMR8gfzxIVp9Sb8Np5EfEOY4VTxvDhSuHQwE
 \`\`\`
-SUPABASE_URL=http://localhost:8000
-SUPABASE_ANON_KEY=$ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+
+## 快速檢查
+執行快速健康檢查：
+\`\`\`bash
+./setup-self-hosted.sh doctor
 \`\`\`
 
-## 或在程式碼中直接使用
-\`\`\`javascript
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'http://localhost:8000'
-const supabaseKey = '$ANON_KEY'
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
-\`\`\`
-
-## Dashboard 存取
-- URL: http://localhost:3000
-- 使用者名稱: supabase
-- 密碼: 請檢查 $WORKDIR/.env 中的 DASHBOARD_PASSWORD
-
-## 重要提醒
-- 這些金鑰僅供開發使用
-- 生產環境請更換為安全的金鑰
-- JWT Secret: $JWT_SECRET (已自動生成)
+## 可用命令
+- \`./setup-self-hosted.sh official\` - 全新安裝
+- \`./setup-self-hosted.sh official migrate\` - 應用 SQL 更新到現有資料庫
+- \`./setup-self-hosted.sh official reinit\` - 重新初始化資料庫（清除所有資料）
 EOF
+}
 
-    log "INFO" "✅ 官方流程完成！"
-    log "INFO" ""
-    log "INFO" "📁 安裝目錄：$WORKDIR"
-    log "INFO" "🌐 Supabase Studio: http://localhost:3000"
-    log "INFO" "🔌 API Gateway: http://localhost:8000"
-    log "INFO" "📖 前端配置：$WORKDIR/frontend-config.md"
-    log "INFO" ""
-    log "INFO" "🛠️  常用指令："
-    log "INFO" "   - 查看服務狀態：cd $WORKDIR && docker compose ps"
-    log "INFO" "   - 查看日誌：cd $WORKDIR && docker compose logs -f"
-    log "INFO" "   - 停止服務：cd $WORKDIR && docker compose down"
-    log "INFO" "   - 重新啟動：cd $WORKDIR && docker compose restart"
-    log "INFO" ""
+show_completion_message() {
+    log "INFO" "✅ Supabase 官方版本安裝完成！"
+    log "INFO" "📋 Supabase Studio: http://localhost:8000"
+    log "INFO" "📄 前端配置說明: frontend-config.md"
+    log "INFO" "🔍 執行 './setup-self-hosted.sh doctor' 進行系統檢查"
+    
+    # 快速檢查服務狀態
+    log "INFO" "執行快速服務狀態檢查..."
+    if command -v docker >/dev/null; then
+        docker compose ps
+    fi
 }
 
 # 主執行流程
@@ -1198,7 +1281,7 @@ main() {
         exit 0
     fi
     if [[ "$COMMAND" == "official" ]]; then
-        run_official_install
+        run_official_install "$2"
         exit 0
     fi
     

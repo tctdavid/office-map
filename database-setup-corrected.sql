@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER 
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO ''
+SET search_path TO 'public'
 AS $$
 BEGIN
     NEW.updated_at = now();
@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql
 STABLE SECURITY DEFINER
-SET search_path TO ''
+SET search_path TO 'public'
 AS $$
     SELECT EXISTS (
         SELECT 1
@@ -46,7 +46,7 @@ CREATE OR REPLACE FUNCTION public.create_auth_for_existing_employees()
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO ''
+SET search_path TO 'public'
 AS $$
 DECLARE
     emp_record RECORD;
@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS public.pc_details (
     main_board TEXT,
     cpu_fan TEXT,
     psu TEXT,
-    case TEXT,
+    pc_case TEXT,
     purchase_date DATE,
     warranty_expiry DATE,
     notes TEXT,
@@ -272,23 +272,23 @@ CREATE TABLE IF NOT EXISTS public.seats (
 -- 為所有具有 updated_at 欄位的表格建立觸發器
 DO $$
 DECLARE
-    table_name TEXT;
-    table_names TEXT[] := ARRAY['attendance_records', 'containers', 'equipment', 'floor_containers', 'seat_coordinates'];
+    v_table_name TEXT;
+    v_table_names TEXT[] := ARRAY['attendance_records', 'containers', 'equipment', 'floor_containers', 'seat_coordinates'];
 BEGIN
-    FOREACH table_name IN ARRAY table_names
+    FOREACH v_table_name IN ARRAY v_table_names
     LOOP
         -- 檢查觸發器是否已存在
         IF NOT EXISTS (
             SELECT 1 FROM information_schema.triggers 
-            WHERE trigger_name = 'update_' || table_name || '_updated_at'
-            AND event_object_table = table_name
+            WHERE trigger_name = 'update_' || v_table_name || '_updated_at'
+            AND event_object_table = v_table_name
         ) THEN
             EXECUTE format('
                 CREATE TRIGGER update_%I_updated_at
                 BEFORE UPDATE ON public.%I
                 FOR EACH ROW
                 EXECUTE FUNCTION public.update_updated_at_column()
-            ', table_name, table_name);
+            ', v_table_name, v_table_name);
         END IF;
     END LOOP;
 END $$;
