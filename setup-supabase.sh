@@ -272,6 +272,24 @@ install() {
     pull_images
     start_services
     wait_for_services
+    
+    # 執行資料庫設置腳本
+    log "INFO" "執行資料庫初始設置..."
+    if docker compose exec -T db psql -U postgres -d postgres -f /docker-entrypoint-initdb.d/01-setup.sql >/dev/null 2>&1; then
+        log "INFO" "✅ 資料庫設置完成"
+    else
+        log "WARN" "⚠️  資料庫設置可能有問題，請檢查"
+    fi
+    
+    # 執行管理員帳號建立
+    log "INFO" "建立管理員帳號..."
+    if docker compose exec -T db psql -U postgres -d postgres -f /docker-entrypoint-initdb.d/02-create-admin-auth.sql >/dev/null 2>&1; then
+        log "INFO" "✅ 管理員帳號建立完成"
+    else
+        log "WARN" "⚠️  管理員帳號建立可能有問題，嘗試修復..."
+        docker compose exec -T db psql -U postgres -d postgres -f /docker-entrypoint-initdb.d/03-fix-admin-auth.sql >/dev/null 2>&1
+    fi
+    
     health_check
     show_completion_info
     
