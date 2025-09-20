@@ -2,7 +2,7 @@
 # 基於官方 Supabase Self-Hosting 指南簡化版本
 # 適用於 Office Map 專案
 
-version: '3.8'
+# version: '3.8'
 
 services:
   # PostgreSQL 資料庫

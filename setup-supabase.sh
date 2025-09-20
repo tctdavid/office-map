@@ -82,7 +82,7 @@ check_dependencies() {
     fi
     
     # 檢查 Docker Compose
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         log "ERROR" "Docker Compose 未安裝。請先安裝 Docker Compose。"
         exit 1
     fi
@@ -138,7 +138,7 @@ create_directories() {
 pull_images() {
     log "INFO" "拉取 Docker 映像檔..."
     
-    docker-compose pull
+    docker compose pull
     
     log "INFO" "映像檔拉取完成"
 }
@@ -147,13 +147,13 @@ pull_images() {
 start_services() {
     log "INFO" "啟動 Supabase 服務..."
     
-    docker-compose up -d
+    docker compose up -d
     
     log "INFO" "等待服務啟動..."
     sleep 30
     
     # 檢查服務狀態
-    if docker-compose ps | grep -q "Up"; then
+    if docker compose ps | grep -q "Up"; then
         log "INFO" "Supabase 服務啟動成功"
     else
         log "ERROR" "服務啟動失敗，請檢查日誌"
@@ -170,7 +170,7 @@ wait_for_services() {
     
     # 等待資料庫
     while [[ $attempt -le $max_attempts ]]; do
-        if docker-compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+        if docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
             log "INFO" "資料庫已就緒"
             break
         fi
@@ -222,7 +222,7 @@ health_check() {
     fi
     
     # 檢查資料庫
-    if docker-compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+    if docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
         log "INFO" "✅ PostgreSQL 資料庫運行正常"
     else
         log "WARN" "⚠️  PostgreSQL 資料庫可能未就緒"
@@ -281,7 +281,7 @@ install() {
 # 啟動服務
 start() {
     log "INFO" "啟動 Supabase 服務..."
-    docker-compose up -d
+    docker compose up -d
     wait_for_services
     log "INFO" "服務啟動完成"
 }
@@ -289,14 +289,14 @@ start() {
 # 停止服務
 stop() {
     log "INFO" "停止 Supabase 服務..."
-    docker-compose down
+    docker compose down
     log "INFO" "服務已停止"
 }
 
 # 重新啟動服務
 restart() {
     log "INFO" "重新啟動 Supabase 服務..."
-    docker-compose restart
+    docker compose restart
     wait_for_services
     log "INFO" "服務重新啟動完成"
 }
@@ -304,16 +304,16 @@ restart() {
 # 顯示服務狀態
 status() {
     log "INFO" "檢查服務狀態..."
-    docker-compose ps
+    docker compose ps
 }
 
 # 顯示日誌
 logs() {
     local service="${1:-}"
     if [[ -n "$service" ]]; then
-        docker-compose logs -f "$service"
+        docker compose logs -f "$service"
     else
-        docker-compose logs -f
+        docker compose logs -f
     fi
 }
 
@@ -328,14 +328,14 @@ clean() {
     fi
     
     log "INFO" "停止所有服務..."
-    docker-compose down -v
+    docker compose down -v
     
     log "INFO" "刪除資料目錄..."
     sudo rm -rf "$SCRIPT_DIR/volumes/db/data"
     sudo rm -rf "$SCRIPT_DIR/volumes/storage"
     
     log "INFO" "清理 Docker 映像檔..."
-    docker-compose down --rmi all
+    docker compose down --rmi all
     
     log "INFO" "清理完成"
 }
