@@ -28,10 +28,8 @@ services:
   studio:
     image: supabase/studio:20240729-ce42139
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
-      STUDIO_PG_META_URL: http://192.168.52.112:8000/pg
+      STUDIO_PG_META_URL: http://kong:8000/pg
       POSTGRES_PASSWORD: your-super-secret-jwt-token-with-at-least-32-characters-long
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
@@ -39,8 +37,8 @@ services:
       POSTGRES_USER: postgres
       DEFAULT_ORGANIZATION_NAME: "Office Map"
       DEFAULT_PROJECT_NAME: "Office Map Project"
-      SUPABASE_URL: http://192.168.52.112:8000
-      SUPABASE_REST_URL: http://192.168.52.112:8000/rest/v1/
+      SUPABASE_URL: http://localhost:8000
+      SUPABASE_REST_URL: http://localhost:8000/rest/v1/
       SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
       SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
     depends_on:
