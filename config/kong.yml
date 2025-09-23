@@ -125,6 +125,7 @@ services:
         paths:
           - "/pg/"
     plugins:
+      - name: cors
       - name: key-auth
         config:
           hide_credentials: false
