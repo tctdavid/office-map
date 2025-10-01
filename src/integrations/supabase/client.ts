@@ -2,8 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://ivhyhwjmseubvwqbvajb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2aHlod2ptc2V1YnZ3cWJ2YWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1MDQwNjAsImV4cCI6MjA2NDA4MDA2MH0.1fx0EYPyWQOWKSFIzNhBYIIIRfYQlHpUOJUe57A9kPk";
+// 自託管 Supabase 配置 - 請根據您的實際 IP 修改
+const SUPABASE_URL = "http://192.168.52.112:8000";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -13,5 +14,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'office-map-self-hosted@2.0.0'
+    }
   }
 });
