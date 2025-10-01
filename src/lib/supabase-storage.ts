@@ -1,8 +1,7 @@
-// Supabase Storage URL configuration - 自託管版本
+// Supabase Storage URL configuration
 // Centralized storage URL management for easy updates
-// 請根據您的自託管 IP 地址修改此 URL
 
-const SUPABASE_URL = "http://192.168.52.112:8000";
+const SUPABASE_URL = "https://ivhyhwjmseubvwqbvajb.supabase.co";
 
 /**
  * Generate full URL for Supabase storage object
