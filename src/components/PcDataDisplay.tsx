@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { getPcPhotoUrl } from "@/lib/supabase-storage";
 interface PcDataDisplayProps {
   pcData: {
     id: string;
@@ -26,9 +27,7 @@ interface PcDataDisplayProps {
 export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
   
   const getImageUrl = (imageName?: string) => {
-    if (!imageName) return null;
-    if (imageName.startsWith('http')) return imageName;
-    return `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/pcs/${imageName}`;
+    return getPcPhotoUrl(imageName);
   };
 
   const [serialNumber, setSerialNumber] = useState<string | null>(null);

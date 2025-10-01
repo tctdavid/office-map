@@ -9,6 +9,7 @@ import { Upload, X, Trash2, Edit, Save, Calendar, User, MapPin, Hash, Wifi, Phon
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AdminPasswordConfirm from "@/components/AdminPasswordConfirm";
+import { getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 
 interface Equipment {
   id?: string;
@@ -235,9 +236,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   };
 
   const getImageUrl = (photo: string | undefined) => {
-    if (!photo) return null;
-    if (photo.startsWith('http')) return photo;
-    return `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${photo}`;
+    return getEquipmentPhotoUrl(photo);
   };
 
   if (!isOpen) return null;

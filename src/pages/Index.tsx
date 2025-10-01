@@ -15,6 +15,7 @@ import AdminPasswordReset from "@/components/AdminPasswordReset";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from '@supabase/supabase-js';
+import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 
 const Index = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -2237,10 +2238,7 @@ const Index = () => {
                                   <div className="relative group">
                                     <div className="w-[60px] h-[60px] rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
                                        <img
-                                         src={seat.employee.photo.startsWith('http') 
-                                           ? seat.employee.photo 
-                                           : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${seat.employee.photo}`
-                                         }
+                                         src={getStaffPhotoUrl(seat.employee.photo) || ''}
                                          alt={seat.employee.name}
                                          className="employee-avatar w-full h-full object-cover transition-all duration-300"
                                        onLoad={() => {
@@ -2305,10 +2303,7 @@ const Index = () => {
                                       title={`設備: ${seat.equipment.product}`}
                                     >
                                       <img
-                                        src={seat.equipment.photo.startsWith('http') 
-                                          ? seat.equipment.photo 
-                                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${seat.equipment.photo}`
-                                        }
+                                        src={getEquipmentPhotoUrl(seat.equipment.photo) || ''}
                                         alt={seat.equipment.product}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
@@ -2466,10 +2461,7 @@ const Index = () => {
                   <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-blue-500 mb-2">
                     {selectedSeatEmployee.photo ? (
                       <img 
-                        src={selectedSeatEmployee.photo.startsWith('http') 
-                          ? selectedSeatEmployee.photo 
-                          : `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${selectedSeatEmployee.photo}`
-                        }
+                        src={getStaffPhotoUrl(selectedSeatEmployee.photo) || ''}
                         alt={selectedSeatEmployee.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {

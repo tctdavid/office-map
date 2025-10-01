@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, MapPin, Hash, Wifi, Phone, FileText, Edit } from "lucide-react";
+import { getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 
 interface Equipment {
   id: string;
@@ -31,9 +32,7 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
   isAdmin = false,
 }) => {
   const getImageUrl = (photo: string | undefined) => {
-    if (!photo) return null;
-    if (photo.startsWith('http')) return photo;
-    return `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/equipment/${photo}`;
+    return getEquipmentPhotoUrl(photo);
   };
 
   return (

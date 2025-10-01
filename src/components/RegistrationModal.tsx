@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User, Eye, EyeOff } from "lucide-react";
+import { getStaffPhotoUrl } from "@/lib/supabase-storage";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -47,11 +48,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
             position: data.position || "",
             extension: data.extension || "",
             photo: data.photo || "",
-            photoPreview: data.photo && data.photo.startsWith('http') 
-              ? data.photo 
-              : data.photo 
-                ? `https://ivhyhwjmseubvwqbvajb.supabase.co/storage/v1/object/public/staff/${data.photo}`
-                : "",
+            photoPreview: getStaffPhotoUrl(data.photo) || "",
             tempPhotoFile: null
           });
         }
