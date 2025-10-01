@@ -276,12 +276,8 @@ const Index = () => {
       }
     };
 
-    // 載入容器資料 - 只在非編輯狀態時載入
+    // 載入容器資料
     const fetchContainers = async () => {
-      // 如果正在編輯容器或拖拽中，不重新載入資料
-      if (isContainerEditMode && editingContainer) return;
-      if (isDragging) return;
-      
       const { data, error } = await supabase
         .from('containers')
         .select('*')
@@ -304,7 +300,7 @@ const Index = () => {
     return () => {
       clearTimer();
     };
-  }, [isContainerEditMode, editingContainer, isDragging]);
+  }, []);
 
   const handleLoginSuccess = async (employee: {id: string, name: string, email: string}) => {
     // 需要獲取完整的員工資訊包含role
@@ -2075,20 +2071,6 @@ const Index = () => {
 
             {/* Render containers with relative positioning and their seats */}
             {containers.map((container) => {
-              // 調試日誌：檢查容器和座位數據
-              const containerSeats = seatCoordinates.filter(seat => seat.container_id === container.id);
-              console.log(`容器 "${container.name}" (${container.id}):`, {
-                container_position: { x: container.x, y: container.y },
-                container_size: { width: container.width, height: container.height },
-                total_seats: containerSeats.length,
-                seats_with_employees: containerSeats.filter(s => s.employee && !s.is_empty).length,
-                seat_details: containerSeats.map(s => ({
-                  id: s.id,
-                  employee: s.employee?.name || '空座位',
-                  position: `${s.x},${s.y}`,
-                  pixel_size: `${s.pixel_x}×${s.pixel_y}`
-                }))
-              });
               
               // 優先使用編輯中的容器狀態，避免資料庫重載影響編輯
               const currentContainer = (editingContainer && editingContainer.id === container.id) 
@@ -2162,19 +2144,6 @@ const Index = () => {
                   {seatCoordinates
                     .filter(seat => seat.container_id === container.id)
                     .map((seat) => {
-                      // 調試日誌：檢查每個座位的渲染狀態
-                      console.log(`渲染座位 ${seat.id}:`, {
-                        container: seat.container,
-                        position: { x: seat.x, y: seat.y },
-                        pixel_size: { width: seat.pixel_x, height: seat.pixel_y },
-                        employee: seat.employee ? {
-                          name: seat.employee.name,
-                          photo: seat.employee.photo,
-                          is_active: seat.employee.is_active
-                        } : null,
-                        is_empty: seat.is_empty,
-                        container_dimensions: { width: container.width, height: container.height }
-                      });
                       // 決定座位顏色 - 使用透明色
                       let seatColor = 'rgba(107, 114, 128, 0.6)'; // 透明灰色 (空位)
                       let borderColor = 'rgba(156, 163, 175, 0.4)'; // 預設邊框
