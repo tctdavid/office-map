@@ -107,11 +107,13 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
           .eq('email', email)
           .maybeSingle();
 
-        if (!employeeProfile) {
+        if (!employeeProfile && user) {
+          // 如果觸發器尚未執行，手動建立員工記錄
           const guessedName = email.split('@')[0];
           const { data: inserted } = await supabase
             .from('employees')
             .insert({
+              id: user.id,
               name: guessedName,
               email,
               department: null,
@@ -119,11 +121,10 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
               extension: null,
               photo: null,
               role: 'employee',
-              is_active: true,
-              password_hash: ''
+              is_active: true
             })
             .select(safeColumns)
-            .single();
+            .maybeSingle();
           employeeProfile = inserted || null;
         }
 

@@ -131,7 +131,7 @@ export type Database = {
           department?: string | null
           email: string
           extension?: string | null
-          id?: string
+          id: string
           is_active?: boolean | null
           name: string
           photo?: string | null
@@ -147,6 +147,48 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          photo?: string | null
+          position?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      employees_backup_before_sync: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          extension: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          photo: string | null
+          position: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          extension?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          photo?: string | null
+          position?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          extension?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
           photo?: string | null
           position?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null

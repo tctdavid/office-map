@@ -262,6 +262,7 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
         
       } else {
         // 註冊模式：使用 Supabase Auth 建立帳號
+        // 觸發器會自動在 employees 表中建立對應記錄
         const redirectUrl = `${window.location.origin}/`;
         const { data: authUser, error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
@@ -269,7 +270,10 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           options: { 
             emailRedirectTo: redirectUrl,
             data: {
-              name: formData.name
+              name: formData.name,
+              department: formData.department || null,
+              position: formData.position || null,
+              extension: formData.extension || null
             }
           }
         });
@@ -283,12 +287,12 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
           return;
         }
         
-        // 等待短暫時間讓 Auth 系統處理
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 等待短暫時間讓 Auth 系統和觸發器處理
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // 如果有暫存的照片文件，現在上傳它
         let photoFileName = '';
-        if (formData.tempPhotoFile) {
+        if (formData.tempPhotoFile && authUser.user) {
           try {
             // 驗證檔案類型
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -305,7 +309,6 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
             const fileExt = formData.tempPhotoFile.name.split('.').pop()?.toLowerCase();
             const fileName = `avatars/${formData.email}_${timestamp}.${fileExt}`;
             
-            // 使用更安全的上傳方式，不依賴認證狀態
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from('staff')
               .upload(fileName, formData.tempPhotoFile, { 
@@ -322,10 +325,19 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
               });
             } else {
               photoFileName = fileName;
-              toast({
-                title: "照片上傳成功",
-                description: "個人照片已成功上傳",
-              });
+              
+              // 更新 employees 表中的照片欄位
+              const { error: updateError } = await supabase
+                .from('employees')
+                .update({ photo: photoFileName })
+                .eq('id', authUser.user.id);
+              
+              if (!updateError) {
+                toast({
+                  title: "照片上傳成功",
+                  description: "個人照片已成功上傳",
+                });
+              }
             }
           } catch (uploadError: any) {
             console.warn('Photo upload failed during registration:', uploadError);
@@ -334,48 +346,23 @@ const RegistrationModal = ({ isOpen, onClose, selectedSeat, containers = [], onR
               description: uploadError.message || "照片上傳失敗，但註冊流程將繼續",
               variant: "destructive"
             });
-            // 不阻止註冊流程，只是照片上傳失敗
           }
         }
         
-        // 嘗試建立員工資料 - 必須在 Auth 帳號建立後執行
-        if (authUser.user) {
-          const employeeData = {
-            name: formData.name,
-            email: formData.email,
-            department: formData.department || null,
-            position: formData.position || null,
-            extension: formData.extension || null,
-            photo: photoFileName || null,
-            role: 'employee' as const,
-            is_active: true,
-            
-          };
+        // 如果有選擇座位，分配座位（觸發器已自動建立 employee 記錄）
+        if (selectedSeat && authUser.user) {
+          const { error: seatError } = await supabase
+            .from('seat_coordinates')
+            .update({ employee_id: authUser.user.id, is_empty: false })
+            .eq('id', selectedSeat.id);
           
-          const { data: newEmployee, error: insertError } = await supabase
-            .from('employees')
-            .insert(employeeData)
-            .select('id, name, email')
-            .maybeSingle();
-          
-          if (insertError) {
-            console.warn('Employee insert error (may be RLS related):', insertError);
-            // 即使員工資料插入失敗，Auth 帳號已建立，所以仍視為成功
-          }
-          
-          // 如果有選擇座位且員工資料建立成功，分配座位
-          if (selectedSeat && newEmployee) {
-            const { error: seatError } = await supabase
-              .from('seat_coordinates')
-              .update({ employee_id: newEmployee.id, is_empty: false })
-              .eq('id', selectedSeat.id);
-            if (seatError) {
-              toast({ 
-                title: '座位分配失敗', 
-                description: '員工已註冊，但座位分配失敗', 
-                variant: 'destructive' 
-              });
-            }
+          if (seatError) {
+            console.error('Seat assignment error:', seatError);
+            toast({ 
+              title: '座位分配失敗', 
+              description: '員工已註冊，但座位分配失敗', 
+              variant: 'destructive' 
+            });
           }
         }
         
