@@ -59,6 +59,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_attendance_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
         ]
       }
       containers: {
@@ -343,6 +350,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_pc_details_pc"
+            columns: ["pc_id"]
+            isOneToOne: false
+            referencedRelation: "pcs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pc_details_pc_id_fkey"
             columns: ["pc_id"]
             isOneToOne: false
@@ -447,10 +461,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_seat_coordinates_container"
+            columns: ["container_id"]
+            isOneToOne: false
+            referencedRelation: "containers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_seat_coordinates_container_id"
             columns: ["container_id"]
             isOneToOne: false
             referencedRelation: "containers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seat_coordinates_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -461,10 +489,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_seat_coordinates_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_seat_coordinates_equipment_id"
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seat_coordinates_pc"
+            columns: ["pc_id"]
+            isOneToOne: false
+            referencedRelation: "pcs"
             referencedColumns: ["id"]
           },
           {
@@ -517,6 +559,27 @@ export type Database = {
           y?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_seats_container"
+            columns: ["container_id"]
+            isOneToOne: false
+            referencedRelation: "containers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seats_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seats_pc"
+            columns: ["pc_id"]
+            isOneToOne: false
+            referencedRelation: "pcs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "seats_container_id_fkey"
             columns: ["container_id"]
