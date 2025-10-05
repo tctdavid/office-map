@@ -9,7 +9,7 @@ import { User, Session } from '@supabase/supabase-js';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess?: (employee: {id: string, name: string, email: string}) => void;
+  onLoginSuccess?: (employee: {id: string, name: string, email: string, role?: string}) => void;
 }
 
 const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
@@ -129,7 +129,12 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }: AuthModalProps) => {
         }
 
         if (onLoginSuccess && employeeProfile) {
-          onLoginSuccess({ id: employeeProfile.id, name: employeeProfile.name, email: employeeProfile.email });
+          onLoginSuccess({ 
+            id: employeeProfile.id, 
+            name: employeeProfile.name, 
+            email: employeeProfile.email,
+            role: employeeProfile.role 
+          });
         }
 
         // 清空輸入框

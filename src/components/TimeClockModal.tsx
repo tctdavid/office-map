@@ -248,7 +248,7 @@ export default function TimeClockModal({ isOpen, onClose, employeeId, employeeNa
         .from('attendance_records')
         .select(`
           *,
-          employees(name)
+          employees!employee_id(name)
         `)
         .gte('record_date', startDate)
         .lte('record_date', endDate);

@@ -302,8 +302,18 @@ const Index = () => {
     };
   }, []);
 
-  const handleLoginSuccess = async (employee: {id: string, name: string, email: string}) => {
-    // 需要獲取完整的員工資訊包含role
+  const handleLoginSuccess = async (employee: {id: string, name: string, email: string, role?: string}) => {
+    // 立即設置員工資訊（包含 role）
+    setCurrentEmployee({
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role
+    });
+    
+    console.log('登入成功，員工角色:', employee.role, '是否為管理員:', employee.role === 'admin');
+    
+    // 需要獲取完整的員工資訊包含role（作為備份驗證）
     try {
       const { data: fullEmployee, error } = await supabase
         .from('employees')
@@ -313,15 +323,18 @@ const Index = () => {
       
       if (error) throw error;
       
+      // 再次確認並更新完整資訊
       setCurrentEmployee({
         id: employee.id,
         name: employee.name,
         email: employee.email,
         role: fullEmployee.role
       });
+      
+      console.log('完整員工資料載入，角色:', fullEmployee.role);
     } catch (error) {
       console.error('Error fetching employee role:', error);
-      setCurrentEmployee(employee);
+      // 保持原有的員工資訊（包含傳入的 role）
     }
     
     setUser({ email: employee.email } as User);
