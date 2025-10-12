@@ -2277,7 +2277,7 @@ const Index = () => {
                                 <div className="absolute inset-0">
                                   {seat.equipment.photo ? (
                                     <div 
-                                      className="w-full h-full rounded-lg overflow-hidden border-2 border-white/30 shadow-lg cursor-pointer hover:border-white/50 transition-all"
+                                      className="w-full h-full rounded-lg overflow-hidden shadow-lg cursor-pointer transition-all"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleEquipmentClick(seat.equipment);
