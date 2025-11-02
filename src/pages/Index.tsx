@@ -15,11 +15,36 @@ import AdminPasswordReset from "@/components/AdminPasswordReset";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useSeats } from "@/hooks/useSeats";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
+import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
+import { getSeatColor } from "@/utils/colorMapping";
 
 const Index = () => {
   // Auth hook
   const { user, currentEmployee, isAdmin, login, logout } = useAuth();
+  
+  // Seats hook
+  const {
+    seatCoordinates,
+    selectedSeat,
+    isDraggingSeat,
+    seatDragPosition,
+    showSeatPreview,
+    containerMousePosition,
+    setSeatCoordinates,
+    setSelectedSeat,
+    setIsDraggingSeat,
+    setSeatDragPosition,
+    setShowSeatPreview,
+    setContainerMousePosition,
+    fetchSeats,
+    deleteSeat: deleteSeatFromHook,
+    updateSeatPosition,
+    handleBasicSeatClick,
+    cancelSeatDrag,
+    handleContainerClickForSeat: handleContainerClickForSeatFromHook,
+  } = useSeats();
   
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
@@ -27,7 +52,6 @@ const Index = () => {
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
   const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [containers, setContainers] = useState<any[]>([]);
-  const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isContainerEditMode, setIsContainerEditMode] = useState(false);
@@ -43,11 +67,6 @@ const Index = () => {
   const [pendingContainer, setPendingContainer] = useState<any>(null);
   const [isSeatEditMode, setIsSeatEditMode] = useState(false);
   const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
-  const [selectedSeat, setSelectedSeat] = useState<any>(null);
-  const [containerMousePosition, setContainerMousePosition] = useState({ x: 0, y: 0 });
-  const [showSeatPreview, setShowSeatPreview] = useState(false);
-  const [isDraggingSeat, setIsDraggingSeat] = useState(false);
-  const [seatDragPosition, setSeatDragPosition] = useState({ x: 0, y: 0 });
   // 備份數據用於取消變更
   const [backupContainers, setBackupContainers] = useState<any[]>([]);
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
@@ -90,95 +109,7 @@ const Index = () => {
   const formatHeaderDate = (d: Date) => d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Taipei' });
 
   const fetchSeatCoordinates = async () => {
-    console.log('開始載入座位資料...');
-    
-    // First, let's try a simple query to see if we can get basic seat data
-    const { data: basicData, error: basicError } = await supabase
-      .from('seat_coordinates')
-      .select('*');
-    
-    console.log('基本座位資料:', { basicData, basicError, count: basicData?.length });
-    
-    if (basicError) {
-      console.error('基本查詢錯誤:', basicError);
-      return;
-    }
-    
-    // Now try with associations using the existing foreign key constraint names
-    const { data, error } = await supabase
-      .from('seat_coordinates')
-      .select(`
-        *,
-        employee:employees!fk_seat_coordinates_employee_id (
-          id,
-          name,
-          photo,
-          department,
-          position,
-          extension,
-          email,
-          is_active
-        ),
-        pc:pcs!fk_seat_coordinates_pc_id (
-          id,
-          name,
-          cpu,
-          memory,
-          storage,
-          graphics,
-          case_photo,
-          monitor_a,
-          monitor_a_photo,
-          monitor_b,
-          monitor_b_photo
-        ),
-        equipment:equipment!fk_seat_coordinates_equipment_id (
-          id,
-          product,
-          supplier,
-          ip,
-          sn,
-          contact_person,
-          mac_adds,
-          purchase_date,
-          photo,
-          notes
-        )
-      `)
-      .order('created_at', { ascending: false });
-    
-    console.log('完整座位資料載入結果:', { data, error, dataLength: data?.length });
-    console.log('座位詳細資料樣本:', data?.slice(0, 2));
-    
-    // 檢查設備資料
-    const seatsWithEquipment = data?.filter(seat => seat.equipment_id);
-    console.log('有設備的座位:', seatsWithEquipment?.map(seat => ({
-      id: seat.id,
-      equipment_id: seat.equipment_id,
-      equipment_data: seat.equipment,
-      product: seat.equipment?.product
-    })));
-    
-    if (error) {
-      console.error('Error fetching seat coordinates:', error);
-    } else {
-      // 更新座位資料並同步 is_empty 狀態
-      const updatedData = data?.map(seat => ({
-        ...seat,
-        is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id
-      })) || [];
-      
-      console.log('設置座位資料到狀態:', updatedData.map(seat => ({
-        id: seat.id,
-        container: seat.container,
-        employee: seat.employee?.name || '空座位',
-        is_empty: seat.is_empty,
-        employee_id: seat.employee_id,
-        has_employee_data: !!seat.employee
-      })));
-      
-      setSeatCoordinates(updatedData);
-    }
+    await fetchSeats();
   };
 
   // 載入電腦資料
@@ -213,12 +144,7 @@ const Index = () => {
     // 處理鍵盤事件 - ESC 取消座位拖拽
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isDraggingSeat) {
-        setIsDraggingSeat(false);
-        setSeatDragPosition({ x: 0, y: 0 });
-        toast({
-          title: "拖拽已取消",
-          description: "座位拖拽已取消",
-        });
+        cancelSeatDrag();
       }
     };
 
@@ -227,7 +153,7 @@ const Index = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDraggingSeat, toast]);
+  }, [isDraggingSeat]);
 
   // 監控管理員狀態變化，非管理員時重置員工管理功能
   useEffect(() => {
@@ -740,37 +666,7 @@ const Index = () => {
         mouseY <= selectedContainer.y + selectedContainer.height;
       
       if (isInSelectedContainer) {
-        // 更新座位位置到資料庫
-        const { error } = await supabase
-          .from('seat_coordinates')
-          .update({
-            x: seatDragPosition.x,
-            y: seatDragPosition.y
-          })
-          .eq('id', selectedSeat.id);
-
-        if (error) {
-          console.error('Error updating seat position:', error);
-          toast({
-            title: "更新失敗",
-            description: "無法更新座位位置",
-            variant: "destructive"
-          });
-        } else {
-          // 更新本地狀態
-          setSeatCoordinates(seats => 
-            seats.map(seat => 
-              seat.id === selectedSeat.id 
-                ? { ...seat, x: seatDragPosition.x, y: seatDragPosition.y }
-                : seat
-            )
-          );
-          
-          toast({
-            title: "座位已移動",
-            description: `座位已移動到新位置 (${seatDragPosition.x}, ${seatDragPosition.y})`,
-          });
-        }
+        await updateSeatPosition(selectedSeat.id, seatDragPosition.x, seatDragPosition.y);
       }
       
       // 退出拖拽模式
@@ -781,15 +677,14 @@ const Index = () => {
     
     if (!isAddingContainer) return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    const snapToGrid = (value: number) => Math.round(value / 20) * 20;
-    const startPoint = {
-      x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
-      y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
-    };
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      const startPoint = {
+        x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
+        y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
+      };
     
     setNewContainerStart(startPoint);
     setNewContainerEnd(startPoint);
@@ -802,7 +697,6 @@ const Index = () => {
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
       
-      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
       const endPoint = {
         x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
         y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
@@ -817,8 +711,6 @@ const Index = () => {
       const rect = e.currentTarget.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
-      
-      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
       
       let newContainer = {...editingContainer};
       const minSize = 40;
@@ -909,7 +801,6 @@ const Index = () => {
       setNewContainerEnd(null);
     } else if (isDragging && editingContainer) {
       // 原有的容器編輯邏輯
-      const snapToGrid = (value: number) => Math.round(value / 20) * 20;
       const finalContainer = {
         ...editingContainer,
         x: snapToGrid(editingContainer.x),
@@ -1112,44 +1003,7 @@ const Index = () => {
 
   // 刪除座位
   const deleteSeat = async () => {
-    if (!selectedSeat) {
-      toast({
-        title: "請選擇座位",
-        description: "請先選擇要刪除的座位",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('seat_coordinates')
-        .delete()
-        .eq('id', selectedSeat.id);
-
-      if (error) {
-        console.error('Error deleting seat:', error);
-        toast({
-          title: "刪除失敗",
-          description: "無法刪除座位",
-          variant: "destructive"
-        });
-      } else {
-        setSeatCoordinates(seatCoordinates.filter(s => s.id !== selectedSeat.id));
-        setSelectedSeat(null);
-        toast({
-          title: "刪除成功",
-          description: "座位已刪除",
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting seat:', error);
-      toast({
-        title: "刪除失敗",
-        description: "發生錯誤",
-        variant: "destructive"
-      });
-    }
+    await deleteSeatFromHook();
   };
 
   // 切換座位編輯模式
@@ -1180,33 +1034,7 @@ const Index = () => {
     });
   };
 
-  // 獲取座位模板尺寸
-  const getSeatSize = (template: string) => {
-    switch (template) {
-      case '120x70': return { width: 120, height: 70 };
-      case '70x90': return { width: 70, height: 90 };
-      case '40x40': return { width: 40, height: 40 };
-      default: return { width: 40, height: 40 };
-    }
-  };
-
-  // 檢查座位重疊
-  const checkSeatOverlap = (newSeat: any, containerId: string) => {
-    return seatCoordinates.some(seat => {
-      if (seat.container_id !== containerId) return false;
-      if (seat.id === newSeat.id) return false;
-      
-      // 檢查兩個矩形是否重疊
-      const isOverlapping = !(
-        newSeat.x + newSeat.pixel_x <= seat.x ||
-        seat.x + seat.pixel_x <= newSeat.x ||
-        newSeat.y + newSeat.pixel_y <= seat.y ||
-        seat.y + seat.pixel_y <= newSeat.y
-      );
-      
-      return isOverlapping;
-    });
-  };
+  // getSeatSize and checkSeatOverlap now imported from utils
 
   // 處理容器點擊事件以放置座位
   const handleContainerClickForSeat = (e: React.MouseEvent, container: any) => {
@@ -1260,7 +1088,7 @@ const Index = () => {
     }
     
     // 檢查重疊
-    if (checkSeatOverlap(newSeat, container.id)) {
+    if (checkSeatOverlap(newSeat, seatCoordinates, container.id)) {
       toast({
         title: "座位重疊",
         description: "座位不能與其他座位重疊",
@@ -1699,10 +1527,6 @@ const Index = () => {
       return;
     }
     
-    // 設定選中的座位
-    setSelectedSeat(seat);
-    console.log('Selected seat:', seat);
-    
     // 設定員工資訊 - 只有在沒有登入用戶時才更新右側面板的員工資訊
     if (!user) {
       if (seat.employee) {
@@ -1713,23 +1537,9 @@ const Index = () => {
         console.log('No employee on this seat');
       }
     }
-    // 如果有登入用戶，保持顯示登入員工的資訊，不因點擊座位而改變
     
-    // 如果在編輯模式且已經選中同一個座位，開始拖拽模式
-    if (selectedSeat?.id === seat.id && isEditMode) {
-      setIsDraggingSeat(true);
-      setSeatDragPosition({ x: seat.x, y: seat.y });
-      toast({
-        title: "拖拽模式",
-        description: "移動滑鼠至新位置後點擊釋放座位",
-      });
-    } else {
-      const seatInfo = seat.employee ? `座位 ${seat.id} - ${seat.employee.name}` : `座位 ${seat.id}`;
-      toast({
-        title: "座位已選中",
-        description: isEditMode ? `已選中${seatInfo}，再次點擊可進入拖拽模式` : `已選中${seatInfo}`,
-      });
-    }
+    // 使用 hook 的基本座位點擊處理
+    handleBasicSeatClick(seat, isEditMode);
   };
 
   return (
@@ -1968,7 +1778,6 @@ const Index = () => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
-                const snapToGrid = (value: number) => Math.round(value / 20) * 20;
                 
                 // 檢查鼠標是否在選中的容器內
                 const isInSelectedContainer = 
@@ -1999,7 +1808,6 @@ const Index = () => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
-                const snapToGrid = (value: number) => Math.round(value / 20) * 20;
                 
                 // 檢查鼠標是否在選中的容器內
                 const isInSelectedContainer = 
@@ -2113,27 +1921,19 @@ const Index = () => {
 
                   {/* Render seats relative to this container */}
                   {seatCoordinates
-                    .filter(seat => seat.container_id === container.id)
+                  .filter(seat => seat.container_id === container.id)
                     .map((seat) => {
-                      // 決定座位顏色 - 使用透明色
-                      let seatColor = 'rgba(107, 114, 128, 0.6)'; // 透明灰色 (空位)
-                      let borderColor = 'rgba(156, 163, 175, 0.4)'; // 預設邊框
+                      // 決定座位顏色
+                      const isSelected = selectedSeat?.id === seat.id;
+                      const isSwapping = isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id);
+                      const isSelectingForReg = isSelectingSeatForRegistration && selectedSeatForRegistration?.id === seat.id;
                       
-                      if (seat.employee_id) {
-                        seatColor = 'rgba(59, 130, 246, 0.6)'; // 透明藍色 (有員工)
-                        borderColor = 'rgba(59, 130, 246, 0.8)'; // 藍色邊框
-                      } else if (seat.pc_id) {
-                        seatColor = 'rgba(16, 185, 129, 0.6)'; // 透明綠色 (有PC)
-                      } else if (seat.equipment_id) {
-                        seatColor = 'rgba(147, 51, 234, 0.6)'; // 透明紫色 (有設備)
-                        borderColor = 'rgba(147, 51, 234, 0.8)'; // 紫色邊框
-                      }
-                      
-                      // 在註冊座位選擇模式時，如果是選中的座位顯示紅色
-                      if (isSelectingSeatForRegistration && selectedSeatForRegistration?.id === seat.id) {
-                        seatColor = 'rgba(239, 68, 68, 0.6)'; // 透明紅色表示已選中
-                        borderColor = 'rgba(239, 68, 68, 0.8)'; // 紅色邊框
-                      }
+                      const { backgroundColor: seatColor, borderColor } = getSeatColor(
+                        seat,
+                        isSelected,
+                        !!isSwapping,
+                        isSelectingForReg
+                      );
                       
                        // 如果是選中的座位並且在拖拽模式，使用拖拽位置
                        const isCurrentSeatDragging = isDraggingSeat && selectedSeat?.id === seat.id;
