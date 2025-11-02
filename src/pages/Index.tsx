@@ -14,17 +14,18 @@ import AdminPasswordReset from "@/components/AdminPasswordReset";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User } from '@supabase/supabase-js';
+import { useAuth } from "@/hooks/useAuth";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 
 const Index = () => {
+  // Auth hook
+  const { user, currentEmployee, isAdmin, login, logout } = useAuth();
+  
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationModalKey, setRegistrationModalKey] = useState(0);
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
   const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [currentEmployee, setCurrentEmployee] = useState<{id: string, name: string, email: string, role?: string} | null>(null);
   const [containers, setContainers] = useState<any[]>([]);
   const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
@@ -228,9 +229,6 @@ const Index = () => {
     };
   }, [isDraggingSeat, toast]);
 
-  // 檢查是否為管理員
-  const isAdmin = currentEmployee?.role === 'admin';
-
   // 監控管理員狀態變化，非管理員時重置員工管理功能
   useEffect(() => {
     if (!isAdmin) {
@@ -303,54 +301,19 @@ const Index = () => {
   }, []);
 
   const handleLoginSuccess = async (employee: {id: string, name: string, email: string, role?: string}) => {
-    // 立即設置員工資訊（包含 role）
-    setCurrentEmployee({
-      id: employee.id,
-      name: employee.name,
-      email: employee.email,
-      role: employee.role
-    });
+    await login(employee);
     
-    console.log('登入成功，員工角色:', employee.role, '是否為管理員:', employee.role === 'admin');
-    
-    // 需要獲取完整的員工資訊包含role（作為備份驗證）
-    try {
-      const { data: fullEmployee, error } = await supabase
-        .from('employees')
-        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at')
-        .eq('id', employee.id)
-        .single();
-      
-      if (error) throw error;
-      
-      // 再次確認並更新完整資訊
-      setCurrentEmployee({
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        role: fullEmployee.role
-      });
-      
-      console.log('完整員工資料載入，角色:', fullEmployee.role);
-    } catch (error) {
-      console.error('Error fetching employee role:', error);
-      // 保持原有的員工資訊（包含傳入的 role）
-    }
-    
-    setUser({ email: employee.email } as User);
-    
-    // 需要獲取完整的員工資訊來顯示在右側面板
+    // 嘗試從資料庫獲取完整員工資料
     try {
       const { data: fullEmployeeData, error } = await supabase
         .from('employees')
-        .select('id, name, email, department, position, extension, photo, role, is_active, created_at, updated_at')
+        .select('*')
         .eq('id', employee.id)
         .single();
-      
+
       if (error) {
         console.error('Error fetching full employee data:', error);
-        setSelectedSeatEmployee(employee); // 使用基本資料作為後備
-      } else {
+      } else if (fullEmployeeData) {
         setSelectedSeatEmployee(fullEmployeeData);
       }
     } catch (error) {
@@ -369,8 +332,7 @@ const Index = () => {
   };
 
   const handleLogout = () => {
-    setUser(null);
-    setCurrentEmployee(null);
+    logout();
     setSelectedSeatEmployee(null); // 清除右側面板的員工資訊
     setIsEditMode(false);
     setIsContainerEditMode(false);
@@ -404,10 +366,6 @@ const Index = () => {
     setIsSwappingEmployees(false);
     setSelectedSeatsForSwap([]);
     setShowSwapConfirmModal(false);
-    toast({
-      title: "登出成功",
-      description: "已成功登出系統",
-    });
   };
 
   // 處理註冊按鈕點擊
