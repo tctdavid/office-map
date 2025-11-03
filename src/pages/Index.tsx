@@ -1527,15 +1527,13 @@ const Index = () => {
       return;
     }
     
-    // 設定員工資訊 - 只有在沒有登入用戶時才更新右側面板的員工資訊
-    if (!user) {
-      if (seat.employee) {
-        setSelectedSeatEmployee(seat.employee);
-        console.log('Selected employee:', seat.employee);
-      } else {
-        setSelectedSeatEmployee(null);
-        console.log('No employee on this seat');
-      }
+    // 設定員工資訊 - 允許所有情況下更新右側面板的員工資訊
+    if (seat.employee) {
+      setSelectedSeatEmployee(seat.employee);
+      console.log('Selected employee:', seat.employee);
+    } else {
+      setSelectedSeatEmployee(null);
+      console.log('No employee on this seat');
     }
     
     // 使用 hook 的基本座位點擊處理
@@ -1954,10 +1952,8 @@ const Index = () => {
                              top: `${displayY}px`,
                              width: `${seat.pixel_x}px`,
                              height: `${seat.pixel_y}px`,
-                               backgroundColor: selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 0.8)' : 
-                                 isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) ? 'rgba(168, 85, 247, 0.8)' : seatColor,
-                               border: `2px solid ${selectedSeat?.id === seat.id ? 'rgba(239, 68, 68, 1)' : 
-                                 isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) ? 'rgba(168, 85, 247, 1)' : borderColor}`,
+                               backgroundColor: seatColor,
+                               border: `2px solid ${borderColor}`,
                               backdropFilter: 'blur(4px)',
                              // 拖拽中的座位加上特殊效果
                              opacity: isCurrentSeatDragging ? 0.8 : 1,
