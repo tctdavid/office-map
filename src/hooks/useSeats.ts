@@ -10,6 +10,8 @@ export const useSeats = () => {
   const [seatDragPosition, setSeatDragPosition] = useState({ x: 0, y: 0 });
   const [showSeatPreview, setShowSeatPreview] = useState(false);
   const [containerMousePosition, setContainerMousePosition] = useState({ x: 0, y: 0 });
+  const [isSeatEditMode, setIsSeatEditMode] = useState(false);
+  const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   
   const { toast } = useToast();
 
@@ -265,15 +267,44 @@ export const useSeats = () => {
   };
 
   /**
+   * 切換座位編輯模式
+   */
+  const toggleSeatEditMode = (selectedContainer: any) => {
+    const wasInSeatEditMode = isSeatEditMode;
+    setIsSeatEditMode(!isSeatEditMode);
+    
+    if (wasInSeatEditMode) {
+      // 退出座位編輯模式時清除座位相關狀態
+      setSelectedSeat(null);
+      setIsDraggingSeat(false);
+      setSeatDragPosition({ x: 0, y: 0 });
+      setShowSeatPreview(false);
+    }
+    
+    if (!wasInSeatEditMode && !selectedContainer) {
+      toast({
+        title: "請選擇容器",
+        description: "請先選擇一個容器來新增座位",
+        variant: "destructive"
+      });
+      setIsSeatEditMode(false);
+      return;
+    }
+    
+    toast({
+      title: wasInSeatEditMode ? "退出座位編輯" : "進入座位編輯",
+      description: wasInSeatEditMode ? "已退出座位編輯模式" : "點擊容器內位置放置座位",
+    });
+  };
+
+  /**
    * 處理容器點擊以放置座位
    */
   const handleContainerClickForSeat = async (
     e: React.MouseEvent,
     container: any,
     selectedContainer: any,
-    selectedSeatTemplate: string,
-    isEditMode: boolean,
-    isSeatEditMode: boolean
+    isEditMode: boolean
   ) => {
     // 只有在編輯模式且座位編輯模式開啟時才允許新增座位
     if (!isEditMode || !isSeatEditMode) return;
@@ -344,6 +375,8 @@ export const useSeats = () => {
     seatDragPosition,
     showSeatPreview,
     containerMousePosition,
+    isSeatEditMode,
+    selectedSeatTemplate,
     
     // 設置函數
     setSeatCoordinates,
@@ -352,6 +385,8 @@ export const useSeats = () => {
     setSeatDragPosition,
     setShowSeatPreview,
     setContainerMousePosition,
+    setIsSeatEditMode,
+    setSelectedSeatTemplate,
     
     // 操作函數
     fetchSeats,
@@ -360,6 +395,7 @@ export const useSeats = () => {
     updateSeatPosition,
     handleBasicSeatClick,
     cancelSeatDrag,
+    toggleSeatEditMode,
     handleContainerClickForSeat,
   };
 };

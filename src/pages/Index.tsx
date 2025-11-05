@@ -34,17 +34,22 @@ const Index = () => {
     seatDragPosition,
     showSeatPreview,
     containerMousePosition,
+    isSeatEditMode,
+    selectedSeatTemplate,
     setSeatCoordinates,
     setSelectedSeat,
     setIsDraggingSeat,
     setSeatDragPosition,
     setShowSeatPreview,
     setContainerMousePosition,
+    setIsSeatEditMode,
+    setSelectedSeatTemplate,
     fetchSeats,
     deleteSeat: deleteSeatFromHook,
     updateSeatPosition,
     handleBasicSeatClick,
     cancelSeatDrag,
+    toggleSeatEditMode: toggleSeatEditModeFromHook,
     handleContainerClickForSeat: handleContainerClickForSeatFromHook,
   } = useSeats();
   
@@ -118,8 +123,6 @@ const Index = () => {
   const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isSeatEditMode, setIsSeatEditMode] = useState(false);
-  const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   // 備份數據用於取消變更
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
   const [isAddPcModalOpen, setIsAddPcModalOpen] = useState(false);
@@ -677,102 +680,17 @@ const Index = () => {
     await deleteSeatFromHook();
   };
 
-  // 切換座位編輯模式
+  // 包裝座位編輯模式切換函數
   const toggleSeatEditMode = () => {
-    const wasInSeatEditMode = isSeatEditMode;
-    setIsSeatEditMode(!isSeatEditMode);
-    
-    if (wasInSeatEditMode) {
-      // 退出座位編輯模式時清除座位相關狀態
-      setSelectedSeat(null);
-      setIsDraggingSeat(false);
-      setSeatDragPosition({ x: 0, y: 0 });
-      setShowSeatPreview(false);
-    }
-    
-    if (!wasInSeatEditMode && !selectedContainer) {
-      toast({
-        title: "請選擇容器",
-        description: "請先選擇一個容器來新增座位",
-        variant: "destructive"
-      });
-      setIsSeatEditMode(false);
-      return;
-    }
-    toast({
-      title: wasInSeatEditMode ? "退出座位編輯" : "進入座位編輯",
-      description: wasInSeatEditMode ? "已退出座位編輯模式" : "點擊容器內位置放置座位",
-    });
+    toggleSeatEditModeFromHook(selectedContainer);
   };
 
-  // getSeatSize and checkSeatOverlap now imported from utils
-
-  // 處理容器點擊事件以放置座位
+  // 包裝容器點擊處理函數（用於放置座位）
   const handleContainerClickForSeat = (e: React.MouseEvent, container: any) => {
-    // 只有在編輯模式且座位編輯模式開啟時才允許新增座位
-    if (!isEditMode || !isSeatEditMode) return;
-    
-    // 只能在選中的編輯容器中新增座位
-    if (!selectedContainer || selectedContainer.id !== container.id) {
-      toast({
-        title: "請選擇容器",
-        description: "請先選擇要編輯的容器",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    e.stopPropagation();
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    // 鎖定到網格點 (20px 網格)
-    const snapToGrid = (value: number) => Math.round(value / 20) * 20;
-    const seatSize = getSeatSize(selectedSeatTemplate);
-    
-    const newSeat = {
-      id: `seat_${Date.now()}`,
-      x: snapToGrid(mouseX),
-      y: snapToGrid(mouseY),
-      pixel_x: seatSize.width,
-      pixel_y: seatSize.height,
-      container_id: container.id,
-      container: container.name,
-      seat_template: selectedSeatTemplate,
-      is_empty: true,
-      employee_id: null,
-      pc_id: null
-    };
-    
-    // 檢查座位是否超出容器邊界
-    if (newSeat.x + newSeat.pixel_x > container.width || 
-        newSeat.y + newSeat.pixel_y > container.height ||
-        newSeat.x < 0 || newSeat.y < 0) {
-      toast({
-        title: "座位超出邊界",
-        description: "座位不能超出容器邊界",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // 檢查重疊
-    if (checkSeatOverlap(newSeat, seatCoordinates, container.id)) {
-      toast({
-        title: "座位重疊",
-        description: "座位不能與其他座位重疊",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // 新增座位到資料庫
-    addSeatToDatabase(newSeat);
+    handleContainerClickForSeatFromHook(e, container, selectedContainer, isEditMode);
   };
 
-  // 新增座位到資料庫
+  // 新增座位到資料庫 - 保留這個函數因為它在其他地方被使用
   const addSeatToDatabase = async (seat: any) => {
     try {
       const { data, error } = await supabase
