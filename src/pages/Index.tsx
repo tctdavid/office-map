@@ -21,6 +21,8 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
 import { getSeatColor } from "@/utils/colorMapping";
+import { enterEditMode, hasChanges, resetEditState, resetLogoutState } from "@/utils/editModeHandlers";
+import { swapEmployees, swapPcsOnly, restoreMissingEmployeeAssignments } from "@/utils/seatSwapHandlers";
 
 const Index = () => {
   // Auth hook
@@ -537,8 +539,9 @@ const Index = () => {
   const toggleEditMode = () => {
     if (!isEditMode) {
       // 進入編輯模式 - 備份當前數據
-      setBackupContainers([...containers]);
-      setBackupSeatCoordinates([...seatCoordinates]);
+      const backup = enterEditMode(containers, seatCoordinates);
+      setBackupContainers(backup.containers);
+      setBackupSeatCoordinates(backup.seatCoordinates);
       setIsEditMode(true);
       toast({
         title: "進入編輯模式",
@@ -546,10 +549,12 @@ const Index = () => {
       });
     } else {
       // 退出編輯模式 - 提供保存或取消選項
-      const hasContainerChanges = JSON.stringify(containers) !== JSON.stringify(backupContainers);
-      const hasSeatChanges = JSON.stringify(seatCoordinates) !== JSON.stringify(backupSeatCoordinates);
+      const changes = hasChanges(
+        { containers, seatCoordinates },
+        { containers: backupContainers, seatCoordinates: backupSeatCoordinates }
+      );
       
-      if (hasContainerChanges || hasSeatChanges) {
+      if (changes.hasContainerChanges || changes.hasSeatChanges) {
         if (confirm("您有未保存的變更。是否要保存變更？\n點擊「確定」保存變更，點擊「取消」放棄變更。")) {
           // 用戶選擇保存變更
           exitEditModeWithSave();
@@ -566,14 +571,15 @@ const Index = () => {
 
   const exitEditModeWithSave = () => {
     // 清除編輯狀態但保留變更
-    setIsEditMode(false);
-    setIsContainerEditMode(false);
-    setSelectedContainer(null);
-    setEditingContainer(null);
-    setIsAddingContainer(false);
-    setIsSeatEditMode(false);
-    setSelectedSeat(null);
-    setIsDraggingSeat(false);
+    const state = resetEditState();
+    setIsEditMode(state.isEditMode!);
+    setIsContainerEditMode(state.isContainerEditMode!);
+    setSelectedContainer(state.selectedContainer);
+    setEditingContainer(state.editingContainer);
+    setIsAddingContainer(state.isAddingContainer!);
+    setIsSeatEditMode(state.isSeatEditMode!);
+    setSelectedSeat(state.selectedSeat);
+    setIsDraggingSeat(state.isDraggingSeat!);
     setSeatDragPosition({ x: 0, y: 0 });
     setShowSeatPreview(false);
     setBackupContainers([]);
@@ -591,14 +597,15 @@ const Index = () => {
     setSeatCoordinates([...backupSeatCoordinates]);
     
     // 清除編輯狀態
-    setIsEditMode(false);
-    setIsContainerEditMode(false);
-    setSelectedContainer(null);
-    setEditingContainer(null);
-    setIsAddingContainer(false);
-    setIsSeatEditMode(false);
-    setSelectedSeat(null);
-    setIsDraggingSeat(false);
+    const state = resetEditState();
+    setIsEditMode(state.isEditMode!);
+    setIsContainerEditMode(state.isContainerEditMode!);
+    setSelectedContainer(state.selectedContainer);
+    setEditingContainer(state.editingContainer);
+    setIsAddingContainer(state.isAddingContainer!);
+    setIsSeatEditMode(state.isSeatEditMode!);
+    setSelectedSeat(state.selectedSeat);
+    setIsDraggingSeat(state.isDraggingSeat!);
     setSeatDragPosition({ x: 0, y: 0 });
     setShowSeatPreview(false);
     setBackupContainers([]);
@@ -612,14 +619,15 @@ const Index = () => {
 
   const exitEditModeWithoutChanges = () => {
     // 沒有變更，直接清除狀態
-    setIsEditMode(false);
-    setIsContainerEditMode(false);
-    setSelectedContainer(null);
-    setEditingContainer(null);
-    setIsAddingContainer(false);
-    setIsSeatEditMode(false);
-    setSelectedSeat(null);
-    setIsDraggingSeat(false);
+    const state = resetEditState();
+    setIsEditMode(state.isEditMode!);
+    setIsContainerEditMode(state.isContainerEditMode!);
+    setSelectedContainer(state.selectedContainer);
+    setEditingContainer(state.editingContainer);
+    setIsAddingContainer(state.isAddingContainer!);
+    setIsSeatEditMode(state.isSeatEditMode!);
+    setSelectedSeat(state.selectedSeat);
+    setIsDraggingSeat(state.isDraggingSeat!);
     setSeatDragPosition({ x: 0, y: 0 });
     setShowSeatPreview(false);
     setBackupContainers([]);
@@ -747,60 +755,23 @@ const Index = () => {
 
   // 修復遺失的員工分配
   const restoreMissingEmployees = async () => {
-    try {
-      // 獲取所有活躍員工
-      const { data: employees, error: empError } = await supabase
-        .from('employees')
-        .select('id, name')
-        .eq('is_active', true)
-        .neq('role', 'admin');
-
-      if (empError) throw empError;
-
-      // 獲取已分配座位的員工ID
-      const { data: assignedSeats, error: seatError } = await supabase
-        .from('seat_coordinates')
-        .select('employee_id')
-        .not('employee_id', 'is', null);
-
-      if (seatError) throw seatError;
-
-      const assignedEmployeeIds = assignedSeats.map(seat => seat.employee_id);
-      const unassignedEmployees = employees.filter(emp => !assignedEmployeeIds.includes(emp.id));
-
-      if (unassignedEmployees.length > 0) {
-        // 獲取空座位
-        const { data: emptySeats, error: emptySeatError } = await supabase
-          .from('seat_coordinates')
-          .select('id')
-          .eq('is_empty', true)
-          .limit(unassignedEmployees.length);
-
-        if (emptySeatError) throw emptySeatError;
-
-        // 分配員工到空座位
-        for (let i = 0; i < Math.min(unassignedEmployees.length, emptySeats.length); i++) {
-          const { error: updateError } = await supabase
-            .from('seat_coordinates')
-            .update({
-              employee_id: unassignedEmployees[i].id,
-              is_empty: false,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', emptySeats[i].id);
-
-          if (updateError) throw updateError;
-        }
-
-        await fetchSeatCoordinates();
-        
+    const result = await restoreMissingEmployeeAssignments();
+    
+    if (result.success) {
+      await fetchSeatCoordinates();
+      
+      if (result.assignedCount > 0) {
         toast({
           title: "員工位置已修復",
-          description: `已重新分配 ${Math.min(unassignedEmployees.length, emptySeats.length)} 位員工到座位`,
+          description: `已重新分配 ${result.assignedCount} 位員工到座位`,
+        });
+      } else {
+        toast({
+          title: "無需修復",
+          description: "所有員工都已正確分配座位",
         });
       }
-    } catch (error) {
-      console.error('修復員工位置時發生錯誤:', error);
+    } else {
       toast({
         title: "修復失敗",
         description: "無法修復員工位置分配",
@@ -817,58 +788,9 @@ const Index = () => {
     
     console.log('Swapping seats:', { seat1, seat2 });
     
-    try {
-      // 添加時間戳確保更新被識別
-      const timestamp = new Date().toISOString();
-      
-      // 準備更新的數據 - 確保正確處理null值
-      const seat1Updates: any = {
-        employee_id: seat2.employee_id || null,
-        is_empty: seat2.employee_id ? false : true,
-        updated_at: timestamp
-      };
-      
-      const seat2Updates: any = {
-        employee_id: seat1.employee_id || null,
-        is_empty: seat1.employee_id ? false : true,
-        updated_at: timestamp
-      };
-
-      // 如果選擇交換電腦
-      if (swapPc) {
-        seat1Updates.pc_id = seat2.pc_id || null;
-        seat2Updates.pc_id = seat1.pc_id || null;
-      }
-
-      console.log('Update data:', { seat1Updates, seat2Updates });
-
-      // 同時更新兩個座位，避免數據競爭
-      const [result1, result2] = await Promise.all([
-        supabase
-          .from('seat_coordinates')
-          .update(seat1Updates)
-          .eq('id', seat1.id),
-        supabase
-          .from('seat_coordinates')
-          .update(seat2Updates)
-          .eq('id', seat2.id)
-      ]);
-
-      const results = [result1, result2];
-      
-      // 檢查所有更新是否成功
-      results.forEach((result, index) => {
-        if (result.error) {
-          console.error(`Update ${index + 1} failed:`, result.error);
-          throw result.error;
-        }
-      });
-
-      console.log('All updates successful');
-
-      // 等待一小段時間確保數據庫更新完成
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+    const result = await swapEmployees(seat1, seat2, swapPc);
+    
+    if (result.success) {
       // 重新載入座位數據
       await fetchSeatCoordinates();
       
@@ -881,8 +803,7 @@ const Index = () => {
         title: "交換成功",
         description: swapPc ? "員工位置和電腦已成功交換" : "員工位置已成功交換",
       });
-    } catch (error) {
-      console.error('Error swapping employees:', error);
+    } else {
       toast({
         title: "交換失敗",
         description: "無法完成位置交換",
@@ -899,50 +820,9 @@ const Index = () => {
     
     console.log('Swapping PCs only:', { seat1, seat2 });
     
-    try {
-      // 添加時間戳確保更新被識別
-      const timestamp = new Date().toISOString();
-      
-      // 準備更新的數據 - 只交換電腦ID，員工ID保持不變
-      const seat1Updates: any = {
-        pc_id: seat2.pc_id || null,
-        updated_at: timestamp
-      };
-      
-      const seat2Updates: any = {
-        pc_id: seat1.pc_id || null,
-        updated_at: timestamp
-      };
-
-      console.log('Update PC data:', { seat1Updates, seat2Updates });
-
-      // 同時更新兩個座位的電腦ID
-      const [result1, result2] = await Promise.all([
-        supabase
-          .from('seat_coordinates')
-          .update(seat1Updates)
-          .eq('id', seat1.id),
-        supabase
-          .from('seat_coordinates')
-          .update(seat2Updates)
-          .eq('id', seat2.id)
-      ]);
-
-      const results = [result1, result2];
-      
-      // 檢查所有更新是否成功
-      results.forEach((result, index) => {
-        if (result.error) {
-          console.error(`PC swap ${index + 1} failed:`, result.error);
-          throw result.error;
-        }
-      });
-
-      console.log('PC swap successful');
-
-      // 等待一小段時間確保數據庫更新完成
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+    const result = await swapPcsOnly(seat1, seat2);
+    
+    if (result.success) {
       // 重新載入座位數據
       await fetchSeatCoordinates();
       
@@ -955,8 +835,7 @@ const Index = () => {
         title: "電腦交換成功",
         description: "電腦設備已成功交換",
       });
-    } catch (error) {
-      console.error('Error swapping PCs:', error);
+    } else {
       toast({
         title: "電腦交換失敗",
         description: "無法完成電腦交換",
