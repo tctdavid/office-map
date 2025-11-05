@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeats } from "@/hooks/useSeats";
 import { useContainers } from "@/hooks/useContainers";
+import { useEmployees } from "@/hooks/useEmployees";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
 import { getSeatColor } from "@/utils/colorMapping";
@@ -92,6 +93,24 @@ const Index = () => {
     getRubberBandStyle,
   } = useContainers();
   
+  // Employees hook
+  const {
+    employees,
+    selectedSeatEmployee,
+    isManagingEmployees,
+    disabledEmployees,
+    showDisabledEmployeesModal,
+    selectedEmptySeat,
+    setSelectedSeatEmployee,
+    setIsManagingEmployees,
+    setShowDisabledEmployeesModal,
+    setSelectedEmptySeat,
+    fetchEmployees,
+    handleDisableEmployee: handleDisableEmployeeFromHook,
+    handleEnableEmployee: handleEnableEmployeeFromHook,
+    resetEmployeeManagement,
+  } = useEmployees();
+  
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationModalKey, setRegistrationModalKey] = useState(0);
@@ -103,18 +122,12 @@ const Index = () => {
   const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   // 備份數據用於取消變更
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [selectedSeatEmployee, setSelectedSeatEmployee] = useState<any>(null);
   const [isAddPcModalOpen, setIsAddPcModalOpen] = useState(false);
   const [isSelectingSeatForPc, setIsSelectingSeatForPc] = useState(false);
   const [selectedSeatForPc, setSelectedSeatForPc] = useState<any>(null);
   const [pcs, setPcs] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
   const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
-  const [isManagingEmployees, setIsManagingEmployees] = useState(false);
-  const [disabledEmployees, setDisabledEmployees] = useState<any[]>([]);
-  const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
-  const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
   
   // Equipment management states
   const [equipments, setEquipments] = useState<any[]>([]);
@@ -192,9 +205,7 @@ const Index = () => {
   useEffect(() => {
     if (!isAdmin) {
       if (isManagingEmployees) {
-        setIsManagingEmployees(false);
-        setShowDisabledEmployeesModal(false);
-        setSelectedEmptySeat(null);
+        resetEmployeeManagement();
         setIsAdminMigrationPanelOpen(false);
       }
       if (isSwappingEmployees) {
@@ -420,16 +431,7 @@ const Index = () => {
     }
 
     // 重新載入員工資料 - 只有管理員才能看全部員工
-    if (isAdmin) {
-      const { data: employeeData, error: employeeError } = await supabase
-        .from('employees')
-        .select('id, name, email, department, position, extension, photo, role, is_active');
-      
-      if (!employeeError && employeeData) {
-        setEmployees(employeeData);
-        setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
-      }
-    }
+    await fetchEmployees(isAdmin);
     
     // 重置註冊狀態
     setIsSelectingSeatForRegistration(false);
@@ -815,95 +817,14 @@ const Index = () => {
     }
   };
 
-  // 停用員工
+  // 停用員工 - 使用 hook 中的函數並傳入座位重載回調
   const handleDisableEmployee = async (employeeId: string, seatId: string) => {
-    try {
-      // 停用員工
-      const { error: employeeError } = await supabase
-        .from('employees')
-        .update({ is_active: false })
-        .eq('id', employeeId);
-
-      if (employeeError) throw employeeError;
-
-      // 清空座位
-      const { error: seatError } = await supabase
-        .from('seat_coordinates')
-        .update({ employee_id: null, is_empty: true })
-        .eq('id', seatId);
-
-      if (seatError) throw seatError;
-
-      toast({
-        title: "員工已停用",
-        description: "員工已被停用並從座位移除",
-      });
-
-      // 重新載入數據
-      fetchSeatCoordinates();
-      if (isAdmin) {
-        const { data: employeeData } = await supabase
-          .from('employees')
-          .select('id, name, email, department, position, extension, photo, role, is_active');
-        if (employeeData) {
-          setEmployees(employeeData);
-          setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
-        }
-      }
-    } catch (error) {
-      console.error('Error disabling employee:', error);
-      toast({
-        title: "停用失敗",
-        description: "無法停用員工",
-        variant: "destructive"
-      });
-    }
+    await handleDisableEmployeeFromHook(employeeId, seatId, isAdmin, fetchSeatCoordinates);
   };
 
-  // 啟用員工並分配座位
+  // 啟用員工並分配座位 - 使用 hook 中的函數並傳入座位重載回調
   const handleEnableEmployee = async (employeeId: string, seatId: string) => {
-    try {
-      // 啟用員工
-      const { error: employeeError } = await supabase
-        .from('employees')
-        .update({ is_active: true })
-        .eq('id', employeeId);
-
-      if (employeeError) throw employeeError;
-
-      // 分配座位
-      const { error: seatError } = await supabase
-        .from('seat_coordinates')
-        .update({ employee_id: employeeId, is_empty: false })
-        .eq('id', seatId);
-
-      if (seatError) throw seatError;
-
-      toast({
-        title: "員工已啟用",
-        description: "員工已被啟用並分配座位",
-      });
-
-      // 重新載入數據
-      fetchSeatCoordinates();
-      if (isAdmin) {
-        const { data: employeeData } = await supabase
-          .from('employees')
-          .select('id, name, email, department, position, extension, photo, role, is_active');
-        if (employeeData) {
-          setEmployees(employeeData);
-          setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
-        }
-      }
-      setShowDisabledEmployeesModal(false);
-    } catch (error) {
-      console.error('Error enabling employee:', error);
-      toast({
-        title: "啟用失敗",
-        description: "無法啟用員工",
-        variant: "destructive"
-      });
-    }
+    await handleEnableEmployeeFromHook(employeeId, seatId, isAdmin, fetchSeatCoordinates);
   };
 
   // 修復遺失的員工分配
