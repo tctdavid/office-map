@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSeats } from "@/hooks/useSeats";
 import { useContainers } from "@/hooks/useContainers";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useRegistration } from "@/hooks/useRegistration";
+import { usePcManagement } from "@/hooks/usePcManagement";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
 import { getSeatColor } from "@/utils/colorMapping";
@@ -118,19 +120,46 @@ const Index = () => {
     resetEmployeeManagement,
   } = useEmployees();
   
+  // Registration hook
+  const {
+    isRegistrationModalOpen,
+    registrationModalKey,
+    isSelectingSeatForRegistration,
+    selectedSeatForRegistration,
+    setIsRegistrationModalOpen,
+    setIsSelectingSeatForRegistration,
+    setSelectedSeatForRegistration,
+    startRegistration,
+    startProfileEdit,
+    selectSeatForRegistration,
+    cancelRegistration,
+    completeRegistration,
+    resetRegistration,
+  } = useRegistration();
+  
+  // PC Management hook
+  const {
+    isAddPcModalOpen,
+    isSelectingSeatForPc,
+    selectedSeatForPc,
+    pcs,
+    setIsAddPcModalOpen,
+    setIsSelectingSeatForPc,
+    setSelectedSeatForPc,
+    setPcs,
+    fetchPcs,
+    startAddPc,
+    selectSeatForPc,
+    cancelAddPc,
+    completeAddPc,
+    resetPcManagement,
+  } = usePcManagement();
+  
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
-  const [registrationModalKey, setRegistrationModalKey] = useState(0);
-  const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
-  const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const [isEditMode, setIsEditMode] = useState(false);
   // 備份數據用於取消變更
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
-  const [isAddPcModalOpen, setIsAddPcModalOpen] = useState(false);
-  const [isSelectingSeatForPc, setIsSelectingSeatForPc] = useState(false);
-  const [selectedSeatForPc, setSelectedSeatForPc] = useState<any>(null);
-  const [pcs, setPcs] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
   const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
   
@@ -161,20 +190,6 @@ const Index = () => {
 
   const fetchSeatCoordinates = async () => {
     await fetchSeats();
-  };
-
-  // 載入電腦資料
-  const fetchPcs = async () => {
-    const { data, error } = await supabase
-      .from('pcs')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching PCs:', error);
-    } else {
-      setPcs(data || []);
-    }
   };
 
   // 載入設備資料
@@ -314,16 +329,10 @@ const Index = () => {
     setShowSeatPreview(false);
     setBackupContainers([]);
     setBackupSeatCoordinates([]);
-    setIsSelectingSeatForRegistration(false);
-    setSelectedSeatForRegistration(null);
-    setIsRegistrationModalOpen(false);
-    setIsSelectingSeatForPc(false);
-    setSelectedSeatForPc(null);
-    setIsAddPcModalOpen(false);
+    resetRegistration();
+    resetPcManagement();
     // 重置員工管理狀態
-    setIsManagingEmployees(false);
-    setShowDisabledEmployeesModal(false);
-    setSelectedEmptySeat(null);
+    resetEmployeeManagement();
     setIsAdminMigrationPanelOpen(false);
     // 重置員工位置交換狀態
     setIsSwappingEmployees(false);
@@ -333,9 +342,7 @@ const Index = () => {
 
   // 處理註冊按鈕點擊
   const handleRegistrationClick = () => {
-    // 每次打開註冊表單時，重置表單內容（通過改變 key 強制重新渲染）
-    setRegistrationModalKey(prev => prev + 1);
-    setIsSelectingSeatForRegistration(true);
+    startRegistration();
     toast({
       title: "請選擇座位",
       description: "請在平面圖中點選一個空的座位進行註冊",
@@ -344,8 +351,7 @@ const Index = () => {
 
   // 處理修改個人資料按鈕點擊
   const handleProfileEditClick = () => {
-    setRegistrationModalKey(prev => prev + 1);
-    setIsRegistrationModalOpen(true);
+    startProfileEdit();
   };
 
   // 處理座位點擊（註冊模式）
@@ -388,8 +394,7 @@ const Index = () => {
     }
     
     // 座位可用，選中並開啟註冊視窗
-    setSelectedSeatForRegistration(seat);
-    setIsRegistrationModalOpen(true);
+    selectSeatForRegistration(seat);
   };
 
   // 處理註冊成功
@@ -439,15 +444,13 @@ const Index = () => {
     await fetchEmployees(isAdmin);
     
     // 重置註冊狀態
-    setIsSelectingSeatForRegistration(false);
-    setSelectedSeatForRegistration(null);
-    setIsRegistrationModalOpen(false);
+    completeRegistration();
   };
 
 
   // 處理新增電腦按鈕點擊
   const handleAddPcClick = () => {
-    setIsSelectingSeatForPc(true);
+    startAddPc();
     toast({
       title: "請選擇座位",
       description: "請點擊要新增電腦的座位，或點擊已有電腦的座位進行修改",
@@ -457,17 +460,14 @@ const Index = () => {
   // 處理座位點擊（新增電腦模式）
   const handleSeatClickForPc = (seat: any) => {
     if (!isSelectingSeatForPc) return;
-    
-    setSelectedSeatForPc(seat);
-    setIsSelectingSeatForPc(false);
-    setIsAddPcModalOpen(true);
+    selectSeatForPc(seat);
   };
 
   // 新增電腦成功後的處理
   const handleAddPcSuccess = async () => {
     await fetchSeatCoordinates();
     await fetchPcs();
-    setSelectedSeatForPc(null);
+    completeAddPc();
     toast({
       title: "電腦新增成功",
       description: "電腦設備已成功新增到座位",
