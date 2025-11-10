@@ -20,6 +20,7 @@ import { useContainers } from "@/hooks/useContainers";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useRegistration } from "@/hooks/useRegistration";
 import { usePcManagement } from "@/hooks/usePcManagement";
+import { useEquipment } from "@/hooks/useEquipment";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
 import { getSeatColor } from "@/utils/colorMapping";
@@ -155,6 +156,31 @@ const Index = () => {
     resetPcManagement,
   } = usePcManagement();
   
+  // Equipment Management hook
+  const {
+    equipments,
+    isEquipmentModalOpen,
+    isSelectingSeatForEquipment,
+    selectedSeatForEquipment,
+    selectedEquipment,
+    isViewingEquipment,
+    setIsEquipmentModalOpen,
+    setIsSelectingSeatForEquipment,
+    setSelectedSeatForEquipment,
+    setSelectedEquipment,
+    setIsViewingEquipment,
+    fetchEquipments,
+    startAddEquipment,
+    selectSeatForEquipment,
+    viewEquipment,
+    startEditEquipment,
+    saveEquipmentToSeat,
+    cancelEquipmentOperation,
+    closeEquipmentView,
+    completeAddEquipment,
+    resetEquipmentManagement,
+  } = useEquipment();
+  
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
   const [isEditMode, setIsEditMode] = useState(false);
@@ -162,14 +188,6 @@ const Index = () => {
   const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
   const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
   const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
-  
-  // Equipment management states
-  const [equipments, setEquipments] = useState<any[]>([]);
-  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
-  const [isSelectingSeatForEquipment, setIsSelectingSeatForEquipment] = useState(false);
-  const [selectedSeatForEquipment, setSelectedSeatForEquipment] = useState<any>(null);
-  const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
-  const [isViewingEquipment, setIsViewingEquipment] = useState(false);
   
   // Admin password confirmation states
   const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
@@ -193,19 +211,6 @@ const Index = () => {
   };
 
   // 載入設備資料
-  const fetchEquipments = async () => {
-    const { data, error } = await supabase
-      .from('equipment')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching equipment:', error);
-    } else {
-      setEquipments(data || []);
-    }
-  };
-
   useEffect(() => {
     // 處理鍵盤事件 - ESC 取消座位拖拽
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -477,16 +482,13 @@ const Index = () => {
   // 設備相關處理函數
   const handleSeatClickForEquipment = (seat: any) => {
     if (!isSelectingSeatForEquipment) return;
-    
-    setSelectedSeatForEquipment(seat);
-    setIsSelectingSeatForEquipment(false);
-    setIsEquipmentModalOpen(true);
+    selectSeatForEquipment(seat);
   };
 
   const handleAddEquipmentSuccess = async () => {
     await fetchSeatCoordinates();
     await fetchEquipments();
-    setSelectedSeatForEquipment(null);
+    completeAddEquipment();
     toast({
       title: "設備新增成功",
       description: "設備已成功新增到座位",
@@ -494,46 +496,28 @@ const Index = () => {
   };
 
   const handleEquipmentSave = async (equipment: any) => {
-    if (selectedSeatForEquipment && equipment.id) {
-      try {
-        const { error } = await supabase
-          .from('seat_coordinates')
-          .update({ equipment_id: equipment.id })
-          .eq('id', selectedSeatForEquipment.id);
-
-        if (error) {
-          console.error('Error updating seat with equipment:', error);
-          toast({
-            title: "錯誤",
-            description: "無法將設備分配到座位",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        await handleAddEquipmentSuccess();
-      } catch (error) {
-        console.error('Error in handleEquipmentSave:', error);
+    if (equipment.id) {
+      const result = await saveEquipmentToSeat(equipment.id);
+      
+      if (!result.success) {
+        toast({
+          title: "錯誤",
+          description: "更新座位設備時發生錯誤",
+          variant: "destructive"
+        });
+        return;
       }
+
+      await handleAddEquipmentSuccess();
     }
   };
 
   const handleEquipmentClick = (equipment: any) => {
-    setSelectedEquipment(equipment);
-    setIsViewingEquipment(true);
+    viewEquipment(equipment);
   };
 
   const handleEquipmentEdit = () => {
-    if (selectedEquipment) {
-      // 找到包含此設備的座位
-      const seatWithEquipment = seatCoordinates.find(seat => seat.equipment_id === selectedEquipment.id);
-      if (seatWithEquipment) {
-        setSelectedSeatForEquipment({ ...seatWithEquipment, equipment: selectedEquipment });
-        setIsViewingEquipment(false);
-        setSelectedEquipment(null);
-        setIsEquipmentModalOpen(true);
-      }
-    }
+    startEditEquipment(seatCoordinates);
   };
 
   const toggleEditMode = () => {
@@ -976,7 +960,7 @@ const Index = () => {
                     {isSelectingSeatForPc ? '選擇座位中...' : '新增/移除-電腦'}
                   </button>
                   <button 
-                    onClick={() => setIsSelectingSeatForEquipment(true)}
+                    onClick={startAddEquipment}
                     disabled={isViewingEquipment || isEquipmentModalOpen}
                     className={`px-4 py-2 rounded text-sm transition-colors ${
                       isSelectingSeatForEquipment 
@@ -1930,11 +1914,7 @@ const Index = () => {
       {/* Equipment Modal */}
       <EquipmentModal 
         isOpen={isEquipmentModalOpen}
-        onClose={() => {
-          setIsEquipmentModalOpen(false);
-          setSelectedSeatForEquipment(null);
-          setIsSelectingSeatForEquipment(false);
-        }}
+        onClose={cancelEquipmentOperation}
         equipment={selectedSeatForEquipment?.equipment}
         onSave={handleEquipmentSave}
         currentEmployee={currentEmployee}
@@ -1944,10 +1924,7 @@ const Index = () => {
       {isViewingEquipment && selectedEquipment && (
         <EquipmentDataDisplay 
           equipment={selectedEquipment}
-          onClose={() => {
-            setIsViewingEquipment(false);
-            setSelectedEquipment(null);
-          }}
+          onClose={closeEquipmentView}
           onEdit={isAdmin ? handleEquipmentEdit : undefined}
           isAdmin={isAdmin}
         />
