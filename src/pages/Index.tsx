@@ -14,13 +14,7 @@ import AdminPasswordReset from "@/components/AdminPasswordReset";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useSeats } from "@/hooks/useSeats";
-import { useContainers } from "@/hooks/useContainers";
-import { useEmployees } from "@/hooks/useEmployees";
-import { useRegistration } from "@/hooks/useRegistration";
-import { usePcManagement } from "@/hooks/usePcManagement";
-import { useEquipment } from "@/hooks/useEquipment";
+import { useAppState } from "@/hooks/useAppState";
 import { getStaffPhotoUrl, getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 import { getSeatSize, snapToGrid, checkSeatOverlap } from "@/utils/seatCalculations";
 import { getSeatColor } from "@/utils/colorMapping";
@@ -28,218 +22,209 @@ import { enterEditMode, hasChanges, resetEditState, resetLogoutState } from "@/u
 import { swapEmployees, swapPcsOnly, restoreMissingEmployeeAssignments } from "@/utils/seatSwapHandlers";
 
 const Index = () => {
-  // Auth hook
-  const { user, currentEmployee, isAdmin, login, logout } = useAuth();
-  
-  // Seats hook
-  const {
-    seatCoordinates,
-    selectedSeat,
-    isDraggingSeat,
-    seatDragPosition,
-    showSeatPreview,
-    containerMousePosition,
-    isSeatEditMode,
-    selectedSeatTemplate,
-    setSeatCoordinates,
-    setSelectedSeat,
-    setIsDraggingSeat,
-    setSeatDragPosition,
-    setShowSeatPreview,
-    setContainerMousePosition,
-    setIsSeatEditMode,
-    setSelectedSeatTemplate,
-    fetchSeats,
-    deleteSeat: deleteSeatFromHook,
-    updateSeatPosition,
-    handleBasicSeatClick,
-    cancelSeatDrag,
-    toggleSeatEditMode: toggleSeatEditModeFromHook,
-    handleContainerClickForSeat: handleContainerClickForSeatFromHook,
-  } = useSeats();
-  
-  // Containers hook
-  const {
-    containers,
-    selectedContainer,
-    editingContainer,
-    isContainerEditMode,
-    isAddingContainer,
-    newContainerStart,
-    newContainerEnd,
-    showNameDialog,
-    newContainerName,
-    pendingContainer,
-    isDragging,
-    dragHandle,
-    backupContainers,
-    setContainers,
-    setSelectedContainer,
-    setEditingContainer,
-    setIsContainerEditMode,
-    setIsAddingContainer,
-    setNewContainerStart,
-    setNewContainerEnd,
-    setShowNameDialog,
-    setNewContainerName,
-    setPendingContainer,
-    setIsDragging,
-    setBackupContainers,
-    fetchContainers,
-    checkContainerOverlap,
-    handleContainerClick,
-    toggleContainerEditMode,
-    startAddingContainer,
-    handleContainerNameChange,
-    handleMouseDown,
-    handleCanvasMouseDownForContainer,
-    handleCanvasMouseMoveForContainer,
-    handleCanvasMouseUpForContainer,
-    saveContainerChanges,
-    saveNewContainer,
-    cancelNewContainer,
-    cancelContainerChanges,
-    deleteContainer,
-    getRubberBandStyle,
-  } = useContainers();
-  
-  // Employees hook
-  const {
-    employees,
-    selectedSeatEmployee,
-    isManagingEmployees,
-    disabledEmployees,
-    showDisabledEmployeesModal,
-    selectedEmptySeat,
-    setSelectedSeatEmployee,
-    setIsManagingEmployees,
-    setShowDisabledEmployeesModal,
-    setSelectedEmptySeat,
-    fetchEmployees,
-    handleDisableEmployee: handleDisableEmployeeFromHook,
-    handleEnableEmployee: handleEnableEmployeeFromHook,
-    resetEmployeeManagement,
-  } = useEmployees();
-  
-  // Registration hook
-  const {
-    isRegistrationModalOpen,
-    registrationModalKey,
-    isSelectingSeatForRegistration,
-    selectedSeatForRegistration,
-    setIsRegistrationModalOpen,
-    setIsSelectingSeatForRegistration,
-    setSelectedSeatForRegistration,
-    startRegistration,
-    startProfileEdit,
-    selectSeatForRegistration,
-    cancelRegistration,
-    completeRegistration,
-    resetRegistration,
-  } = useRegistration();
-  
-  // PC Management hook
-  const {
-    isAddPcModalOpen,
-    isSelectingSeatForPc,
-    selectedSeatForPc,
-    pcs,
-    setIsAddPcModalOpen,
-    setIsSelectingSeatForPc,
-    setSelectedSeatForPc,
-    setPcs,
-    fetchPcs,
-    startAddPc,
-    selectSeatForPc,
-    cancelAddPc,
-    completeAddPc,
-    resetPcManagement,
-  } = usePcManagement();
-  
-  // Equipment Management hook
-  const {
-    equipments,
-    isEquipmentModalOpen,
-    isSelectingSeatForEquipment,
-    selectedSeatForEquipment,
-    selectedEquipment,
-    isViewingEquipment,
-    setIsEquipmentModalOpen,
-    setIsSelectingSeatForEquipment,
-    setSelectedSeatForEquipment,
-    setSelectedEquipment,
-    setIsViewingEquipment,
-    fetchEquipments,
-    startAddEquipment,
-    selectSeatForEquipment,
-    viewEquipment,
-    startEditEquipment,
-    saveEquipmentToSeat,
-    cancelEquipmentOperation,
-    closeEquipmentView,
-    completeAddEquipment,
-    resetEquipmentManagement,
-  } = useEquipment();
-  
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 1060, height: 850});
-  const [isEditMode, setIsEditMode] = useState(false);
-  // 備份數據用於取消變更
-  const [backupSeatCoordinates, setBackupSeatCoordinates] = useState<any[]>([]);
-  const [isTimeClockModalOpen, setIsTimeClockModalOpen] = useState(false);
-  const [isAdminMigrationPanelOpen, setIsAdminMigrationPanelOpen] = useState(false);
-  
-  // Admin password confirmation states
-  const [isSwappingEmployees, setIsSwappingEmployees] = useState(false);
-  const [selectedSeatsForSwap, setSelectedSeatsForSwap] = useState<any[]>([]);
-  const [showSwapConfirmModal, setShowSwapConfirmModal] = useState(false);
-  const [isPasswordResetModalOpen, setIsPasswordResetModalOpen] = useState(false);
-  
+  // 使用統一的狀態管理層
+  const appState = useAppState();
   const { toast } = useToast();
   
-  // Header clock (GMT+8)
-  const [currentTime, setCurrentTime] = useState(new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // 解構常用的狀態和方法（為了方便訪問）
+  const {
+    // Auth
+    auth: { user, currentEmployee, isAdmin, login, logout },
+    
+    // Seats
+    seats: {
+      seatCoordinates,
+      selectedSeat,
+      isDraggingSeat,
+      seatDragPosition,
+      showSeatPreview,
+      containerMousePosition,
+      isSeatEditMode,
+      selectedSeatTemplate,
+      setSeatCoordinates,
+      setSelectedSeat,
+      setIsDraggingSeat,
+      setSeatDragPosition,
+      setShowSeatPreview,
+      setContainerMousePosition,
+      setIsSeatEditMode,
+      setSelectedSeatTemplate,
+      fetchSeats,
+      deleteSeat: deleteSeatFromHook,
+      updateSeatPosition,
+      handleBasicSeatClick,
+      cancelSeatDrag,
+      toggleSeatEditMode: toggleSeatEditModeFromHook,
+      handleContainerClickForSeat: handleContainerClickForSeatFromHook,
+    },
+    
+    // Containers
+    containers: {
+      containers,
+      selectedContainer,
+      editingContainer,
+      isContainerEditMode,
+      isAddingContainer,
+      newContainerStart,
+      newContainerEnd,
+      showNameDialog,
+      newContainerName,
+      pendingContainer,
+      isDragging,
+      dragHandle,
+      backupContainers,
+      setContainers,
+      setSelectedContainer,
+      setEditingContainer,
+      setIsContainerEditMode,
+      setIsAddingContainer,
+      setNewContainerStart,
+      setNewContainerEnd,
+      setShowNameDialog,
+      setNewContainerName,
+      setPendingContainer,
+      setIsDragging,
+      setBackupContainers,
+      fetchContainers,
+      checkContainerOverlap,
+      handleContainerClick,
+      toggleContainerEditMode,
+      startAddingContainer,
+      handleContainerNameChange,
+      handleMouseDown,
+      handleCanvasMouseDownForContainer,
+      handleCanvasMouseMoveForContainer,
+      handleCanvasMouseUpForContainer,
+      saveContainerChanges,
+      saveNewContainer,
+      cancelNewContainer,
+      cancelContainerChanges,
+      deleteContainer,
+      getRubberBandStyle,
+    },
+    
+    // Employees
+    employees: {
+      employees,
+      selectedSeatEmployee,
+      isManagingEmployees,
+      disabledEmployees,
+      showDisabledEmployeesModal,
+      selectedEmptySeat,
+      setSelectedSeatEmployee,
+      setIsManagingEmployees,
+      setShowDisabledEmployeesModal,
+      setSelectedEmptySeat,
+      fetchEmployees,
+      handleDisableEmployee: handleDisableEmployeeFromHook,
+      handleEnableEmployee: handleEnableEmployeeFromHook,
+      resetEmployeeManagement,
+    },
+    
+    // Registration
+    registration: {
+      isRegistrationModalOpen,
+      registrationModalKey,
+      isSelectingSeatForRegistration,
+      selectedSeatForRegistration,
+      setIsRegistrationModalOpen,
+      setIsSelectingSeatForRegistration,
+      setSelectedSeatForRegistration,
+      startRegistration,
+      startProfileEdit,
+      selectSeatForRegistration,
+      cancelRegistration,
+      completeRegistration,
+      resetRegistration,
+    },
+    
+    // PC Management
+    pcManagement: {
+      isAddPcModalOpen,
+      isSelectingSeatForPc,
+      selectedSeatForPc,
+      pcs,
+      setIsAddPcModalOpen,
+      setIsSelectingSeatForPc,
+      setSelectedSeatForPc,
+      setPcs,
+      fetchPcs,
+      startAddPc,
+      selectSeatForPc,
+      cancelAddPc,
+      completeAddPc,
+      resetPcManagement,
+    },
+    
+    // Equipment
+    equipment: {
+      equipments,
+      isEquipmentModalOpen,
+      isSelectingSeatForEquipment,
+      selectedSeatForEquipment,
+      selectedEquipment,
+      isViewingEquipment,
+      setIsEquipmentModalOpen,
+      setIsSelectingSeatForEquipment,
+      setSelectedSeatForEquipment,
+      setSelectedEquipment,
+      setIsViewingEquipment,
+      fetchEquipments,
+      startAddEquipment,
+      selectSeatForEquipment,
+      viewEquipment,
+      startEditEquipment,
+      saveEquipmentToSeat,
+      cancelEquipmentOperation,
+      closeEquipmentView,
+      completeAddEquipment,
+      resetEquipmentManagement,
+    },
+    
+    // Global UI State
+    isLoginModalOpen,
+    setIsLoginModalOpen,
+    isTimeClockModalOpen,
+    setIsTimeClockModalOpen,
+    isAdminMigrationPanelOpen,
+    setIsAdminMigrationPanelOpen,
+    isPasswordResetModalOpen,
+    setIsPasswordResetModalOpen,
+    
+    // Edit Mode
+    isEditMode,
+    setIsEditMode,
+    backupSeatCoordinates,
+    setBackupSeatCoordinates,
+    
+    // Employee Swap
+    isSwappingEmployees,
+    setIsSwappingEmployees,
+    selectedSeatsForSwap,
+    setSelectedSeatsForSwap,
+    showSwapConfirmModal,
+    setShowSwapConfirmModal,
+    
+    // Canvas
+    canvasSize,
+    setCanvasSize,
+    
+    // Time
+    currentTime,
+    
+    // Combined Actions
+    handleCompleteLogout,
+    refreshAllData,
+    resetAllEditStates,
+  } = appState;
+  
+  // 時間格式化函數
   const formatHeaderTime = (d: Date) => d.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Taipei' });
   const formatHeaderDate = (d: Date) => d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Taipei' });
 
   const fetchSeatCoordinates = async () => {
     await fetchSeats();
   };
-
-  // 載入設備資料
-  useEffect(() => {
-    // 處理鍵盤事件 - ESC 取消座位拖拽
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isDraggingSeat) {
-        cancelSeatDrag();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isDraggingSeat]);
-
-  // 監控管理員狀態變化，非管理員時重置員工管理功能
-  useEffect(() => {
-    if (!isAdmin) {
-      if (isManagingEmployees) {
-        resetEmployeeManagement();
-        setIsAdminMigrationPanelOpen(false);
-      }
-      if (isSwappingEmployees) {
-        setIsSwappingEmployees(false);
-        setSelectedSeatsForSwap([]);
-        setShowSwapConfirmModal(false);
-      }
-    }
-  }, [isAdmin, isManagingEmployees, isSwappingEmployees]);
 
   useEffect(() => {
     let logoutTimer: NodeJS.Timeout | null = null;
