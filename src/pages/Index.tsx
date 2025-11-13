@@ -11,6 +11,7 @@ import EquipmentDataDisplay from "@/components/EquipmentDataDisplay";
 import EquipmentModal from "@/components/EquipmentModal";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
 import AdminPasswordReset from "@/components/AdminPasswordReset";
+import RightPanel from "@/components/RightPanel";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1533,225 +1534,32 @@ const Index = () => {
         {/* Right Panel - 3 Containers - 250px width */}
         <div className="w-[250px] flex flex-col gap-2 h-[calc(100vh-120px)]">
           {/* Combined Staff Info + Work Log Container */}
-          <div className="flex-[1.8] bg-slate-800/30 rounded-lg border border-gray-700 px-2 py-4 space-y-4">
-            {/* Staff Info Section */}
-            {selectedSeatEmployee ? (
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-white text-lg font-medium">員工資訊</span>
-                  </div>
-                  <span className="text-white text-lg font-medium">{selectedSeatEmployee.name}</span>
-                </div>
-                
-                {/* Avatar and basic info */}
-                <div className="flex flex-col items-center mb-3">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-blue-500 mb-2">
-                    {selectedSeatEmployee.photo ? (
-                      <img 
-                        src={getStaffPhotoUrl(selectedSeatEmployee.photo) || ''}
-                        alt={selectedSeatEmployee.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            parent.innerHTML = '<div class="w-full h-full bg-gray-600 flex items-center justify-center"><span class="text-xl text-white">👤</span></div>';
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-600 flex items-center justify-center">
-                        <span className="text-xl text-white">👤</span>
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-blue-300 text-sm">{selectedSeatEmployee.position || '未設定職位'}</span>
-                </div>
-                
-                {/* Contact info */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                    </svg>
-                    <span className="text-white">分機: {selectedSeatEmployee.extension || '未設定'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-white">部門: {selectedSeatEmployee.department || '未設定部門'}</span>
-                  </div>
-                </div>
-              </div>
-            ) : isSelectingSeatForRegistration ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-lg">🪑</span>
-                </div>
-                <h3 className="text-sm font-medium text-blue-300 mb-2">選擇座位</h3>
-                <p className="text-xs text-gray-400 mb-2">請在平面圖中點選一個空的座位</p>
-                <button 
-                  onClick={() => {
-                    setIsSelectingSeatForRegistration(false);
-                    toast({
-                      title: "已取消",
-                      description: "已取消座位選擇",
-                    });
-                  }}
-                  className="mt-2 px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs transition-colors"
-                >
-                  取消選擇
-                </button>
-              </div>
-            ) : isEditMode ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-cyan-300 text-center">系統管理員</h3>
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mb-2">
-                    <span className="text-lg text-white">👤</span>
-                  </div>
-                  <span className="text-blue-300 text-sm">系統管理員</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
-                  <div className="w-8 h-6 border border-gray-600 rounded"></div>
-                </div>
-                <p className="text-xs text-gray-400 text-center">請點選座位查看員工信息</p>
-              </div>
-            )}
-
-            {/* Edit Tools (always show in edit mode) */}
-            {isEditMode && (
-              <div className="space-y-2 mb-3">
-                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
-                <button 
-                  onClick={startAddingContainer}
-                  className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors"
-                >
-                  新增容器
-                </button>
-                <button 
-                  onClick={toggleContainerEditMode}
-                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
-                    isContainerEditMode 
-                      ? 'bg-yellow-600 hover:bg-yellow-700' 
-                      : 'bg-orange-600 hover:bg-orange-700'
-                  }`}
-                >
-                  {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
-                </button>
-                <button 
-                  onClick={deleteContainer}
-                  className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors"
-                >
-                  刪除容器
-                </button>
-                <button 
-                  onClick={toggleSeatEditMode}
-                  disabled={!selectedContainer}
-                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
-                    isSeatEditMode 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-green-600 hover:bg-green-700'
-                  } ${!selectedContainer ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  新增座位
-                </button>
-                <button 
-                  onClick={deleteSeat}
-                  disabled={!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id}
-                  className={`w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors ${
-                    (!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id) 
-                      ? 'opacity-50 cursor-not-allowed' 
-                      : ''
-                  }`}
-                >
-                  刪除座位
-                </button>
-              </div>
-            )}
-
-            {/* Work Log Section (title removed) */}
-            {selectedSeatEmployee ? (
-              currentEmployee && currentEmployee.id === selectedSeatEmployee.id ? (
-                <WorkLogPanel 
-                  employeeId={selectedSeatEmployee.id}
-                  employeeName={selectedSeatEmployee.name}
-                  currentUserId={currentEmployee?.id || null}
-                  pcData={null}
-                />
-              ) : (
-                <WorkLogViewer 
-                  employeeId={selectedSeatEmployee.id}
-                  employeeName={selectedSeatEmployee.name}
-                  currentUserId={currentEmployee?.id || null}
-                  pcData={null}
-                />
-              )
-            ) : isEditMode ? (
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-cyan-300 text-center mb-3">編輯模式</h3>
-                <button 
-                  onClick={startAddingContainer}
-                  className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors"
-                >
-                  新增容器
-                </button>
-                <button 
-                  onClick={toggleContainerEditMode}
-                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
-                    isContainerEditMode 
-                      ? 'bg-yellow-600 hover:bg-yellow-700' 
-                      : 'bg-orange-600 hover:bg-orange-700'
-                  }`}
-                >
-                  {isContainerEditMode ? '退出編輯容器' : '編輯容器'}
-                </button>
-                <button 
-                  onClick={deleteContainer}
-                  className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors"
-                >
-                  刪除容器
-                </button>
-                <button 
-                  onClick={toggleSeatEditMode}
-                  disabled={!selectedContainer}
-                  className={`w-full px-3 py-2 rounded text-xs font-medium transition-colors ${
-                    isSeatEditMode 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-green-600 hover:bg-green-700'
-                  } ${!selectedContainer ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  新增座位
-                </button>
-                <button 
-                  onClick={deleteSeat}
-                  disabled={!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id}
-                  className={`w-full px-3 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors ${
-                    (!selectedSeat || !selectedContainer || selectedSeat.container_id !== selectedContainer.id) 
-                      ? 'opacity-50 cursor-not-allowed' 
-                      : ''
-                  }`}
-                >
-                  刪除座位
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="w-12 h-12 mb-3 border border-gray-600 rounded-lg flex items-center justify-center">
-                  <div className="w-8 h-6 border border-gray-600 rounded"></div>
-                </div>
-                <p className="text-xs text-gray-400 text-center">工作日誌</p>
-              </div>
-            )}
+          <div className="flex-[1.8] bg-slate-800/30 rounded-lg border border-gray-700 overflow-hidden">
+            <RightPanel
+              isSelectingSeatForRegistration={isSelectingSeatForRegistration}
+              isEditMode={isEditMode}
+              selectedSeatEmployee={selectedSeatEmployee}
+              onCancelSelection={() => {
+                setIsSelectingSeatForRegistration(false);
+                toast({
+                  title: "已取消",
+                  description: "已取消座位選擇",
+                });
+              }}
+              isContainerEditMode={isContainerEditMode}
+              isSeatEditMode={isSeatEditMode}
+              selectedContainer={selectedContainer}
+              selectedSeat={selectedSeat}
+              onStartAddingContainer={startAddingContainer}
+              onToggleContainerEditMode={toggleContainerEditMode}
+              onDeleteContainer={deleteContainer}
+              onToggleSeatEditMode={toggleSeatEditMode}
+              onDeleteSeat={deleteSeat}
+              selectedSeatTemplate={selectedSeatTemplate}
+              onTemplateChange={setSelectedSeatTemplate}
+              currentUserId={currentEmployee?.id || null}
+              pcData={undefined}
+            />
           </div>
 
           {/* PC Data Container - larger height */}
