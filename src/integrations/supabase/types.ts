@@ -609,7 +609,7 @@ export type Database = {
     }
     Functions: {
       check_rls_performance: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           estimated_rows: number
           index_count: number
@@ -617,26 +617,11 @@ export type Database = {
           table_name: string
         }[]
       }
-      create_auth_for_existing_employees: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_employee_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_employee_owner: {
-        Args: { employee_uuid: string }
-        Returns: boolean
-      }
+      create_auth_for_existing_employees: { Args: never; Returns: string }
+      get_current_employee_id: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      is_employee_owner: { Args: { employee_uuid: string }; Returns: boolean }
     }
     Enums: {
       user_role: "admin" | "employee"
