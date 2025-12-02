@@ -12,6 +12,7 @@ import EquipmentModal from "@/components/EquipmentModal";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
 import AdminPasswordReset from "@/components/AdminPasswordReset";
 import RightPanel from "@/components/RightPanel";
+import { CanvasArea, ColorLegend } from "@/components/Canvas";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1078,457 +1079,45 @@ const Index = () => {
       <div className="w-[1400px] flex px-6 py-6 gap-6">
         {/* Left Panel - Seat Configuration - 1300px width */}
         <div className="w-[1300px] flex-1">
-          {/* Legend - 400px width, 80px height */}
-          <div className="w-100 mx-auto mb-4">
-            <div className="flex items-center justify-center gap-6 mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                <span className="text-sm">有員工</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span className="text-sm">有PC</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-gray-500 rounded"></div>
-                <span className="text-sm">空位</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                <span className="text-sm">有設備</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-red-500 rounded"></div>
-                <span className="text-sm">已選中</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 text-center">
-              請點選座位查看詳細信息 可按拖選進行位置調整
-            </p>
-          </div>
+          {/* Legend */}
+          <ColorLegend />
 
-          {/* Container Display Area - Dynamic Canvas Size */}
-          <div 
-            className={`bg-slate-800/30 rounded-lg relative overflow-hidden ${
-              isAddingContainer ? 'cursor-crosshair' : 
-              isDraggingSeat ? 'cursor-move' : 
-              isSeatEditMode && selectedContainer ? 'cursor-none' : ''
-            }`}
-            style={{
-              width: `${canvasSize.width}px`,
-              height: `${canvasSize.height}px`,
-              backgroundImage: (isEditMode || isAddingContainer)
-                ? `repeating-linear-gradient(to right, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px),
-                   repeating-linear-gradient(to bottom, transparent, transparent 19px, rgba(156, 163, 175, 0.15) 19px, rgba(156, 163, 175, 0.15) 20px)`
-                : 'none',
-              backgroundSize: (isEditMode || isAddingContainer) ? '20px 20px' : 'auto',
-              userSelect: 'none'
-            }}
-            onMouseDown={handleCanvasMouseDown}
-            onMouseMove={(e) => {
-              handleCanvasMouseMove(e);
-              
-              // 處理座位拖拽
-              if (isDraggingSeat && selectedSeat && selectedContainer) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                // 檢查鼠標是否在選中的容器內
-                const isInSelectedContainer = 
-                  mouseX >= selectedContainer.x && 
-                  mouseX <= selectedContainer.x + selectedContainer.width &&
-                  mouseY >= selectedContainer.y && 
-                  mouseY <= selectedContainer.y + selectedContainer.height;
-                
-                if (isInSelectedContainer) {
-                  // 計算相對於容器的位置
-                  const relativeX = mouseX - selectedContainer.x;
-                  const relativeY = mouseY - selectedContainer.y;
-                  const seatX = snapToGrid(relativeX);
-                  const seatY = snapToGrid(relativeY);
-                  
-                  // 確保座位不會超出容器邊界
-                  const maxX = selectedContainer.width - selectedSeat.pixel_x;
-                  const maxY = selectedContainer.height - selectedSeat.pixel_y;
-                  
-                  setSeatDragPosition({
-                    x: Math.max(0, Math.min(seatX, maxX)),
-                    y: Math.max(0, Math.min(seatY, maxY))
-                  });
-                }
-              }
-              // 追蹤鼠標位置用於座位預覽
-              else if (isSeatEditMode && selectedContainer) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                // 檢查鼠標是否在選中的容器內
-                const isInSelectedContainer = 
-                  mouseX >= selectedContainer.x && 
-                  mouseX <= selectedContainer.x + selectedContainer.width &&
-                  mouseY >= selectedContainer.y && 
-                  mouseY <= selectedContainer.y + selectedContainer.height;
-                
-                if (isInSelectedContainer) {
-                  const seatSize = getSeatSize(selectedSeatTemplate);
-                  const seatX = snapToGrid(mouseX);
-                  const seatY = snapToGrid(mouseY);
-                  
-                  // 確保座位不會超出容器邊界
-                  const maxX = selectedContainer.x + selectedContainer.width - seatSize.width;
-                  const maxY = selectedContainer.y + selectedContainer.height - seatSize.height;
-                  
-                  setContainerMousePosition({
-                    x: Math.max(selectedContainer.x, Math.min(seatX, maxX)),
-                    y: Math.max(selectedContainer.y, Math.min(seatY, maxY))
-                  });
-                  setShowSeatPreview(true);
-                } else {
-                  setShowSeatPreview(false);
-                }
-              } else {
-                setShowSeatPreview(false);
-              }
-            }}
-            onMouseUp={handleCanvasMouseUp}
-            onMouseLeave={(e) => {
-              handleCanvasMouseUp();
-              setShowSeatPreview(false);
-            }}
-          >
-            {/* 橡皮筋矩形 */}
-            {isAddingContainer && newContainerStart && newContainerEnd && (
-              <div style={getRubberBandStyle()} />
-            )}
-
-            {/* Render containers with relative positioning and their seats */}
-            {containers.map((container) => {
-              
-              // 優先使用編輯中的容器狀態，避免資料庫重載影響編輯
-              const currentContainer = (editingContainer && editingContainer.id === container.id) 
-                ? editingContainer 
-                : container;
-              const isSelected = selectedContainer?.id === container.id;
-              
-              return (
-                <div 
-                  key={container.id} 
-                  className={`relative border bg-opacity-10 ${
-                    isContainerEditMode ? 'cursor-pointer hover:border-yellow-400' : ''
-                  } ${
-                    isSelected ? 'border-yellow-400 border-2' : 'border-gray-700'
-                  }`}
-                   onClick={(e) => {
-                     if (isSeatEditMode) {
-                       handleContainerClickForSeat(e, container);
-                     }
-                     // 在編輯模式下，總是允許選擇容器
-                     if (isEditMode) {
-                       handleContainerClick(container);
-                     }
-                   }}
-                  style={{ 
-                    position: 'absolute',
-                    left: `${currentContainer.x}px`,
-                    top: `${currentContainer.y}px`,
-                    width: `${currentContainer.width}px`,
-                    height: `${currentContainer.height}px`,
-                    backgroundColor: 'transparent'
-                  }}
-                  title={`容器: ${currentContainer.name} 位置:(${currentContainer.x}, ${currentContainer.y}) 大小:(${currentContainer.width}×${currentContainer.height})`}
-                >
-                  {/* 容器名稱 */}
-                  <div className="absolute inset-0 flex items-start justify-center text-lg font-medium text-white pointer-events-none pt-2">
-                    {currentContainer.name}
-                  </div>
-                  
-                  {/* Resize Handles - 只在選中時顯示 */}
-                  {isSelected && isContainerEditMode && (
-                    <>
-                      {/* Top handle */}
-                      <div 
-                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-6 h-2 bg-yellow-400 cursor-n-resize select-none"
-                        onMouseDown={(e) => handleMouseDown(e, 'top')}
-                        style={{ userSelect: 'none' }}
-                      />
-                      {/* Bottom handle */}
-                      <div 
-                        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-6 h-2 bg-yellow-400 cursor-s-resize select-none"
-                        onMouseDown={(e) => handleMouseDown(e, 'bottom')}
-                        style={{ userSelect: 'none' }}
-                      />
-                      {/* Left handle */}
-                      <div 
-                        className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-w-resize select-none"
-                        onMouseDown={(e) => handleMouseDown(e, 'left')}
-                        style={{ userSelect: 'none' }}
-                      />
-                      {/* Right handle */}
-                      <div 
-                        className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-6 bg-yellow-400 cursor-e-resize select-none"
-                        onMouseDown={(e) => handleMouseDown(e, 'right')}
-                        style={{ userSelect: 'none' }}
-                      />
-                    </>
-                  )}
-
-                  {/* Render seats relative to this container */}
-                  {seatCoordinates
-                  .filter(seat => seat.container_id === container.id)
-                    .map((seat) => {
-                      // 決定座位顏色
-                      const isSelected = selectedSeat?.id === seat.id;
-                      const isSwapping = isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id);
-                      const isSelectingForReg = isSelectingSeatForRegistration && selectedSeatForRegistration?.id === seat.id;
-                      
-                      const { backgroundColor: seatColor, borderColor } = getSeatColor(
-                        seat,
-                        isSelected,
-                        !!isSwapping,
-                        isSelectingForReg
-                      );
-                      
-                       // 如果是選中的座位並且在拖拽模式，使用拖拽位置
-                       const isCurrentSeatDragging = isDraggingSeat && selectedSeat?.id === seat.id;
-                       const displayX = isCurrentSeatDragging ? seatDragPosition.x : seat.x;
-                       const displayY = isCurrentSeatDragging ? seatDragPosition.y : seat.y;
-                       
-                       return (
-                         <div
-                           key={seat.id}
-                              className={`seat-container absolute rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 ${
-                                selectedSeat?.id === seat.id ? 'ring-2 ring-red-400 ring-opacity-80' : ''
-                              } ${
-                                isSwappingEmployees && selectedSeatsForSwap.find(s => s.id === seat.id) 
-                                  ? 'ring-4 ring-purple-400 ring-opacity-100' : ''
-                              }`}
-                           style={{
-                             left: `${displayX}px`,
-                             top: `${displayY}px`,
-                             width: `${seat.pixel_x}px`,
-                             height: `${seat.pixel_y}px`,
-                               backgroundColor: seatColor,
-                               border: `2px solid ${borderColor}`,
-                              backdropFilter: 'blur(4px)',
-                             // 拖拽中的座位加上特殊效果
-                             opacity: isCurrentSeatDragging ? 0.8 : 1,
-                             transform: isCurrentSeatDragging ? 'scale(1.05)' : 'scale(1)',
-                             zIndex: isCurrentSeatDragging ? 1000 : 'auto'
-                           }}
-                             onClick={(e) => {
-                                // 允許所有模式下點擊座位查看資訊
-                                handleSeatClick(e, seat);
-                              }}
-                            title={`座位 ${seat.id} 容器內位置:(${seat.x}, ${seat.y}) 大小:(${seat.pixel_x}×${seat.pixel_y}) ${seat.employee ? `員工: ${seat.employee.name}` : '空座位'}`}
-                          >
-                             {/* 員工資訊顯示 */}
-                             {seat.employee && (
-                               <div className="absolute top-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-                                 {seat.employee.photo ? (
-                                  // 有頭像時顯示圓形頭像
-                                  <div className="relative group">
-                                    <div className="w-[60px] h-[60px] rounded-full overflow-hidden border-2 border-white/50 shadow-lg">
-                                       <img
-                                         src={getStaffPhotoUrl(seat.employee.photo) || ''}
-                                         alt={seat.employee.name}
-                                         className="employee-avatar w-full h-full object-cover transition-all duration-300"
-                                       onLoad={() => {
-                                         console.log('頭像載入成功:', seat.employee.name, seat.employee.photo);
-                                       }}
-                                       onError={(e) => {
-                                         console.error('頭像載入失敗:', seat.employee.name, seat.employee.photo);
-                                        console.error('嘗試載入的URL:', e.currentTarget.src);
-                                        // 如果圖片載入失敗，隱藏圖片並顯示預設圓形圖示
-                                        e.currentTarget.style.display = 'none';
-                                        const parent = e.currentTarget.parentElement;
-                                        if (parent) {
-                                          const fallback = document.createElement('div');
-                                          fallback.className = 'employee-avatar w-full h-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300';
-                                          fallback.innerHTML = '<div class="text-2xl">👤</div>';
-                                          parent.appendChild(fallback);
-                                        }
-                                      }}
-                                       />
-                                     </div>
-                                      {/* 懸停時顯示名字 */}
-                                      <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-                                       {seat.employee.name}
-                                     </div>
-                                  </div>
-                                ) : (
-                                  // 沒有頭像時顯示圓形預設圖示
-                                  <div className="relative group">
-                                    <div className="employee-avatar w-[60px] h-[60px] rounded-full overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/50 shadow-lg transition-all duration-300">
-                                      <div className="w-full h-full text-white flex items-center justify-center">
-                                        <div className="text-2xl">👤</div>
-                                      </div>
-                                    </div>
-                                     {/* 懸停時顯示名字 */}
-                                     <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-                                       {seat.employee.name}
-                                    </div>
-                                 </div>
-                               )}
-                              </div>
-                             )}
-                              
-                               {/* 電腦圖示顯示 */}
-                               {seat.pc && (
-                                 <div className="absolute bottom-1 right-1">
-                                   <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                                     <span className="text-white text-xs">💻</span>
-                                   </div>
-                                 </div>
-                               )}
-                             
-                              {/* 設備圖示顯示 - 充滿整個座位 */}
-                              {seat.equipment && (
-                                <div className="absolute inset-0">
-                                  {seat.equipment.photo ? (
-                                    <div 
-                                      className="w-full h-full rounded-lg overflow-hidden shadow-lg cursor-pointer transition-all"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEquipmentClick(seat.equipment);
-                                      }}
-                                      title={`設備: ${seat.equipment.product}`}
-                                    >
-                                      <img
-                                        src={getEquipmentPhotoUrl(seat.equipment.photo) || ''}
-                                        alt={seat.equipment.product}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          console.error('設備圖片載入失敗:', seat.equipment.product, seat.equipment.photo);
-                                          // 如果圖片載入失敗，顯示預設圖示
-                                          const parent = e.currentTarget.parentElement;
-                                          if (parent) {
-                                            parent.innerHTML = '<div class="w-full h-full bg-purple-500/80 rounded-lg flex items-center justify-center"><span class="text-white text-2xl">⚙️</span></div>';
-                                          }
-                                        }}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div 
-                                      className="w-full h-full bg-purple-500/80 rounded-lg flex items-center justify-center shadow-lg cursor-pointer hover:bg-purple-500/90 transition-all"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEquipmentClick(seat.equipment);
-                                      }}
-                                      title={`設備: ${seat.equipment.product}`}
-                                    >
-                                      <span className="text-white text-2xl">⚙️</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            
-                            {/* 拖拽中的座位顯示十字線 */}
-                            {isCurrentSeatDragging && (
-                             <div
-                               className="absolute"
-                               style={{
-                                 left: '-8px',
-                                 top: '-8px',
-                                 width: '16px',
-                                 height: '16px',
-                                 pointerEvents: 'none'
-                               }}
-                             >
-                               {/* 垂直線 */}
-                               <div
-                                 className="absolute bg-red-500"
-                                 style={{
-                                   left: '7px',
-                                   top: '0px',
-                                   width: '2px',
-                                   height: '16px'
-                                 }}
-                               />
-                               {/* 水平線 */}
-                               <div
-                                 className="absolute bg-red-500"
-                                 style={{
-                                   left: '0px',
-                                   top: '7px',
-                                   width: '16px',
-                                   height: '2px'
-                                 }}
-                               />
-                             </div>
-                           )}
-                         </div>
-                       );
-                    })
-                  }
-                </div>
-              );
-            })}
-            
-            {/* 座位預覽 - 跟隨鼠標的座位模板 */}
-            {showSeatPreview && isSeatEditMode && selectedContainer && (
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${containerMousePosition.x}px`,
-                  top: `${containerMousePosition.y}px`,
-                  width: `${getSeatSize(selectedSeatTemplate).width}px`,
-                  height: `${getSeatSize(selectedSeatTemplate).height}px`,
-                  backgroundColor: 'rgba(34, 197, 94, 0.5)',
-                  border: '2px dashed #22c55e',
-                  borderRadius: '4px',
-                  zIndex: 1000
-                }}
-              >
-                {/* 十字線在左上角 */}
-                <div
-                  className="absolute"
-                  style={{
-                    left: '-8px',
-                    top: '-8px',
-                    width: '16px',
-                    height: '16px',
-                    pointerEvents: 'none'
-                  }}
-                >
-                  {/* 垂直線 */}
-                  <div
-                    className="absolute bg-red-500"
-                    style={{
-                      left: '7px',
-                      top: '0px',
-                      width: '2px',
-                      height: '16px'
-                    }}
-                  />
-                  {/* 水平線 */}
-                  <div
-                    className="absolute bg-red-500"
-                    style={{
-                      left: '0px',
-                      top: '7px',
-                      width: '16px',
-                      height: '2px'
-                    }}
-                  />
-                </div>
-                
-                {/* 座位模板標示 */}
-                <div
-                  className="absolute text-white text-xs font-bold flex items-center justify-center bg-black/60 rounded px-1"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: '10px'
-                  }}
-                >
-                  {selectedSeatTemplate}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Canvas Area */}
+          <CanvasArea
+            canvasSize={canvasSize}
+            isEditMode={isEditMode}
+            isAddingContainer={isAddingContainer}
+            isDraggingSeat={isDraggingSeat}
+            isSeatEditMode={isSeatEditMode}
+            selectedContainer={selectedContainer}
+            containers={containers}
+            editingContainer={editingContainer}
+            isContainerEditMode={isContainerEditMode}
+            seatCoordinates={seatCoordinates}
+            selectedSeat={selectedSeat}
+            seatDragPosition={seatDragPosition}
+            isSwappingEmployees={isSwappingEmployees}
+            selectedSeatsForSwap={selectedSeatsForSwap}
+            isSelectingSeatForRegistration={isSelectingSeatForRegistration}
+            selectedSeatForRegistration={selectedSeatForRegistration}
+            selectedSeatTemplate={selectedSeatTemplate}
+            showSeatPreview={showSeatPreview}
+            containerMousePosition={containerMousePosition}
+            newContainerStart={newContainerStart}
+            newContainerEnd={newContainerEnd}
+            onCanvasMouseDown={handleCanvasMouseDown}
+            onCanvasMouseMove={handleCanvasMouseMove}
+            onCanvasMouseUp={handleCanvasMouseUp}
+            onContainerClick={handleContainerClick}
+            onContainerClickForSeat={handleContainerClickForSeat}
+            onMouseDown={handleMouseDown}
+            onSeatClick={handleSeatClick}
+            onEquipmentClick={handleEquipmentClick}
+            getRubberBandStyle={getRubberBandStyle}
+            setSeatDragPosition={setSeatDragPosition}
+            setContainerMousePosition={setContainerMousePosition}
+            setShowSeatPreview={setShowSeatPreview}
+          />
         </div>
 
         {/* Right Panel - 3 Containers - 250px width */}
