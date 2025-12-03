@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import AuthModal from "@/components/AuthModal";
-import RegistrationModal from "@/components/RegistrationModal";
-import AddPcModal from "@/components/AddPcModal";
-import TimeClockModal from "@/components/TimeClockModal";
 import WorkLogPanel from "@/components/WorkLogPanel";
 import WorkLogViewer from "@/components/WorkLogViewer";
 import PcDataDisplay from "@/components/PcDataDisplay";
-import EquipmentDataDisplay from "@/components/EquipmentDataDisplay";
-import EquipmentModal from "@/components/EquipmentModal";
 import AdminMigrationPanel from "@/components/AdminMigrationPanel";
-import AdminPasswordReset from "@/components/AdminPasswordReset";
 import RightPanel from "@/components/RightPanel";
 import Header from "@/components/Header";
 import { CanvasArea, ColorLegend } from "@/components/Canvas";
+import { ModalManager } from "@/components/Modals";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1134,260 +1128,80 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+      {/* Modal Manager */}
+      <ModalManager
+        // Auth Modal
+        isLoginModalOpen={isLoginModalOpen}
+        setIsLoginModalOpen={setIsLoginModalOpen}
         onLoginSuccess={handleLoginSuccess}
-      />
-
-      {/* Registration Modal */}
-      <RegistrationModal 
-        key={registrationModalKey}
-        isOpen={isRegistrationModalOpen} 
-        onClose={() => {
-          setIsRegistrationModalOpen(false);
-          setSelectedSeatForRegistration(null);
-          setIsSelectingSeatForRegistration(false);
-        }}
-        selectedSeat={selectedSeatForRegistration}
+        
+        // Registration Modal
+        isRegistrationModalOpen={isRegistrationModalOpen}
+        registrationModalKey={registrationModalKey}
+        setIsRegistrationModalOpen={setIsRegistrationModalOpen}
+        selectedSeatForRegistration={selectedSeatForRegistration}
+        setSelectedSeatForRegistration={setSelectedSeatForRegistration}
+        setIsSelectingSeatForRegistration={setIsSelectingSeatForRegistration}
         containers={containers}
         onRegistrationSuccess={handleRegistrationSuccess}
-        isEditMode={!!user}
+        user={user}
         currentEmployee={currentEmployee}
+        
+        // Add PC Modal
+        isAddPcModalOpen={isAddPcModalOpen}
+        setIsAddPcModalOpen={setIsAddPcModalOpen}
+        selectedSeatForPc={selectedSeatForPc}
+        setSelectedSeatForPc={setSelectedSeatForPc}
+        setIsSelectingSeatForPc={setIsSelectingSeatForPc}
+        onAddPcSuccess={handleAddPcSuccess}
+        
+        // Equipment Modal
+        isEquipmentModalOpen={isEquipmentModalOpen}
+        selectedSeatForEquipment={selectedSeatForEquipment}
+        onEquipmentCancel={cancelEquipmentOperation}
+        onEquipmentSave={handleEquipmentSave}
+        
+        // Equipment Data Display
+        isViewingEquipment={isViewingEquipment}
+        selectedEquipment={selectedEquipment}
+        onCloseEquipmentView={closeEquipmentView}
+        onEquipmentEdit={handleEquipmentEdit}
+        isAdmin={isAdmin}
+        
+        // Time Clock Modal
+        isTimeClockModalOpen={isTimeClockModalOpen}
+        setIsTimeClockModalOpen={setIsTimeClockModalOpen}
+        
+        // Admin Migration Panel
+        isAdminMigrationPanelOpen={isAdminMigrationPanelOpen}
+        
+        // Container Name Dialog
+        showNameDialog={showNameDialog}
+        newContainerName={newContainerName}
+        setNewContainerName={setNewContainerName}
+        onSaveNewContainer={saveNewContainer}
+        onCancelNewContainer={cancelNewContainer}
+        
+        // Disabled Employees Modal
+        showDisabledEmployeesModal={showDisabledEmployeesModal}
+        setShowDisabledEmployeesModal={setShowDisabledEmployeesModal}
+        disabledEmployees={disabledEmployees}
+        selectedEmptySeat={selectedEmptySeat}
+        onEnableEmployee={handleEnableEmployee}
+        
+        // Swap Confirm Modal
+        showSwapConfirmModal={showSwapConfirmModal}
+        setShowSwapConfirmModal={setShowSwapConfirmModal}
+        selectedSeatsForSwap={selectedSeatsForSwap}
+        setSelectedSeatsForSwap={setSelectedSeatsForSwap}
+        onSwapEmployees={handleSwapEmployees}
+        onSwapPcsOnly={handleSwapPcsOnly}
+        
+        // Admin Password Reset
+        isPasswordResetModalOpen={isPasswordResetModalOpen}
+        setIsPasswordResetModalOpen={setIsPasswordResetModalOpen}
       />
 
-      {/* Add PC Modal */}
-      <AddPcModal 
-        isOpen={isAddPcModalOpen}
-        onClose={() => {
-          setIsAddPcModalOpen(false);
-          setSelectedSeatForPc(null);
-          setIsSelectingSeatForPc(false);
-        }}
-        selectedSeat={selectedSeatForPc}
-        existingPc={selectedSeatForPc?.pc}
-        onSuccess={handleAddPcSuccess}
-      />
-
-      {/* Equipment Modal */}
-      <EquipmentModal 
-        isOpen={isEquipmentModalOpen}
-        onClose={cancelEquipmentOperation}
-        equipment={selectedSeatForEquipment?.equipment}
-        onSave={handleEquipmentSave}
-        currentEmployee={currentEmployee}
-      />
-
-      {/* Equipment Data Display */}
-      {isViewingEquipment && selectedEquipment && (
-        <EquipmentDataDisplay 
-          equipment={selectedEquipment}
-          onClose={closeEquipmentView}
-          onEdit={isAdmin ? handleEquipmentEdit : undefined}
-          isAdmin={isAdmin}
-        />
-      )}
-
-      {/* Time Clock Modal */}
-      {currentEmployee && (
-        <TimeClockModal 
-          isOpen={isTimeClockModalOpen}
-          onClose={() => setIsTimeClockModalOpen(false)}
-          employeeId={currentEmployee.id}
-          employeeName={currentEmployee.name}
-          isAdmin={currentEmployee.role === 'admin'}
-        />
-      )}
-
-      {/* Name Dialog for New Container */}
-      {showNameDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 w-96">
-            <h3 className="text-lg font-medium text-white mb-4">新增容器</h3>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">容器名稱</label>
-              <input
-                type="text"
-                value={newContainerName}
-                onChange={(e) => setNewContainerName(e.target.value)}
-                placeholder="請輸入容器名稱"
-                className="w-full px-3 py-2 bg-slate-600 border border-gray-500 rounded text-white"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={saveNewContainer}
-                disabled={!newContainerName.trim()}
-                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-sm font-medium transition-colors"
-              >
-                保存
-              </button>
-              <button
-                onClick={cancelNewContainer}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 已停用員工選擇模態框 */}
-      {showDisabledEmployeesModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">選擇要啟用的員工</h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {disabledEmployees.length === 0 ? (
-                <p className="text-gray-400 text-sm">沒有已停用的員工</p>
-              ) : (
-                disabledEmployees.map(employee => (
-                  <button
-                    key={employee.id}
-                    onClick={() => handleEnableEmployee(employee.id, selectedEmptySeat?.id)}
-                    className="w-full text-left p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-                  >
-                    <div className="text-white font-medium">{employee.name}</div>
-                    <div className="text-gray-400 text-sm">{employee.email}</div>
-                    <div className="text-gray-400 text-sm">{employee.department} - {employee.position}</div>
-                  </button>
-                ))
-              )}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowDisabledEmployeesModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 員工位置交換確認模態框 */}
-      {showSwapConfirmModal && selectedSeatsForSwap.length === 2 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-lg w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">確認交換員工位置</h3>
-            
-            <div className="space-y-4 mb-6">
-              {/* 第一個座位信息 */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h4 className="text-white font-medium mb-2">座位 1: {selectedSeatsForSwap[0].id}</h4>
-                {selectedSeatsForSwap[0].employee ? (
-                  <div>
-                    <p className="text-gray-300">員工: {selectedSeatsForSwap[0].employee.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[0].employee.department} - {selectedSeatsForSwap[0].employee.position}</p>
-                  </div>
-                ) : selectedSeatsForSwap[0].employee_id ? (
-                  <p className="text-yellow-400">員工: ID {selectedSeatsForSwap[0].employee_id} (資料載入中)</p>
-                ) : (
-                  <p className="text-gray-400">空座位</p>
-                )}
-                {selectedSeatsForSwap[0].pc ? (
-                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[0].pc.name}</p>
-                ) : selectedSeatsForSwap[0].pc_id ? (
-                  <p className="text-yellow-400 text-sm mt-1">電腦: ID {selectedSeatsForSwap[0].pc_id} (資料載入中)</p>
-                ) : null}
-              </div>
-
-              {/* 交換箭頭 */}
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-8 h-8 bg-purple-600 rounded-full">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8l3.707-3.707a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* 第二個座位信息 */}
-              <div className="bg-slate-700 rounded-lg p-4">
-                <h4 className="text-white font-medium mb-2">座位 2: {selectedSeatsForSwap[1].id}</h4>
-                {selectedSeatsForSwap[1].employee ? (
-                  <div>
-                    <p className="text-gray-300">員工: {selectedSeatsForSwap[1].employee.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedSeatsForSwap[1].employee.department} - {selectedSeatsForSwap[1].employee.position}</p>
-                  </div>
-                ) : selectedSeatsForSwap[1].employee_id ? (
-                  <p className="text-yellow-400">員工: ID {selectedSeatsForSwap[1].employee_id} (資料載入中)</p>
-                ) : (
-                  <p className="text-gray-400">空座位</p>
-                )}
-                {selectedSeatsForSwap[1].pc ? (
-                  <p className="text-blue-400 text-sm mt-1">電腦: {selectedSeatsForSwap[1].pc.name}</p>
-                ) : selectedSeatsForSwap[1].pc_id ? (
-                  <p className="text-yellow-400 text-sm mt-1">電腦: ID {selectedSeatsForSwap[1].pc_id} (資料載入中)</p>
-                ) : null}
-              </div>
-            </div>
-
-            {/* 是否交換電腦的選項 */}
-            {(selectedSeatsForSwap[0].pc_id || selectedSeatsForSwap[1].pc_id) && (
-              <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
-                <p className="text-yellow-400 text-sm mb-2">⚠️ 檢測到電腦設備</p>
-                <p className="text-gray-300 text-sm">是否同時交換電腦設備？</p>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3">
-              {(selectedSeatsForSwap[0].pc_id || selectedSeatsForSwap[1].pc_id) ? (
-                <>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleSwapEmployees(false)}
-                      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-sm"
-                    >
-                      僅交換員工
-                    </button>
-                    <button
-                      onClick={handleSwapPcsOnly}
-                      className="flex-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors text-sm"
-                    >
-                      僅交換電腦
-                    </button>
-                    <button
-                      onClick={() => handleSwapEmployees(true)}
-                      className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors text-sm"
-                    >
-                      交換員工和電腦
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <button
-                  onClick={() => handleSwapEmployees(false)}
-                  className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-                >
-                  確認交換
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setShowSwapConfirmModal(false);
-                  setSelectedSeatsForSwap([]);
-                }}
-                className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 管理員密碼重設對話框 */}
-      {isAdmin && (
-        <AdminPasswordReset
-          isOpen={isPasswordResetModalOpen}
-          onClose={() => setIsPasswordResetModalOpen(false)}
-          currentAdminEmail={currentEmployee?.email || ''}
-        />
-      )}
 
     </div>
   );
