@@ -11,7 +11,7 @@ import { ModalManager } from "@/components/Modals";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAppState } from "@/hooks/useAppState";
+import { useAppState } from "@/contexts";
 import { useEditMode } from "@/hooks/useEditMode";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import { useSeatEvents } from "@/hooks/useSeatEvents";
