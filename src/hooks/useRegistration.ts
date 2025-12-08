@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SeatWithRelations } from '@/types';
 
 /**
  * 員工註冊流程管理 Hook
@@ -7,7 +8,7 @@ export const useRegistration = () => {
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationModalKey, setRegistrationModalKey] = useState(0);
   const [isSelectingSeatForRegistration, setIsSelectingSeatForRegistration] = useState(false);
-  const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<any>(null);
+  const [selectedSeatForRegistration, setSelectedSeatForRegistration] = useState<SeatWithRelations | null>(null);
 
   /**
    * 開始註冊流程 - 進入座位選擇模式
@@ -28,7 +29,7 @@ export const useRegistration = () => {
   /**
    * 選擇註冊座位
    */
-  const selectSeatForRegistration = (seat: any) => {
+  const selectSeatForRegistration = (seat: SeatWithRelations) => {
     setSelectedSeatForRegistration(seat);
     setIsRegistrationModalOpen(true);
   };

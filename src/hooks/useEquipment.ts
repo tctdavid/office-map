@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Equipment, SeatWithRelations } from '@/types';
 
 /**
  * 設備管理 Hook
  */
 export const useEquipment = () => {
-  const [equipments, setEquipments] = useState<any[]>([]);
+  const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [isSelectingSeatForEquipment, setIsSelectingSeatForEquipment] = useState(false);
-  const [selectedSeatForEquipment, setSelectedSeatForEquipment] = useState<any>(null);
-  const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
+  const [selectedSeatForEquipment, setSelectedSeatForEquipment] = useState<SeatWithRelations | null>(null);
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [isViewingEquipment, setIsViewingEquipment] = useState(false);
 
   /**
@@ -39,7 +40,7 @@ export const useEquipment = () => {
   /**
    * 選擇座位以新增設備
    */
-  const selectSeatForEquipment = (seat: any) => {
+  const selectSeatForEquipment = (seat: SeatWithRelations) => {
     setSelectedSeatForEquipment(seat);
     setIsSelectingSeatForEquipment(false);
     setIsEquipmentModalOpen(true);
@@ -48,7 +49,7 @@ export const useEquipment = () => {
   /**
    * 點擊設備查看詳情
    */
-  const viewEquipment = (equipment: any) => {
+  const viewEquipment = (equipment: Equipment) => {
     setSelectedEquipment(equipment);
     setIsViewingEquipment(true);
   };
@@ -56,7 +57,7 @@ export const useEquipment = () => {
   /**
    * 編輯設備
    */
-  const startEditEquipment = (seatCoordinates: any[]) => {
+  const startEditEquipment = (seatCoordinates: SeatWithRelations[]) => {
     if (selectedEquipment) {
       // 找到包含此設備的座位
       const seatWithEquipment = seatCoordinates.find(
@@ -77,7 +78,7 @@ export const useEquipment = () => {
   /**
    * 保存設備到座位
    */
-  const saveEquipmentToSeat = async (equipmentId: string): Promise<{ success: boolean; error?: any }> => {
+  const saveEquipmentToSeat = async (equipmentId: string): Promise<{ success: boolean; error?: unknown }> => {
     if (!selectedSeatForEquipment || !equipmentId) {
       return { success: false, error: 'Missing seat or equipment' };
     }

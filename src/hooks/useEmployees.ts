@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Employee, SeatWithRelations } from '@/types';
 
 export const useEmployees = () => {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [selectedSeatEmployee, setSelectedSeatEmployee] = useState<any>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedSeatEmployee, setSelectedSeatEmployee] = useState<Employee | null>(null);
   const [isManagingEmployees, setIsManagingEmployees] = useState(false);
-  const [disabledEmployees, setDisabledEmployees] = useState<any[]>([]);
+  const [disabledEmployees, setDisabledEmployees] = useState<Employee[]>([]);
   const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
-  const [selectedEmptySeat, setSelectedEmptySeat] = useState<any>(null);
+  const [selectedEmptySeat, setSelectedEmptySeat] = useState<SeatWithRelations | null>(null);
   
   const { toast } = useToast();
 
@@ -21,8 +22,13 @@ export const useEmployees = () => {
       .select('id, name, email, department, position, extension, photo, role, is_active');
     
     if (!employeeError && employeeData) {
-      setEmployees(employeeData);
-      setDisabledEmployees(employeeData.filter(emp => !emp.is_active));
+      const typedEmployees: Employee[] = employeeData.map(emp => ({
+        ...emp,
+        created_at: null,
+        updated_at: null
+      }));
+      setEmployees(typedEmployees);
+      setDisabledEmployees(typedEmployees.filter(emp => !emp.is_active));
     }
   };
 
