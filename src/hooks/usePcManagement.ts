@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { PC, SeatWithRelations } from '@/types';
 
 /**
  * PC 管理 Hook
@@ -7,8 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 export const usePcManagement = () => {
   const [isAddPcModalOpen, setIsAddPcModalOpen] = useState(false);
   const [isSelectingSeatForPc, setIsSelectingSeatForPc] = useState(false);
-  const [selectedSeatForPc, setSelectedSeatForPc] = useState<any>(null);
-  const [pcs, setPcs] = useState<any[]>([]);
+  const [selectedSeatForPc, setSelectedSeatForPc] = useState<SeatWithRelations | null>(null);
+  const [pcs, setPcs] = useState<PC[]>([]);
 
   /**
    * 獲取所有 PC 資料
@@ -37,7 +38,7 @@ export const usePcManagement = () => {
   /**
    * 選擇要新增 PC 的座位
    */
-  const selectSeatForPc = (seat: any) => {
+  const selectSeatForPc = (seat: SeatWithRelations) => {
     setSelectedSeatForPc(seat);
     setIsSelectingSeatForPc(false);
     setIsAddPcModalOpen(true);

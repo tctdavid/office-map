@@ -1,22 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { snapToGrid } from '@/utils/seatCalculations';
+import { Container, CanvasSize, Position } from '@/types';
 
 export const useContainers = () => {
-  const [containers, setContainers] = useState<any[]>([]);
-  const [selectedContainer, setSelectedContainer] = useState<any>(null);
-  const [editingContainer, setEditingContainer] = useState<any>(null);
+  const [containers, setContainers] = useState<Container[]>([]);
+  const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
+  const [editingContainer, setEditingContainer] = useState<Container | null>(null);
   const [isContainerEditMode, setIsContainerEditMode] = useState(false);
   const [isAddingContainer, setIsAddingContainer] = useState(false);
-  const [newContainerStart, setNewContainerStart] = useState<{x: number, y: number} | null>(null);
-  const [newContainerEnd, setNewContainerEnd] = useState<{x: number, y: number} | null>(null);
+  const [newContainerStart, setNewContainerStart] = useState<Position | null>(null);
+  const [newContainerEnd, setNewContainerEnd] = useState<Position | null>(null);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [newContainerName, setNewContainerName] = useState('');
-  const [pendingContainer, setPendingContainer] = useState<any>(null);
+  const [pendingContainer, setPendingContainer] = useState<Partial<Container> | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragHandle, setDragHandle] = useState<string>('');
-  const [backupContainers, setBackupContainers] = useState<any[]>([]);
+  const [backupContainers, setBackupContainers] = useState<Container[]>([]);
   
   const { toast } = useToast();
 
@@ -35,16 +36,16 @@ export const useContainers = () => {
   };
 
   // 檢查容器重疊
-  const checkContainerOverlap = (newContainer: any, excludeId?: string) => {
+  const checkContainerOverlap = (newContainer: Partial<Container>, excludeId?: string) => {
     return containers.some(container => {
       if (container.id === (excludeId || newContainer.id)) return false;
       
       // 檢查兩個矩形是否重疊
       const isOverlapping = !(
-        newContainer.x + newContainer.width <= container.x ||
-        container.x + container.width <= newContainer.x ||
-        newContainer.y + newContainer.height <= container.y ||
-        container.y + container.height <= newContainer.y
+        (newContainer.x ?? 0) + (newContainer.width ?? 0) <= container.x ||
+        container.x + container.width <= (newContainer.x ?? 0) ||
+        (newContainer.y ?? 0) + (newContainer.height ?? 0) <= container.y ||
+        container.y + container.height <= (newContainer.y ?? 0)
       );
       
       return isOverlapping;
@@ -52,7 +53,7 @@ export const useContainers = () => {
   };
 
   // 處理容器點擊
-  const handleContainerClick = (container: any) => {
+  const handleContainerClick = (container: Container) => {
     if (isContainerEditMode && !isDragging && !isAddingContainer) {
       setSelectedContainer(container);
       setEditingContainer({...container});
@@ -105,7 +106,7 @@ export const useContainers = () => {
   // 處理畫布鼠標按下
   const handleCanvasMouseDownForContainer = (
     e: React.MouseEvent,
-    canvasSize: {width: number, height: number}
+    canvasSize: CanvasSize
   ) => {
     if (!isAddingContainer) return false;
     
@@ -113,7 +114,7 @@ export const useContainers = () => {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    const startPoint = {
+    const startPoint: Position = {
       x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
       y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
     };
@@ -127,14 +128,14 @@ export const useContainers = () => {
   // 處理畫布鼠標移動
   const handleCanvasMouseMoveForContainer = (
     e: React.MouseEvent,
-    canvasSize: {width: number, height: number}
+    canvasSize: CanvasSize
   ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
     if (isAddingContainer && isDragging && newContainerStart) {
-      const endPoint = {
+      const endPoint: Position = {
         x: Math.max(0, Math.min(snapToGrid(mouseX), canvasSize.width)),
         y: Math.max(0, Math.min(snapToGrid(mouseY), canvasSize.height))
       };
@@ -196,7 +197,7 @@ export const useContainers = () => {
       const height = Math.abs(newContainerEnd.y - newContainerStart.y);
       
       if (width >= 40 && height >= 40) {
-        const newContainer = { x, y, width, height };
+        const newContainer: Partial<Container> = { x, y, width, height };
         
         if (checkContainerOverlap(newContainer)) {
           toast({
@@ -221,7 +222,7 @@ export const useContainers = () => {
       setNewContainerEnd(null);
       return true;
     } else if (isDragging && editingContainer) {
-      const finalContainer = {
+      const finalContainer: Container = {
         ...editingContainer,
         x: snapToGrid(editingContainer.x),
         y: snapToGrid(editingContainer.y),

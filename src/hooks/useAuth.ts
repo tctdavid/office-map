@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  role?: string;
-}
+import { Employee } from '@/types';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,7 +17,14 @@ export const useAuth = () => {
       id: employee.id,
       name: employee.name,
       email: employee.email,
-      role: employee.role
+      department: employee.department ?? null,
+      position: employee.position ?? null,
+      extension: employee.extension ?? null,
+      photo: employee.photo ?? null,
+      role: employee.role ?? null,
+      is_active: employee.is_active ?? true,
+      created_at: employee.created_at ?? null,
+      updated_at: employee.updated_at ?? null,
     });
     
     console.log('登入成功，員工角色:', employee.role, '是否為管理員:', employee.role === 'admin');

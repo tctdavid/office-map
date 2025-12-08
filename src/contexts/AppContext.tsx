@@ -7,49 +7,12 @@ import { useRegistration } from '@/hooks/useRegistration';
 import { usePcManagement } from '@/hooks/usePcManagement';
 import { useEquipment } from '@/hooks/useEquipment';
 import { resetLogoutState } from '@/utils/editModeHandlers';
-
-// ==================== UI 狀態類型定義 ====================
-
-interface UIState {
-  // Modal 狀態
-  isLoginModalOpen: boolean;
-  isTimeClockModalOpen: boolean;
-  isAdminMigrationPanelOpen: boolean;
-  isPasswordResetModalOpen: boolean;
-  
-  // 編輯模式
-  isEditMode: boolean;
-  backupSeatCoordinates: any[];
-  
-  // 員工交換
-  isSwappingEmployees: boolean;
-  selectedSeatsForSwap: any[];
-  showSwapConfirmModal: boolean;
-  
-  // 畫布
-  canvasSize: { width: number; height: number };
-  
-  // 時間
-  currentTime: Date;
-}
-
-// ==================== UI Action 類型定義 ====================
-
-type UIAction =
-  | { type: 'SET_LOGIN_MODAL'; payload: boolean }
-  | { type: 'SET_TIME_CLOCK_MODAL'; payload: boolean }
-  | { type: 'SET_ADMIN_MIGRATION_PANEL'; payload: boolean }
-  | { type: 'SET_PASSWORD_RESET_MODAL'; payload: boolean }
-  | { type: 'SET_EDIT_MODE'; payload: boolean }
-  | { type: 'SET_BACKUP_SEATS'; payload: any[] }
-  | { type: 'SET_SWAPPING_EMPLOYEES'; payload: boolean }
-  | { type: 'SET_SELECTED_SEATS_FOR_SWAP'; payload: any[] }
-  | { type: 'SET_SWAP_CONFIRM_MODAL'; payload: boolean }
-  | { type: 'SET_CANVAS_SIZE'; payload: { width: number; height: number } }
-  | { type: 'UPDATE_TIME'; payload: Date }
-  | { type: 'RESET_ALL_MODALS' }
-  | { type: 'RESET_SWAP_STATE' }
-  | { type: 'RESET_EDIT_STATE' };
+import { 
+  SeatWithRelations, 
+  CanvasSize, 
+  UIState, 
+  UIAction 
+} from '@/types';
 
 // ==================== 初始狀態 ====================
 
@@ -141,11 +104,11 @@ interface AppContextType {
   setIsAdminMigrationPanelOpen: (value: boolean) => void;
   setIsPasswordResetModalOpen: (value: boolean) => void;
   setIsEditMode: (value: boolean) => void;
-  setBackupSeatCoordinates: (value: any[]) => void;
+  setBackupSeatCoordinates: (value: SeatWithRelations[]) => void;
   setIsSwappingEmployees: (value: boolean) => void;
-  setSelectedSeatsForSwap: (value: any[]) => void;
+  setSelectedSeatsForSwap: (value: SeatWithRelations[]) => void;
   setShowSwapConfirmModal: (value: boolean) => void;
-  setCanvasSize: (value: { width: number; height: number }) => void;
+  setCanvasSize: (value: CanvasSize) => void;
   
   // 組合操作
   handleCompleteLogout: () => void;
@@ -221,15 +184,15 @@ export function AppProvider({ children }: AppProviderProps) {
     dispatch({ type: 'SET_PASSWORD_RESET_MODAL', payload: value });
   const setIsEditMode = (value: boolean) => 
     dispatch({ type: 'SET_EDIT_MODE', payload: value });
-  const setBackupSeatCoordinates = (value: any[]) => 
+  const setBackupSeatCoordinates = (value: SeatWithRelations[]) => 
     dispatch({ type: 'SET_BACKUP_SEATS', payload: value });
   const setIsSwappingEmployees = (value: boolean) => 
     dispatch({ type: 'SET_SWAPPING_EMPLOYEES', payload: value });
-  const setSelectedSeatsForSwap = (value: any[]) => 
+  const setSelectedSeatsForSwap = (value: SeatWithRelations[]) => 
     dispatch({ type: 'SET_SELECTED_SEATS_FOR_SWAP', payload: value });
   const setShowSwapConfirmModal = (value: boolean) => 
     dispatch({ type: 'SET_SWAP_CONFIRM_MODAL', payload: value });
-  const setCanvasSize = (value: { width: number; height: number }) => 
+  const setCanvasSize = (value: CanvasSize) => 
     dispatch({ type: 'SET_CANVAS_SIZE', payload: value });
   
   // ==================== 組合操作函數 ====================

@@ -2,14 +2,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkSeatOverlap, getSeatSize, snapToGrid } from "@/utils/seatCalculations";
+import { SeatWithRelations, Container, Position } from "@/types";
 
 export const useSeats = () => {
-  const [seatCoordinates, setSeatCoordinates] = useState<any[]>([]);
-  const [selectedSeat, setSelectedSeat] = useState<any>(null);
+  const [seatCoordinates, setSeatCoordinates] = useState<SeatWithRelations[]>([]);
+  const [selectedSeat, setSelectedSeat] = useState<SeatWithRelations | null>(null);
   const [isDraggingSeat, setIsDraggingSeat] = useState(false);
-  const [seatDragPosition, setSeatDragPosition] = useState({ x: 0, y: 0 });
+  const [seatDragPosition, setSeatDragPosition] = useState<Position>({ x: 0, y: 0 });
   const [showSeatPreview, setShowSeatPreview] = useState(false);
-  const [containerMousePosition, setContainerMousePosition] = useState({ x: 0, y: 0 });
+  const [containerMousePosition, setContainerMousePosition] = useState<Position>({ x: 0, y: 0 });
   const [isSeatEditMode, setIsSeatEditMode] = useState(false);
   const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   
@@ -82,9 +83,24 @@ export const useSeats = () => {
       console.error('Error fetching seat coordinates:', error);
     } else {
       // 更新座位資料並同步 is_empty 狀態
-      const updatedData = data?.map(seat => ({
+      const updatedData: SeatWithRelations[] = data?.map(seat => ({
         ...seat,
-        is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id
+        is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id,
+        employee: seat.employee ? {
+          ...seat.employee,
+          role: null,
+          created_at: null,
+          updated_at: null
+        } : null,
+        pc: seat.pc ? {
+          ...seat.pc,
+          created_at: null
+        } : null,
+        equipment: seat.equipment ? {
+          ...seat.equipment,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } : null
       })) || [];
       
       setSeatCoordinates(updatedData);
@@ -94,7 +110,7 @@ export const useSeats = () => {
   /**
    * 刪除座位
    */
-  const deleteSeat = async (seatToDelete?: any) => {
+  const deleteSeat = async (seatToDelete?: SeatWithRelations) => {
     const targetSeat = seatToDelete || selectedSeat;
     
     if (!targetSeat) {
@@ -142,7 +158,7 @@ export const useSeats = () => {
   /**
    * 新增座位到資料庫
    */
-  const addSeat = async (seat: any) => {
+  const addSeat = async (seat: Partial<SeatWithRelations>) => {
     try {
       const { data, error } = await supabase
         .from('seat_coordinates')
@@ -171,7 +187,13 @@ export const useSeats = () => {
         });
         return false;
       } else {
-        setSeatCoordinates([data, ...seatCoordinates]);
+        const newSeat: SeatWithRelations = {
+          ...data,
+          employee: null,
+          pc: null,
+          equipment: null
+        };
+        setSeatCoordinates([newSeat, ...seatCoordinates]);
         toast({
           title: "創建成功",
           description: "新座位已創建",
@@ -233,7 +255,7 @@ export const useSeats = () => {
    * 處理座位點擊（基本邏輯）
    * 注意：這個函數應該在父組件中被擴展，以處理更多的業務邏輯
    */
-  const handleBasicSeatClick = (seat: any, isEditMode: boolean = false) => {
+  const handleBasicSeatClick = (seat: SeatWithRelations, isEditMode: boolean = false) => {
     setSelectedSeat(seat);
     console.log('Selected seat:', seat);
     
@@ -269,7 +291,7 @@ export const useSeats = () => {
   /**
    * 切換座位編輯模式
    */
-  const toggleSeatEditMode = (selectedContainer: any) => {
+  const toggleSeatEditMode = (selectedContainer: Container | null) => {
     const wasInSeatEditMode = isSeatEditMode;
     setIsSeatEditMode(!isSeatEditMode);
     
@@ -302,8 +324,8 @@ export const useSeats = () => {
    */
   const handleContainerClickForSeat = async (
     e: React.MouseEvent,
-    container: any,
-    selectedContainer: any,
+    container: Container,
+    selectedContainer: Container | null,
     isEditMode: boolean
   ) => {
     // 只有在編輯模式且座位編輯模式開啟時才允許新增座位
@@ -327,7 +349,7 @@ export const useSeats = () => {
     
     const seatSize = getSeatSize(selectedSeatTemplate);
     
-    const newSeat = {
+    const newSeat: Partial<SeatWithRelations> = {
       id: `seat_${Date.now()}`,
       x: snapToGrid(mouseX),
       y: snapToGrid(mouseY),
@@ -342,9 +364,9 @@ export const useSeats = () => {
     };
     
     // 檢查座位是否超出容器邊界
-    if (newSeat.x + newSeat.pixel_x > container.width || 
-        newSeat.y + newSeat.pixel_y > container.height ||
-        newSeat.x < 0 || newSeat.y < 0) {
+    if ((newSeat.x ?? 0) + (newSeat.pixel_x ?? 0) > container.width || 
+        (newSeat.y ?? 0) + (newSeat.pixel_y ?? 0) > container.height ||
+        (newSeat.x ?? 0) < 0 || (newSeat.y ?? 0) < 0) {
       toast({
         title: "座位超出邊界",
         description: "座位不能超出容器邊界",
@@ -354,7 +376,7 @@ export const useSeats = () => {
     }
     
     // 檢查重疊
-    if (checkSeatOverlap(newSeat, seatCoordinates, container.id)) {
+    if (checkSeatOverlap(newSeat as SeatWithRelations, seatCoordinates, container.id)) {
       toast({
         title: "座位重疊",
         description: "座位不能與其他座位重疊",
