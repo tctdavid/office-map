@@ -257,9 +257,9 @@ export interface UseAuthReturn {
   user: any | null;
   currentEmployee: Employee | null;
   isAdmin: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  login: (employee: Employee) => Promise<void>;
+  logout: () => void;
+  setUser: (user: any) => void;
   setCurrentEmployee: (employee: Employee | null) => void;
 }
 
@@ -272,6 +272,8 @@ export interface UseSeatsReturn {
   containerMousePosition: Position;
   isSeatEditMode: boolean;
   selectedSeatTemplate: string;
+  isLoading: boolean;
+  error: string | null;
   setSeatCoordinates: (seats: SeatWithRelations[]) => void;
   setSelectedSeat: (seat: SeatWithRelations | null) => void;
   setIsDraggingSeat: (dragging: boolean) => void;
@@ -304,6 +306,8 @@ export interface UseContainersReturn {
   isDragging: boolean;
   dragHandle: string;
   backupContainers: Container[];
+  isLoading: boolean;
+  error: string | null;
   setContainers: (containers: Container[]) => void;
   setSelectedContainer: (container: Container | null) => void;
   setEditingContainer: (container: Container | null) => void;
@@ -342,6 +346,8 @@ export interface UseEmployeesReturn {
   disabledEmployees: Employee[];
   showDisabledEmployeesModal: boolean;
   selectedEmptySeat: SeatWithRelations | null;
+  isLoading: boolean;
+  error: string | null;
   setEmployees: (employees: Employee[]) => void;
   setSelectedSeatEmployee: (employee: Employee | null) => void;
   setIsManagingEmployees: (managing: boolean) => void;

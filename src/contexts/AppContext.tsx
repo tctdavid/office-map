@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSeats } from '@/hooks/useSeats';
 import { useContainers } from '@/hooks/useContainers';
@@ -84,6 +84,11 @@ function uiReducer(state: UIState, action: UIAction): UIState {
 
 // ==================== Context 類型定義 ====================
 
+interface DataLoadingState {
+  isLoading: boolean;
+  errors: string[];
+}
+
 interface AppContextType {
   // 子模組 hooks
   auth: ReturnType<typeof useAuth>;
@@ -97,6 +102,9 @@ interface AppContextType {
   // UI 狀態
   ui: UIState;
   dispatch: React.Dispatch<UIAction>;
+  
+  // 全局 Loading/Error 狀態
+  dataState: DataLoadingState;
   
   // 便捷 setter 函數（保持向後兼容）
   setIsLoginModalOpen: (value: boolean) => void;
@@ -195,6 +203,26 @@ export function AppProvider({ children }: AppProviderProps) {
   const setCanvasSize = (value: CanvasSize) => 
     dispatch({ type: 'SET_CANVAS_SIZE', payload: value });
   
+  // ==================== 全局 Loading/Error 狀態 ====================
+  
+  const dataState = useMemo<DataLoadingState>(() => {
+    const isLoading = 
+      seats.isLoading || 
+      containers.isLoading || 
+      employees.isLoading;
+    
+    const errors: string[] = [];
+    if (seats.error) errors.push(`座位: ${seats.error}`);
+    if (containers.error) errors.push(`容器: ${containers.error}`);
+    if (employees.error) errors.push(`員工: ${employees.error}`);
+    
+    return { isLoading, errors };
+  }, [
+    seats.isLoading, seats.error,
+    containers.isLoading, containers.error,
+    employees.isLoading, employees.error
+  ]);
+  
   // ==================== 組合操作函數 ====================
   
   const handleCompleteLogout = () => {
@@ -259,6 +287,7 @@ export function AppProvider({ children }: AppProviderProps) {
     equipment,
     ui,
     dispatch,
+    dataState,
     setIsLoginModalOpen,
     setIsTimeClockModalOpen,
     setIsAdminMigrationPanelOpen,
@@ -331,6 +360,11 @@ export const useAppState = () => {
     canvasSize: context.ui.canvasSize,
     setCanvasSize: context.setCanvasSize,
     currentTime: context.ui.currentTime,
+    
+    // Loading/Error 狀態
+    dataState: context.dataState,
+    isDataLoading: context.dataState.isLoading,
+    dataErrors: context.dataState.errors,
     
     handleCompleteLogout: context.handleCompleteLogout,
     refreshAllData: context.refreshAllData,

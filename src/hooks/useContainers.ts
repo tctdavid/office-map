@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { snapToGrid } from '@/utils/seatCalculations';
@@ -19,21 +19,48 @@ export const useContainers = () => {
   const [dragHandle, setDragHandle] = useState<string>('');
   const [backupContainers, setBackupContainers] = useState<Container[]>([]);
   
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   // 載入容器資料
-  const fetchContainers = async () => {
-    const { data, error } = await supabase
-      .from('containers')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const fetchContainers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     
-    if (error) {
-      console.error('Error fetching containers:', error);
-    } else {
-      setContainers(data || []);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('containers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (fetchError) {
+        console.error('Error fetching containers:', fetchError);
+        setError(fetchError.message);
+        toast({
+          title: "載入失敗",
+          description: "無法載入容器資料",
+          variant: "destructive"
+        });
+      } else {
+        setContainers(data || []);
+        setError(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '未知錯誤';
+      console.error('Error in fetchContainers:', err);
+      setError(errorMessage);
+      toast({
+        title: "載入失敗",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   // 檢查容器重疊
   const checkContainerOverlap = (newContainer: Partial<Container>, excludeId?: string) => {
@@ -444,6 +471,8 @@ export const useContainers = () => {
     isDragging,
     dragHandle,
     backupContainers,
+    isLoading,
+    error,
     
     // Setters
     setContainers,

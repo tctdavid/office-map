@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Employee, SeatWithRelations } from '@/types';
@@ -11,26 +11,55 @@ export const useEmployees = () => {
   const [showDisabledEmployeesModal, setShowDisabledEmployeesModal] = useState(false);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<SeatWithRelations | null>(null);
   
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   // 載入員工資料
-  const fetchEmployees = async (isAdmin: boolean) => {
+  const fetchEmployees = useCallback(async (isAdmin: boolean) => {
     if (!isAdmin) return;
     
-    const { data: employeeData, error: employeeError } = await supabase
-      .from('employees')
-      .select('id, name, email, department, position, extension, photo, role, is_active');
+    setIsLoading(true);
+    setError(null);
     
-    if (!employeeError && employeeData) {
-      const typedEmployees: Employee[] = employeeData.map(emp => ({
-        ...emp,
-        created_at: null,
-        updated_at: null
-      }));
-      setEmployees(typedEmployees);
-      setDisabledEmployees(typedEmployees.filter(emp => !emp.is_active));
+    try {
+      const { data: employeeData, error: fetchError } = await supabase
+        .from('employees')
+        .select('id, name, email, department, position, extension, photo, role, is_active');
+      
+      if (fetchError) {
+        console.error('Error fetching employees:', fetchError);
+        setError(fetchError.message);
+        toast({
+          title: "載入失敗",
+          description: "無法載入員工資料",
+          variant: "destructive"
+        });
+      } else if (employeeData) {
+        const typedEmployees: Employee[] = employeeData.map(emp => ({
+          ...emp,
+          created_at: null,
+          updated_at: null
+        }));
+        setEmployees(typedEmployees);
+        setDisabledEmployees(typedEmployees.filter(emp => !emp.is_active));
+        setError(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '未知錯誤';
+      console.error('Error in fetchEmployees:', err);
+      setError(errorMessage);
+      toast({
+        title: "載入失敗",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   // 停用員工
   const handleDisableEmployee = async (employeeId: string, seatId: string, isAdmin: boolean, onSuccess?: () => void) => {
@@ -130,6 +159,8 @@ export const useEmployees = () => {
     disabledEmployees,
     showDisabledEmployeesModal,
     selectedEmptySeat,
+    isLoading,
+    error,
     setEmployees,
     setSelectedSeatEmployee,
     setIsManagingEmployees,

@@ -2,6 +2,19 @@
 
 import { Employee, Container, Seat, SeatWithRelations, PC, Equipment } from './database';
 
+// ==================== 異步狀態類型 ====================
+
+export interface AsyncState<T> {
+  data: T;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface FetchState {
+  isLoading: boolean;
+  error: string | null;
+}
+
 // ==================== 畫布相關類型 ====================
 
 export interface CanvasSize {
@@ -151,6 +164,22 @@ export interface AuthState {
   currentEmployee: Employee | null;
   isAdmin: boolean;
   isLoading: boolean;
+  error: string | null;
+}
+
+// ==================== 數據獲取狀態類型 ====================
+
+export interface SeatsState extends FetchState {
+  seatCoordinates: SeatWithRelations[];
+}
+
+export interface ContainersState extends FetchState {
+  containers: Container[];
+}
+
+export interface EmployeesState extends FetchState {
+  employees: Employee[];
+  disabledEmployees: Employee[];
 }
 
 // ==================== Toast 類型 ====================
