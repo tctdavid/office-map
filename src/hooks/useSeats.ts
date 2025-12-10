@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkSeatOverlap, getSeatSize, snapToGrid } from "@/utils/seatCalculations";
@@ -14,98 +14,130 @@ export const useSeats = () => {
   const [isSeatEditMode, setIsSeatEditMode] = useState(false);
   const [selectedSeatTemplate, setSelectedSeatTemplate] = useState<string>('120x70');
   
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
   /**
    * 獲取座位資料
    */
-  const fetchSeats = async () => {
+  const fetchSeats = useCallback(async () => {
     console.log('開始載入座位資料...');
+    setIsLoading(true);
+    setError(null);
     
-    // First, let's try a simple query to see if we can get basic seat data
-    const { data: basicData, error: basicError } = await supabase
-      .from('seat_coordinates')
-      .select('*');
-    
-    console.log('基本座位資料:', { basicData, basicError, count: basicData?.length });
-    
-    if (basicError) {
-      console.error('基本查詢錯誤:', basicError);
-      return;
-    }
-    
-    // Now try with associations using the existing foreign key constraint names
-    const { data, error } = await supabase
-      .from('seat_coordinates')
-      .select(`
-        *,
-        employee:employees!fk_seat_coordinates_employee_id (
-          id,
-          name,
-          photo,
-          department,
-          position,
-          extension,
-          email,
-          is_active
-        ),
-        pc:pcs!fk_seat_coordinates_pc_id (
-          id,
-          name,
-          cpu,
-          memory,
-          storage,
-          graphics,
-          case_photo,
-          monitor_a,
-          monitor_a_photo,
-          monitor_b,
-          monitor_b_photo
-        ),
-        equipment:equipment!fk_seat_coordinates_equipment_id (
-          id,
-          product,
-          supplier,
-          ip,
-          sn,
-          contact_person,
-          mac_adds,
-          purchase_date,
-          photo,
-          notes
-        )
-      `)
-      .order('created_at', { ascending: false });
-    
-    console.log('完整座位資料載入結果:', { data, error, dataLength: data?.length });
-    
-    if (error) {
-      console.error('Error fetching seat coordinates:', error);
-    } else {
-      // 更新座位資料並同步 is_empty 狀態
-      const updatedData: SeatWithRelations[] = data?.map(seat => ({
-        ...seat,
-        is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id,
-        employee: seat.employee ? {
-          ...seat.employee,
-          role: null,
-          created_at: null,
-          updated_at: null
-        } : null,
-        pc: seat.pc ? {
-          ...seat.pc,
-          created_at: null
-        } : null,
-        equipment: seat.equipment ? {
-          ...seat.equipment,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } : null
-      })) || [];
+    try {
+      // First, let's try a simple query to see if we can get basic seat data
+      const { data: basicData, error: basicError } = await supabase
+        .from('seat_coordinates')
+        .select('*');
       
-      setSeatCoordinates(updatedData);
+      console.log('基本座位資料:', { basicData, basicError, count: basicData?.length });
+      
+      if (basicError) {
+        console.error('基本查詢錯誤:', basicError);
+        setError(basicError.message);
+        toast({
+          title: "載入失敗",
+          description: "無法載入座位資料",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Now try with associations using the existing foreign key constraint names
+      const { data, error: fetchError } = await supabase
+        .from('seat_coordinates')
+        .select(`
+          *,
+          employee:employees!fk_seat_coordinates_employee_id (
+            id,
+            name,
+            photo,
+            department,
+            position,
+            extension,
+            email,
+            is_active
+          ),
+          pc:pcs!fk_seat_coordinates_pc_id (
+            id,
+            name,
+            cpu,
+            memory,
+            storage,
+            graphics,
+            case_photo,
+            monitor_a,
+            monitor_a_photo,
+            monitor_b,
+            monitor_b_photo
+          ),
+          equipment:equipment!fk_seat_coordinates_equipment_id (
+            id,
+            product,
+            supplier,
+            ip,
+            sn,
+            contact_person,
+            mac_adds,
+            purchase_date,
+            photo,
+            notes
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      console.log('完整座位資料載入結果:', { data, error: fetchError, dataLength: data?.length });
+      
+      if (fetchError) {
+        console.error('Error fetching seat coordinates:', fetchError);
+        setError(fetchError.message);
+        toast({
+          title: "載入失敗",
+          description: "無法載入座位關聯資料",
+          variant: "destructive"
+        });
+      } else {
+        // 更新座位資料並同步 is_empty 狀態
+        const updatedData: SeatWithRelations[] = data?.map(seat => ({
+          ...seat,
+          is_empty: !seat.employee_id && !seat.pc_id && !seat.equipment_id,
+          employee: seat.employee ? {
+            ...seat.employee,
+            role: null,
+            created_at: null,
+            updated_at: null
+          } : null,
+          pc: seat.pc ? {
+            ...seat.pc,
+            created_at: null
+          } : null,
+          equipment: seat.equipment ? {
+            ...seat.equipment,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          } : null
+        })) || [];
+        
+        setSeatCoordinates(updatedData);
+        setError(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '未知錯誤';
+      console.error('Error in fetchSeats:', err);
+      setError(errorMessage);
+      toast({
+        title: "載入失敗",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   /**
    * 刪除座位
@@ -399,6 +431,8 @@ export const useSeats = () => {
     containerMousePosition,
     isSeatEditMode,
     selectedSeatTemplate,
+    isLoading,
+    error,
     
     // 設置函數
     setSeatCoordinates,
