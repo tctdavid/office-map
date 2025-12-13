@@ -37,7 +37,7 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl">
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-5xl">
         <Card className="border-0 shadow-none">
           <CardHeader className="bg-primary text-primary-foreground py-3">
             <CardTitle className="text-lg font-bold">設備詳細資訊</CardTitle>
@@ -50,10 +50,10 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
                   <img
                     src={getImageUrl(equipment.photo)}
                     alt={equipment.product}
-                    className="w-[280px] h-[200px] object-cover rounded-lg border border-border"
+                    className="w-[336px] h-[240px] object-cover rounded-lg border border-border"
                   />
                 ) : (
-                  <div className="w-[280px] h-[200px] bg-muted rounded-lg border border-border flex items-center justify-center">
+                  <div className="w-[336px] h-[240px] bg-muted rounded-lg border border-border flex items-center justify-center">
                     <span className="text-muted-foreground text-sm">無圖片</span>
                   </div>
                 )}
@@ -141,7 +141,7 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
 
             {/* 備註 - Aligned with fields */}
             <div className="flex gap-6">
-              <div className="w-[280px] flex-shrink-0"></div>
+              <div className="w-[336px] flex-shrink-0"></div>
               <div className="flex-1 space-y-1">
                 <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                   <FileText className="h-3 w-3" />
