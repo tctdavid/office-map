@@ -37,8 +37,8 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <Card className="border-0 shadow-none">
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-[90vw] aspect-video max-h-[90vh] overflow-y-auto">
+        <Card className="border-0 shadow-none h-full">
           <CardHeader className="bg-primary text-primary-foreground">
             <CardTitle className="text-xl font-bold">設備詳細資訊</CardTitle>
           </CardHeader>
