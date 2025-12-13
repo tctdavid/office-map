@@ -50,10 +50,10 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
                   <img
                     src={getImageUrl(equipment.photo)}
                     alt={equipment.product}
-                    className="w-56 h-40 object-cover rounded-lg border border-border"
+                    className="w-[280px] h-[200px] object-cover rounded-lg border border-border"
                   />
                 ) : (
-                  <div className="w-56 h-40 bg-muted rounded-lg border border-border flex items-center justify-center">
+                  <div className="w-[280px] h-[200px] bg-muted rounded-lg border border-border flex items-center justify-center">
                     <span className="text-muted-foreground text-sm">無圖片</span>
                   </div>
                 )}
@@ -139,14 +139,17 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
               </div>
             </div>
 
-            {/* 備註 - Full Width */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                備註
-              </label>
-              <div className="p-2 bg-muted rounded-md min-h-[40px]">
-                <p className="text-sm whitespace-pre-wrap">{equipment.notes || '-'}</p>
+            {/* 備註 - Aligned with fields */}
+            <div className="flex gap-6">
+              <div className="w-[280px] flex-shrink-0"></div>
+              <div className="flex-1 space-y-1">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  備註
+                </label>
+                <div className="p-2 bg-muted rounded-md min-h-[40px]">
+                  <p className="text-sm whitespace-pre-wrap">{equipment.notes || '-'}</p>
+                </div>
               </div>
             </div>
 
