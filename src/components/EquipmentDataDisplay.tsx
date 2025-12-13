@@ -37,133 +37,128 @@ const EquipmentDataDisplay: React.FC<EquipmentDataDisplayProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-lg shadow-xl w-full max-w-[90vw] aspect-video max-h-[90vh] overflow-y-auto">
-        <Card className="border-0 shadow-none h-full">
-          <CardHeader className="bg-primary text-primary-foreground">
-            <CardTitle className="text-xl font-bold">設備詳細資訊</CardTitle>
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl">
+        <Card className="border-0 shadow-none">
+          <CardHeader className="bg-primary text-primary-foreground py-3">
+            <CardTitle className="text-lg font-bold">設備詳細資訊</CardTitle>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="flex flex-col md:flex-row gap-6">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex gap-6">
               {/* Equipment Photo - Left Side */}
-              {equipment.photo && (
-                <div className="flex-shrink-0">
+              <div className="flex-shrink-0">
+                {equipment.photo ? (
                   <img
                     src={getImageUrl(equipment.photo)}
                     alt={equipment.product}
-                    className="w-full md:w-64 h-auto max-h-80 object-cover rounded-lg border-2 border-border"
+                    className="w-56 h-40 object-cover rounded-lg border border-border"
                   />
-                </div>
-              )}
-
-              {/* Equipment Details - Right Side */}
-              <div className="flex-1 grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">產品名稱</label>
-                  <div className="p-3 bg-muted rounded-md">
-                    <p className="font-medium">{equipment.product}</p>
-                  </div>
-                </div>
-
-                {equipment.supplier && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      供應商
-                    </label>
-                    <div className="p-3 bg-muted rounded-md">
-                      <p>{equipment.supplier}</p>
-                    </div>
+                ) : (
+                  <div className="w-56 h-40 bg-muted rounded-lg border border-border flex items-center justify-center">
+                    <span className="text-muted-foreground text-sm">無圖片</span>
                   </div>
                 )}
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {equipment.ip && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        IP 位址
-                      </label>
-                      <div className="p-3 bg-muted rounded-md">
-                        <Badge variant="secondary">{equipment.ip}</Badge>
-                      </div>
+              {/* Equipment Details - Right Side */}
+              <div className="flex-1 space-y-3">
+                {/* Row 1: 產品名稱, 供應商, 聯絡人 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">產品名稱</label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="font-medium text-sm">{equipment.product}</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      供應商
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm">{equipment.supplier || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      聯絡人
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm">{equipment.contact_person || '-'}</p>
+                    </div>
+                  </div>
+                </div>
 
-                  {equipment.sn && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Hash className="h-4 w-4" />
-                        序號
-                      </label>
-                      <div className="p-3 bg-muted rounded-md">
-                        <p className="font-mono text-sm">{equipment.sn}</p>
-                      </div>
+                {/* Row 2: IP位址, MAC位址, 序號 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      IP 位址
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm font-mono">{equipment.ip || '-'}</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <Wifi className="h-3 w-3" />
+                      MAC 位址
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm font-mono">{equipment.mac_adds || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <Hash className="h-3 w-3" />
+                      序號
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm font-mono">{equipment.sn || '-'}</p>
+                    </div>
+                  </div>
+                </div>
 
-                  {equipment.contact_person && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        聯絡人
-                      </label>
-                      <div className="p-3 bg-muted rounded-md">
-                        <p>{equipment.contact_person}</p>
-                      </div>
+                {/* Row 3: 購買日期 */}
+                <div className="w-1/3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      購買日期
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm">
+                        {equipment.purchase_date 
+                          ? new Date(equipment.purchase_date).toLocaleDateString('zh-TW') 
+                          : '-'}
+                      </p>
                     </div>
-                  )}
-
-                  {equipment.mac_adds && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Wifi className="h-4 w-4" />
-                        MAC 位址
-                      </label>
-                      <div className="p-3 bg-muted rounded-md">
-                        <p className="font-mono text-sm">{equipment.mac_adds}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {equipment.purchase_date && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        購買日期
-                      </label>
-                      <div className="p-3 bg-muted rounded-md">
-                        <p>{new Date(equipment.purchase_date).toLocaleDateString('zh-TW')}</p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Notes */}
-            {equipment.notes && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  備註
-                </label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="whitespace-pre-wrap">{equipment.notes}</p>
-                </div>
+            {/* 備註 - Full Width */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                備註
+              </label>
+              <div className="p-2 bg-muted rounded-md min-h-[40px]">
+                <p className="text-sm whitespace-pre-wrap">{equipment.notes || '-'}</p>
               </div>
-            )}
+            </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-between pt-4 border-t">
-              <div>
-                {isAdmin && onEdit && (
-                  <Button onClick={onEdit} variant="outline" className="flex items-center gap-2">
-                    <Edit className="h-4 w-4" />
-                    編輯設備
-                  </Button>
-                )}
-              </div>
-              <Button onClick={onClose} variant="outline">
+            <div className="flex justify-end pt-2 border-t">
+              {isAdmin && onEdit && (
+                <Button onClick={onEdit} variant="outline" size="sm" className="mr-2 flex items-center gap-1">
+                  <Edit className="h-3 w-3" />
+                  編輯設備
+                </Button>
+              )}
+              <Button onClick={onClose} variant="outline" size="sm">
                 關閉
               </Button>
             </div>
