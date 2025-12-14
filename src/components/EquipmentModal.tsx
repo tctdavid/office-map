@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import AdminPasswordConfirm from "@/components/AdminPasswordConfirm";
 import { getEquipmentPhotoUrl } from "@/lib/supabase-storage";
 
+// ... [Interfaces remain the same] ...
+
 interface Equipment {
   id?: string;
   product: string;
@@ -244,182 +246,212 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* V E R T I C A L   S T R U C T U R E */}
+        {/* 變動點 1: 調整最大寬度為 max-w-5xl，以容納三欄佈局。 */}
+        <div className="bg-background rounded-lg shadow-xl w-full **max-w-5xl** max-h-[90vh] overflow-y-auto"> // <---【紅色變動點】
           <Card className="border-0 shadow-none">
-            <CardHeader className="bg-primary text-primary-foreground">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+            {/* 變動點 2: 調整 CardHeader 垂直內邊距，使其更緊湊。 */}
+            <CardHeader className="bg-primary text-primary-foreground **py-3**"> // <---【紅色變動點】
+              {/* 變動點 3: 調整標題字體大小。 */}
+              <CardTitle className="**text-lg** font-bold flex items-center gap-2"> // <---【紅色變動點】
                 {equipment ? <Edit className="h-5 w-5" /> : <Save className="h-5 w-5" />}
                 {equipment ? "編輯設備" : "新增設備"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 **space-y-4**"> // <---【紅色變動點：調整內容區塊間距】
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Equipment Photo */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">設備照片</Label>
-                  <div className="space-y-3">
-                    {(existingPhoto || selectedFiles.length > 0) && (
-                      <div className="flex justify-center">
-                        <img
-                          src={selectedFiles.length > 0 
-                            ? URL.createObjectURL(selectedFiles[0])
-                            : getImageUrl(existingPhoto) || undefined
-                          }
-                          alt="設備照片"
-                          className="max-w-full h-auto max-h-48 object-cover rounded-lg border-2 border-border"
-                        />
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        {existingPhoto || selectedFiles.length > 0 ? "更換照片" : "上傳照片"}
-                      </Button>
+                
+                {/* H O R I Z O N T A L   S T R U C T U R E */}
+                {/* 變動點 4: 新增 Flex 容器，將照片區和欄位區左右並排。 */}
+                <div className="**flex gap-6**"> // <---【紅色變動點：新的 Flex 容器】
+                  
+                  {/* Equipment Photo - Left Side (固定寬度區塊) */}
+                  {/* 變動點 5: 設定左側照片區塊的固定寬度 (w-[336px]) 且不收縮 (flex-shrink-0)。 */}
+                  <div className="**flex-shrink-0 space-y-3**"> // <---【紅色變動點：設定寬度和不收縮】
+                    <Label className="text-sm font-medium">設備照片</Label>
+                    <div className="space-y-3">
                       {(existingPhoto || selectedFiles.length > 0) && (
+                        {/* 變動點 6: 圖片居中改為靠左對齊。 */}
+                        <div className="**flex justify-start**"> // <---【紅色變動點：對齊方式變更】
+                          <img
+                            src={selectedFiles.length > 0 
+                              ? URL.createObjectURL(selectedFiles[0])
+                              : getImageUrl(existingPhoto) || undefined
+                            }
+                            alt="設備照片"
+                            {/* 變動點 7: 設定圖片的固定尺寸 (w-[336px] h-[240px])。 */}
+                            className="**w-[336px] h-[240px]** object-cover rounded-lg border-2 border-border" // <---【紅色變動點：尺寸變更】
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => {
-                            setSelectedFiles([]);
-                            setExistingPhoto(null);
-                          }}
+                          onClick={() => fileInputRef.current?.click()}
                           className="flex items-center gap-2"
                         >
-                          <X className="h-4 w-4" />
-                          移除照片
+                          <Upload className="h-4 w-4" />
+                          {existingPhoto || selectedFiles.length > 0 ? "更換照片" : "上傳照片"}
                         </Button>
-                      )}
+                        {(existingPhoto || selectedFiles.length > 0) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedFiles([]);
+                              setExistingPhoto(null);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            移除照片
+                          </Button>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
+                  </div>
+
+                  {/* Equipment Details - Right Side (彈性佔滿空間區塊) */}
+                  {/* 變動點 8: 設定右側欄位區塊佔滿剩餘空間 (flex-1)，並調整內部垂直間距。 */}
+                  <div className="**flex-1 space-y-6**"> // <---【紅色變動點：Flex 屬性與間距調整】
+                    
+                    {/* 變動點 9: 欄位佈局改為三欄 (sm:grid-cols-3)，取代原來的 md:grid-cols-2。 */}
+                    <div className="**grid grid-cols-1 sm:grid-cols-3 gap-4**"> // <---【紅色變動點：網格佈局變更】
+                      <div className="space-y-2">
+                        <Label htmlFor="product" className="flex items-center gap-2">
+                          產品名稱 <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="product"
+                          name="product"
+                          value={formData.product}
+                          onChange={handleInputChange}
+                          placeholder="輸入產品名稱"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="supplier" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          供應商
+                        </Label>
+                        <Input
+                          id="supplier"
+                          name="supplier"
+                          value={formData.supplier}
+                          onChange={handleInputChange}
+                          placeholder="輸入供應商"
+                        />
+                      </div>
+                      
+                      {/* 變動點 10: 聯絡人欄位從原來的下一行移到第一行，以適應三欄佈局。 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="contact_person" className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          聯絡人
+                        </Label>
+                        <Input
+                          id="contact_person"
+                          name="contact_person"
+                          value={formData.contact_person}
+                          onChange={handleInputChange}
+                          placeholder="輸入聯絡人"
+                        />
+                      </div>
+
+                      {/* 新的一行：IP, MAC, SN */}
+                      <div className="space-y-2">
+                        <Label htmlFor="ip" className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          IP 位址
+                        </Label>
+                        <Input
+                          id="ip"
+                          name="ip"
+                          value={formData.ip}
+                          onChange={handleInputChange}
+                          placeholder="輸入 IP 位址"
+                        />
+                      </div>
+
+                      {/* 變動點 11: MAC 位址欄位從原來的下一行移到此行，與 IP/SN 並排。 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="mac_adds" className="flex items-center gap-2">
+                          <Wifi className="h-4 w-4" />
+                          MAC 位址
+                        </Label>
+                        <Input
+                          id="mac_adds"
+                          name="mac_adds"
+                          value={formData.mac_adds}
+                          onChange={handleInputChange}
+                          placeholder="輸入 MAC 位址"
+                        />
+                      </div>
+                      
+                      {/* 變動點 12: 序號欄位從原來的下一行移到此行，與 IP/MAC 並排。 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="sn" className="flex items-center gap-2">
+                          <Hash className="h-4 w-4" />
+                          序號
+                        </Label>
+                        <Input
+                          id="sn"
+                          name="sn"
+                          value={formData.sn}
+                          onChange={handleInputChange}
+                          placeholder="輸入序號"
+                        />
+                      </div>
+                      
+                      {/* 變動點 13: 購買日期單獨一行，不再需要跨兩欄，且不再需要 md:col-span-2 類別。 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="purchase_date" className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          購買日期
+                        </Label>
+                        <Input
+                          id="purchase_date"
+                          name="purchase_date"
+                          type="date"
+                          value={formData.purchase_date}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* Equipment Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="product" className="flex items-center gap-2">
-                      產品名稱 <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="product"
-                      name="product"
-                      value={formData.product}
-                      onChange={handleInputChange}
-                      placeholder="輸入產品名稱"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="supplier" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      供應商
-                    </Label>
-                    <Input
-                      id="supplier"
-                      name="supplier"
-                      value={formData.supplier}
-                      onChange={handleInputChange}
-                      placeholder="輸入供應商"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="ip" className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      IP 位址
-                    </Label>
-                    <Input
-                      id="ip"
-                      name="ip"
-                      value={formData.ip}
-                      onChange={handleInputChange}
-                      placeholder="輸入 IP 位址"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sn" className="flex items-center gap-2">
-                      <Hash className="h-4 w-4" />
-                      序號
-                    </Label>
-                    <Input
-                      id="sn"
-                      name="sn"
-                      value={formData.sn}
-                      onChange={handleInputChange}
-                      placeholder="輸入序號"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="contact_person" className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      聯絡人
-                    </Label>
-                    <Input
-                      id="contact_person"
-                      name="contact_person"
-                      value={formData.contact_person}
-                      onChange={handleInputChange}
-                      placeholder="輸入聯絡人"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="mac_adds" className="flex items-center gap-2">
-                      <Wifi className="h-4 w-4" />
-                      MAC 位址
-                    </Label>
-                    <Input
-                      id="mac_adds"
-                      name="mac_adds"
-                      value={formData.mac_adds}
-                      onChange={handleInputChange}
-                      placeholder="輸入 MAC 位址"
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="purchase_date" className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      購買日期
-                    </Label>
-                    <Input
-                      id="purchase_date"
-                      name="purchase_date"
-                      type="date"
-                      value={formData.purchase_date}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    備註
-                  </Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    placeholder="輸入備註"
-                    className="min-h-[100px]"
-                  />
+                
+                {/* 備註欄位：獨立區塊，與右側欄位對齊 */}
+                {/* 變動點 14: 新增 Flex 容器，並使用一個空 div 佔位以與上方照片對齊。 */}
+                <div className="**flex gap-6**"> // <---【紅色變動點：新的 Flex 容器】
+                    {/* 變動點 15: 佔位符 div，寬度和不收縮屬性必須與左側照片區塊一致。 */}
+                    <div className="**w-[336px] flex-shrink-0**"></div> // <---【紅色變動點：佔位符】
+                    
+                    {/* 變動點 16: 備註區塊佔滿剩餘空間。 */}
+                    <div className="**flex-1 space-y-2**"> // <---【紅色變動點：Flex 屬性】
+                      <Label htmlFor="notes" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        備註
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        placeholder="輸入備註"
+                        className="min-h-[100px]"
+                      />
+                    </div>
                 </div>
 
                 {/* Action Buttons */}
