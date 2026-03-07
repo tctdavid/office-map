@@ -475,7 +475,7 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto border-2 border-yellow-400/40">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
@@ -490,339 +490,175 @@ const AddPcModal = ({ isOpen, onClose, selectedSeat, existingPc, onSuccess }: Ad
           )}
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 基本規格 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium flex items-center gap-2">
-              💻 基本規格
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Horizontal layout: Photos left, Fields right */}
+          <div className="flex gap-6">
+            {/* Left: Photos */}
+            <div className="flex-shrink-0 w-[336px] space-y-3">
+              {/* Case Photo */}
               <div>
-                <Label htmlFor="name" className="text-white">電腦名稱 *</Label>
-                <Input
-                  id="name"
-                  placeholder="例：辦公室PC-001"
-                  value={pcData.name}
-                  onChange={(e) => setPcData({ ...pcData, name: e.target.value })}
-                  required
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="cpu" className="text-white">處理器</Label>
-                <Input
-                  id="cpu"
-                  placeholder="例：Intel Core i5-12400"
-                  value={pcData.cpu}
-                  onChange={(e) => setPcData({ ...pcData, cpu: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="memory" className="text-white">記憶體</Label>
-                <Input
-                  id="memory"
-                  placeholder="例：16GB DDR4"
-                  value={pcData.memory}
-                  onChange={(e) => setPcData({ ...pcData, memory: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="storage" className="text-white">儲存空間</Label>
-                <Input
-                  id="storage"
-                  placeholder="例：512GB SSD"
-                  value={pcData.storage}
-                  onChange={(e) => setPcData({ ...pcData, storage: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="graphics" className="text-white">顯示卡</Label>
-              <Input
-                id="graphics"
-                placeholder="例：NVIDIA GeForce RTX 3060"
-                value={pcData.graphics}
-                onChange={(e) => setPcData({ ...pcData, graphics: e.target.value })}
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-              />
-            </div>
-            
-            {/* 機殼照片上傳 */}
-            <div>
-              <Label className="text-white">機殼照片</Label>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                <Label className="text-slate-300 text-xs">機殼照片</Label>
+                <div className="w-[336px] h-[180px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden relative group">
                   {pcData.case_photo_preview ? (
-                    <img 
-                      src={pcData.case_photo_preview} 
-                      alt="機殼照片預覽" 
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={pcData.case_photo_preview} alt="機殼照片" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-gray-400">📷</span>
+                    <div className="w-full h-full flex items-center justify-center"><span className="text-gray-400 text-3xl">📷</span></div>
                   )}
+                  <label htmlFor="case-photo-upload" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                    <span className="text-white text-sm">📤 更換照片</span>
+                  </label>
+                  <input id="case-photo-upload" type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e, 'case_photo')} className="hidden" />
                 </div>
-                <label htmlFor="case-photo-upload" className="cursor-pointer">
-                  <div className="border-2 border-dashed border-slate-600 rounded-lg p-3 hover:border-slate-500 transition-colors">
-                    <span className="text-sm text-gray-300">📤 選擇機殼照片</span>
-                  </div>
-                  <input
-                    id="case-photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload(e, 'case_photo')}
-                    className="hidden"
-                  />
-                </label>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="monitor_a" className="text-white">主顯示器</Label>
-                <Input
-                  id="monitor_a"
-                  placeholder="例：Dell 27 inch 4K Monitor"
-                  value={pcData.monitor_a}
-                  onChange={(e) => setPcData({ ...pcData, monitor_a: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="monitor_b" className="text-white">副顯示器</Label>
-                <Input
-                  id="monitor_b"
-                  placeholder="例：ASUS 24 inch Monitor"
-                  value={pcData.monitor_b}
-                  onChange={(e) => setPcData({ ...pcData, monitor_b: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* 顯示器照片上傳 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white">主顯示器照片</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+              {/* Monitor Photos */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-slate-300 text-xs">主顯示器照片</Label>
+                  <div className="h-[100px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden relative group">
                     {pcData.monitor_a_photo_preview ? (
-                      <img 
-                        src={pcData.monitor_a_photo_preview} 
-                        alt="主顯示器照片預覽" 
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={pcData.monitor_a_photo_preview} alt="主顯示器" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-gray-400">🖥️</span>
+                      <div className="w-full h-full flex items-center justify-center"><span className="text-gray-400 text-2xl">🖥️</span></div>
                     )}
+                    <label htmlFor="monitor-a-photo-upload" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                      <span className="text-white text-xs">📤 更換</span>
+                    </label>
+                    <input id="monitor-a-photo-upload" type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e, 'monitor_a_photo')} className="hidden" />
                   </div>
-                  <label htmlFor="monitor-a-photo-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-2 hover:border-slate-500 transition-colors">
-                      <span className="text-xs text-gray-300">📤 選擇照片</span>
-                    </div>
-                    <input
-                      id="monitor-a-photo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoUpload(e, 'monitor_a_photo')}
-                      className="hidden"
-                    />
-                  </label>
                 </div>
-              </div>
-              
-              <div>
-                <Label className="text-white">副顯示器照片</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                <div>
+                  <Label className="text-slate-300 text-xs">副顯示器照片</Label>
+                  <div className="h-[100px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden relative group">
                     {pcData.monitor_b_photo_preview ? (
-                      <img 
-                        src={pcData.monitor_b_photo_preview} 
-                        alt="副顯示器照片預覽" 
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={pcData.monitor_b_photo_preview} alt="副顯示器" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-gray-400">🖥️</span>
+                      <div className="w-full h-full flex items-center justify-center"><span className="text-gray-400 text-2xl">🖥️</span></div>
                     )}
+                    <label htmlFor="monitor-b-photo-upload" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                      <span className="text-white text-xs">📤 更換</span>
+                    </label>
+                    <input id="monitor-b-photo-upload" type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e, 'monitor_b_photo')} className="hidden" />
                   </div>
-                  <label htmlFor="monitor-b-photo-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-2 hover:border-slate-500 transition-colors">
-                      <span className="text-xs text-gray-300">📤 選擇照片</span>
-                    </div>
-                    <input
-                      id="monitor-b-photo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoUpload(e, 'monitor_b_photo')}
-                      className="hidden"
-                    />
-                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Fields in 3-column grid */}
+            <div className="flex-1 space-y-3">
+              {/* Row 1 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">電腦名稱 *</Label>
+                  <Input value={pcData.name} onChange={(e) => setPcData({ ...pcData, name: e.target.value })} required placeholder="例：PC-001" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">處理器</Label>
+                  <Input value={pcData.cpu} onChange={(e) => setPcData({ ...pcData, cpu: e.target.value })} placeholder="例：i5-12400" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">記憶體</Label>
+                  <Input value={pcData.memory} onChange={(e) => setPcData({ ...pcData, memory: e.target.value })} placeholder="例：16GB DDR4" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+              </div>
+              {/* Row 2 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">儲存空間</Label>
+                  <Input value={pcData.storage} onChange={(e) => setPcData({ ...pcData, storage: e.target.value })} placeholder="例：512GB SSD" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">顯示卡</Label>
+                  <Input value={pcData.graphics} onChange={(e) => setPcData({ ...pcData, graphics: e.target.value })} placeholder="例：RTX 3060" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">序號</Label>
+                  <Input value={pcData.serial_number} onChange={(e) => setPcData({ ...pcData, serial_number: e.target.value })} placeholder="例：ABC123" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+              </div>
+              {/* Row 3 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">品牌</Label>
+                  <Input value={pcData.brand} onChange={(e) => setPcData({ ...pcData, brand: e.target.value })} placeholder="例：Dell" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">MAC 地址</Label>
+                  <Input value={pcData.mac_add} onChange={(e) => setPcData({ ...pcData, mac_add: e.target.value })} placeholder="例：00:11:22:33:44:55" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">作業系統</Label>
+                  <Input value={pcData.os} onChange={(e) => setPcData({ ...pcData, os: e.target.value })} placeholder="例：Win 11 Pro" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+              </div>
+              {/* Row 4 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">主機板</Label>
+                  <Input value={pcData.main_board} onChange={(e) => setPcData({ ...pcData, main_board: e.target.value })} placeholder="例：ASUS B550-F" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">電源供應器</Label>
+                  <Input value={pcData.psu} onChange={(e) => setPcData({ ...pcData, psu: e.target.value })} placeholder="例：RM750x" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">CPU 散熱器</Label>
+                  <Input value={pcData.cpu_fan} onChange={(e) => setPcData({ ...pcData, cpu_fan: e.target.value })} placeholder="例：NH-D15" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+              </div>
+              {/* Row 5 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">機殼</Label>
+                  <Input value={pcData.pc_case} onChange={(e) => setPcData({ ...pcData, pc_case: e.target.value })} placeholder="例：4000D" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">購買日期</Label>
+                  <Input type="date" value={pcData.purchase_date} onChange={(e) => setPcData({ ...pcData, purchase_date: e.target.value })} className="h-9 bg-slate-700 border-slate-600 text-white text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">保固到期</Label>
+                  <Input type="date" value={pcData.warranty_expiry} onChange={(e) => setPcData({ ...pcData, warranty_expiry: e.target.value })} className="h-9 bg-slate-700 border-slate-600 text-white text-sm" />
+                </div>
+              </div>
+              {/* Row 6: Monitors */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">主顯示器型號</Label>
+                  <Input value={pcData.monitor_a} onChange={(e) => setPcData({ ...pcData, monitor_a: e.target.value })} placeholder="例：Dell 27吋" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-xs">副顯示器型號</Label>
+                  <Input value={pcData.monitor_b} onChange={(e) => setPcData({ ...pcData, monitor_b: e.target.value })} placeholder="例：ASUS 24吋" className="h-9 bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 詳細資訊 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">📋 詳細資訊</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="brand" className="text-white">品牌</Label>
-                <Input
-                  id="brand"
-                  placeholder="例：Dell"
-                  value={pcData.brand}
-                  onChange={(e) => setPcData({ ...pcData, brand: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="mac_add" className="text-white">MAC地址</Label>
-                <Input
-                  id="mac_add"
-                  placeholder="例：00:11:22:33:44:55"
-                  value={pcData.mac_add}
-                  onChange={(e) => setPcData({ ...pcData, mac_add: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="serial_number" className="text-white">序號</Label>
-                <Input
-                  id="serial_number"
-                  placeholder="例：ABC123456789"
-                  value={pcData.serial_number}
-                  onChange={(e) => setPcData({ ...pcData, serial_number: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="purchase_date" className="text-white">購買日期</Label>
-                <Input
-                  id="purchase_date"
-                  type="date"
-                  value={pcData.purchase_date}
-                  onChange={(e) => setPcData({ ...pcData, purchase_date: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="warranty_expiry" className="text-white">保固到期</Label>
-                <Input
-                  id="warranty_expiry"
-                  type="date"
-                  value={pcData.warranty_expiry}
-                  onChange={(e) => setPcData({ ...pcData, warranty_expiry: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="case" className="text-white">機殼</Label>
-                <Input
-                  id="case"
-                  placeholder="例：Corsair 4000D"
-                  value={pcData.pc_case}
-                  onChange={(e) => setPcData({ ...pcData, pc_case: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="psu" className="text-white">電源供應器</Label>
-                <Input
-                  id="psu"
-                  placeholder="例：Corsair RM750x 750W"
-                  value={pcData.psu}
-                  onChange={(e) => setPcData({ ...pcData, psu: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="main_board" className="text-white">主機板</Label>
-                <Input
-                  id="main_board"
-                  placeholder="例：ASUS ROG STRIX B550-F"
-                  value={pcData.main_board}
-                  onChange={(e) => setPcData({ ...pcData, main_board: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="os" className="text-white">作業系統</Label>
-                <Input
-                  id="os"
-                  placeholder="例：Windows 11 Pro"
-                  value={pcData.os}
-                  onChange={(e) => setPcData({ ...pcData, os: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="cpu_fan" className="text-white">CPU散熱器</Label>
-                <Input
-                  id="cpu_fan"
-                  placeholder="例：Noctua NH-D15"
-                  value={pcData.cpu_fan}
-                  onChange={(e) => setPcData({ ...pcData, cpu_fan: e.target.value })}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-                />
-              </div>
+          {/* 備註 - Aligned with fields */}
+          <div className="flex gap-6">
+            <div className="w-[336px] flex-shrink-0"></div>
+            <div className="flex-1 space-y-1">
+              <Label className="text-slate-400 text-xs">備註</Label>
+              <Textarea value={pcData.notes} onChange={(e) => setPcData({ ...pcData, notes: e.target.value })} placeholder="其他相關資訊..." rows={2} className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 text-sm" />
             </div>
           </div>
 
-          {/* 備註 */}
-          <div>
-            <Label htmlFor="notes" className="text-white">備註</Label>
-            <Textarea
-              id="notes"
-              placeholder="其他相關資訊..."
-              value={pcData.notes}
-              onChange={(e) => setPcData({ ...pcData, notes: e.target.value })}
-              rows={3}
-              className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
-            />
-          </div>
-
-          {/* 按鈕 */}
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              取消
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? '保存中...' : (existingPc ? '更新電腦' : '新增電腦')}
-            </Button>
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-600">
             {existingPc && (
-              <Button 
-                type="button" 
-                variant="destructive" 
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={loading}
-              >
+              <Button type="button" variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={loading}>
                 刪除電腦
               </Button>
             )}
+            <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+              取消
+            </Button>
+            <Button type="submit" size="sm" disabled={loading}>
+              {loading ? '保存中...' : (existingPc ? '更新電腦' : '新增電腦')}
+            </Button>
           </div>
         </form>
         
-        {/* 刪除確認對話框 */}
         <AdminPasswordConfirm
           isOpen={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
