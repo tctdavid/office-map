@@ -173,7 +173,7 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
             查看詳細規格
           </Button>
         </DialogTrigger>
-        <DialogContent className="bg-slate-800 border-slate-600 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-slate-800 border-slate-600 text-white max-w-5xl max-h-[90vh] overflow-y-auto border-2 border-yellow-400/40">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -183,142 +183,154 @@ export default function PcDataDisplay({ pcData }: PcDataDisplayProps) {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* 基本規格 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">💻 基本規格</h3>
-
-              <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
+            {/* Horizontal layout: Photos left, Fields right */}
+            <div className="flex gap-6">
+              {/* Left: Photos */}
+              <div className="flex-shrink-0 w-[336px] space-y-3">
+                {/* Case Photo */}
                 <div>
-                  <Label htmlFor="name" className="text-white">電腦名稱</Label>
-                  <Input id="name" value={pcData.name} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="cpu" className="text-white">處理器</Label>
-                  <Input id="cpu" value={pcData.cpu || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="memory" className="text-white">記憶體</Label>
-                  <Input id="memory" value={pcData.memory || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="storage" className="text-white">儲存空間</Label>
-                  <Input id="storage" value={pcData.storage || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="graphics" className="text-white">顯示卡</Label>
-                <Input id="graphics" value={pcData.graphics || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-              </div>
-
-              {/* 照片預覽 */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-white">機殼照片</Label>
-                  <div className="w-20 h-20 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
+                  <Label className="text-slate-300 text-xs">機殼照片</Label>
+                  <div className="w-[336px] h-[180px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden">
                     {pcData.case_photo ? (
                       <img src={getImageUrl(pcData.case_photo) ?? ''} alt="機殼照片" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-gray-400">📷</span>
+                      <div className="w-full h-full flex items-center justify-center"><HardDrive className="w-10 h-10 text-slate-500" /></div>
                     )}
                   </div>
                 </div>
-                <div>
-                  <Label className="text-white">主顯示器照片</Label>
-                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
-                    {pcData.monitor_a_photo ? (
-                      <img src={getImageUrl(pcData.monitor_a_photo) ?? ''} alt="主顯示器照片" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-gray-400">🖥️</span>
-                    )}
+                {/* Monitor Photos */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-slate-300 text-xs">主顯示器</Label>
+                    <div className="h-[100px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden">
+                      {pcData.monitor_a_photo ? (
+                        <img src={getImageUrl(pcData.monitor_a_photo) ?? ''} alt="主顯示器" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Monitor className="w-8 h-8 text-slate-500" /></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <Label className="text-white">副顯示器照片</Label>
-                  <div className="w-16 h-16 bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden border border-slate-600">
-                    {pcData.monitor_b_photo ? (
-                      <img src={getImageUrl(pcData.monitor_b_photo) ?? ''} alt="副顯示器照片" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-gray-400">🖥️</span>
-                    )}
+                  <div>
+                    <Label className="text-slate-300 text-xs">副顯示器</Label>
+                    <div className="h-[100px] bg-slate-700 rounded-lg border border-slate-600 overflow-hidden">
+                      {pcData.monitor_b_photo ? (
+                        <img src={getImageUrl(pcData.monitor_b_photo) ?? ''} alt="副顯示器" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Monitor className="w-8 h-8 text-slate-500" /></div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="monitor_a" className="text-white">主顯示器</Label>
-                  <Input id="monitor_a" value={pcData.monitor_a || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
+              {/* Right: Fields in 3-column grid */}
+              <div className="flex-1 space-y-3">
+                {/* Row 1 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">電腦名稱</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm font-medium text-white">{pcData.name || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">處理器</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.cpu || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">記憶體</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.memory || '-'}</p></div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="monitor_b" className="text-white">副顯示器</Label>
-                  <Input id="monitor_b" value={pcData.monitor_b || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
+                {/* Row 2 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">儲存空間</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.storage || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">顯示卡</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.graphics || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">序號</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm font-mono text-white">{serialNumber || '-'}</p></div>
+                  </div>
+                </div>
+                {/* Row 3 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">品牌</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.brand || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">MAC 地址</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm font-mono text-white">{details?.mac_add || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">作業系統</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.os || '-'}</p></div>
+                  </div>
+                </div>
+                {/* Row 4 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">主機板</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.main_board || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">電源供應器</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.psu || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">CPU 散熱器</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.cpu_fan || '-'}</p></div>
+                  </div>
+                </div>
+                {/* Row 5 */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">機殼</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.pc_case || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">購買日期</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.purchase_date || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">保固到期</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{details?.warranty_expiry || '-'}</p></div>
+                  </div>
+                </div>
+                {/* Row 6: Monitors */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">主顯示器型號</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.monitor_a || '-'}</p></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">副顯示器型號</Label>
+                    <div className="p-2 bg-slate-700/50 rounded-md"><p className="text-sm text-white">{pcData.monitor_b || '-'}</p></div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 詳細資訊 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">📋 詳細資訊</h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="brand" className="text-white">品牌</Label>
-                  <Input id="brand" value={details?.brand || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="mac_add" className="text-white">MAC地址</Label>
-                  <Input id="mac_add" value={details?.mac_add || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="serial_number" className="text-white">序號</Label>
-                  <Input id="serial_number" value={serialNumber || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="purchase_date" className="text-white">購買日期</Label>
-                  <Input id="purchase_date" value={details?.purchase_date || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="warranty_expiry" className="text-white">保固到期</Label>
-                  <Input id="warranty_expiry" value={details?.warranty_expiry || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="case" className="text-white">機殼</Label>
-                  <Input id="case" value={details?.pc_case || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="psu" className="text-white">電源供應器</Label>
-                  <Input id="psu" value={details?.psu || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="main_board" className="text-white">主機板</Label>
-                  <Input id="main_board" value={details?.main_board || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="os" className="text-white">作業系統</Label>
-                  <Input id="os" value={details?.os || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="cpu_fan" className="text-white">CPU散熱器</Label>
-                  <Input id="cpu_fan" value={details?.cpu_fan || ''} disabled className="bg-slate-700 border-slate-600 text-white" />
+            {/* 備註 - Aligned with fields */}
+            <div className="flex gap-6">
+              <div className="w-[336px] flex-shrink-0"></div>
+              <div className="flex-1 space-y-1">
+                <Label className="text-slate-400 text-xs">備註</Label>
+                <div className="p-2 bg-slate-700/50 rounded-md min-h-[40px]">
+                  <p className="text-sm whitespace-pre-wrap text-white">{details?.notes || '-'}</p>
                 </div>
               </div>
             </div>
 
-            {/* 備註 */}
-            <div>
-              <Label htmlFor="notes" className="text-white">備註</Label>
-              <Textarea id="notes" value={details?.notes || ''} disabled rows={3} className="bg-slate-700 border-slate-600 text-white" />
-            </div>
-
-            <DialogFooter className="gap-2">
+            <div className="flex justify-end pt-2 border-t border-slate-600">
               <DialogClose asChild>
-                <Button variant="outline" className="w-full">
-                  關閉
-                </Button>
+                <Button variant="outline" size="sm">關閉</Button>
               </DialogClose>
-            </DialogFooter>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
